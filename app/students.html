@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Students — Mechanical Academic Portal</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="main-content">
+    <div class="top-bar">
+      <button class="btn btn-light btn-sm menu-toggle" id="menu-toggle"><i class="bi bi-list"></i></button>
+      <div class="page-header d-flex justify-content-between align-items-center flex-grow-1">
+      <div>
+        <h2>Student Management</h2>
+        <p class="text-muted mb-0">Manage students, enrollments, and view performance</p>
+      </div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-outline-success shadow-sm" id="export-students-btn">
+          <i class="bi bi-file-earmark-excel me-1"></i>Export Data
+        </button>
+        <button class="btn btn-outline-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#bulkUploadModal">
+          <i class="bi bi-file-earmark-spreadsheet me-1"></i>Bulk Upload
+        </button>
+        <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#addStudentModal">
+          <i class="bi bi-person-plus me-1"></i>Add Student
+        </button>
+      </div>
+    </div>
+    </div>
+
+    <div class="page-body">
+      <!-- Search & Filters -->
+      <div class="row g-2 mb-3">
+        <div class="col-md-5">
+          <input type="text" id="student-search" class="form-control" placeholder="🔍 Search by name, email, roll no, URN or dept...">
+        </div>
+        <div class="col-md-3">
+          <select id="filter-course" class="form-select">
+            <option value="">All Courses</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <select id="filter-department" class="form-select">
+            <option value="">All Departments</option>
+            <option value="AERO">AERO</option>
+            <option value="CSE">CSE</option>
+            <option value="CIVIL">CIVIL</option>
+            <option value="MECH">MECH</option>
+            <option value="EE">EE</option>
+            <option value="FOOD">FOOD</option>
+            <option value="AIDS">AIDS</option>
+            <option value="CSE (IOT)">CSE (IOT)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Students Table -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <h6 class="mb-0"><i class="bi bi-table me-2"></i>Students List</h6>
+          <span class="badge bg-primary" id="student-count">0</span>
+        </div>
+        <div class="card-body p-0 table-responsive" style="max-height: 65vh;">
+          <table class="table table-striped table-hover mb-0">
+            <thead class="table-light" style="position: sticky; top: 0; z-index: 1;">
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Roll No</th>
+                <th>URN</th>
+                <th>Dept</th>
+                <th>Email</th>
+                <th>Course</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="students-tbody">
+              <tr><td colspan="8" class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm"></span> Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Student Modal -->
+  <div class="modal fade" id="addStudentModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-person-plus me-2"></i>Add New Student</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <form id="add-student-form">
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">Full Name <span class="text-danger">*</span></label>
+              <input type="text" id="s-name" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Email <span class="text-danger">*</span></label>
+              <input type="email" id="s-email" class="form-control" required>
+            </div>
+            <div class="row g-3 mb-3">
+              <div class="col">
+                <label class="form-label">Roll Number</label>
+                <input type="text" id="s-roll" class="form-control" placeholder="CS-001">
+              </div>
+              <div class="col">
+                <label class="form-label">URN</label>
+                <input type="text" id="s-urn" class="form-control" placeholder="URN-12345">
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Department <span class="text-danger">*</span></label>
+              <select id="s-department" class="form-select" required>
+                <option value="">— Select Department —</option>
+                <option value="AERO">AERO</option>
+                <option value="CSE">CSE</option>
+                <option value="CIVIL">CIVIL</option>
+                <option value="MECH">MECH</option>
+                <option value="EE">EE</option>
+                <option value="FOOD">FOOD</option>
+                <option value="AIDS">AIDS</option>
+                <option value="CSE (IOT)">CSE (IOT)</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Password <span class="text-danger">*</span></label>
+              <input type="password" id="s-password" class="form-control" required minlength="6" value="Adcet@123">
+              <small class="text-muted"><i class="bi bi-info-circle"></i> Default is `Adcet@123`. Instruct the student to change this on their first login.</small>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Assign to Course</label>
+              <select id="s-course" class="form-select">
+                <option value="">— No course (assign later) —</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="add-student-btn">
+              <i class="bi bi-person-plus me-1"></i>Add Student
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Student Modal -->
+  <div class="modal fade" id="editStudentModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-pencil me-2"></i>Edit Student</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <form id="edit-student-form">
+          <input type="hidden" id="edit-uid">
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">Full Name</label>
+              <input type="text" id="edit-name" class="form-control" required>
+            </div>
+            <div class="row g-3 mb-3">
+              <div class="col">
+                <label class="form-label">Roll No</label>
+                <input type="text" id="edit-roll" class="form-control">
+              </div>
+              <div class="col">
+                <label class="form-label">URN</label>
+                <input type="text" id="edit-urn" class="form-control">
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Department</label>
+              <select id="edit-department" class="form-select">
+                <option value="">— Select Department —</option>
+                <option value="AERO">AERO</option>
+                <option value="CSE">CSE</option>
+                <option value="CIVIL">CIVIL</option>
+                <option value="MECH">MECH</option>
+                <option value="EE">EE</option>
+                <option value="FOOD">FOOD</option>
+                <option value="AIDS">AIDS</option>
+                <option value="CSE (IOT)">CSE (IOT)</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Secure Delete Modal -->
+  <div class="modal fade" id="secureDeleteModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered border-danger">
+      <div class="modal-content">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>Secure Delete</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body text-center py-4 text-start">
+          <p class="text-danger fw-bold my-2" id="secure-delete-msg">Are you sure you want to delete this data? This cannot be undone.</p>
+          <div class="mt-4 text-start">
+            <label class="form-label fw-bold">Confirm Account Password:</label>
+            <input type="password" id="secure-delete-password" class="form-control" placeholder="Enter your password to authorize">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" id="confirm-secure-delete-btn" disabled>
+             <i class="bi bi-trash"></i> Permanently Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Student Profile View Modal -->
+  <div class="modal fade" id="profileStudentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-person-badge me-2"></i>Student Profile</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-0">
+           <!-- Profile Banner -->
+           <div class="bg-primary text-white p-4 d-flex align-items-center gap-3">
+              <div class="user-avatar" style="width: 64px; height: 64px; font-size: 1.5rem; background: rgba(255,255,255,0.2);" id="profile-avatar">S</div>
+              <div>
+                 <h4 class="mb-0" id="profile-name">Student Name</h4>
+                 <p class="mb-0 text-white-50" id="profile-email">student@email.com</p>
+              </div>
+           </div>
+           
+           <div class="p-4">
+              <div class="row g-4">
+                 <!-- Info Card -->
+                 <div class="col-md-6">
+                    <h6 class="border-bottom pb-2 text-muted text-uppercase small fw-bold">Demographics</h6>
+                    <table class="table table-sm table-borderless">
+                      <tr><td class="text-muted w-25">URN:</td><td class="fw-bold" id="profile-urn">...</td></tr>
+                      <tr><td class="text-muted">Roll No:</td><td class="fw-bold" id="profile-roll">...</td></tr>
+                      <tr><td class="text-muted">Dept:</td><td><span class="badge bg-secondary" id="profile-dept">...</span></td></tr>
+                      <tr><td class="text-muted">Enrolled:</td><td id="profile-enrolled-date">...</td></tr>
+                    </table>
+                 </div>
+                 <!-- Course & Attendance Info -->
+                 <div class="col-md-6">
+                    <h6 class="border-bottom pb-2 text-muted text-uppercase small fw-bold">Academic Status</h6>
+                    <p class="mb-1 text-muted small">Assigned Courses:</p>
+                    <div id="profile-courses" class="mb-3 d-flex flex-wrap gap-1"></div>
+                     <p class="mb-1 text-muted small">Overall Attendance:</p>
+                     <div class="d-flex align-items-center gap-2 mb-2">
+                        <div class="progress flex-grow-1" style="height: 10px;">
+                           <div class="progress-bar bg-secondary" id="profile-att-bar" style="width: 0%"></div>
+                        </div>
+                        <span class="fw-bold small" id="profile-att-percentage">&mdash;</span>
+                     </div>
+                 </div>
+              </div>
+
+              <!-- Admin Actions -->
+              <div class="mt-4 pt-3 border-top">
+                 <h6 class="text-muted text-uppercase small fw-bold mb-3">Account Actions</h6>
+                 <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <button class="btn btn-sm btn-outline-primary" id="profile-edit-btn">
+                       <i class="bi bi-pencil me-1"></i> Edit Details
+                    </button>
+                    <button class="btn btn-sm btn-outline-warning text-dark" id="profile-reset-btn">
+                       <i class="bi bi-envelope-at me-1"></i> Send Password Reset Link
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger ms-auto" id="profile-delete-btn">
+                       <i class="bi bi-trash me-1"></i> Delete Student
+                    </button>
+                 </div>
+              </div>
+           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <!-- Bulk Upload Students Modal -->
+    <div class="modal fade" id="bulkUploadModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-light">
+            <h5 class="modal-title"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Bulk Upload Students</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="alert alert-info py-2 d-flex justify-content-between align-items-center mb-3">
+              <span class="small"><i class="bi bi-info-circle me-1"></i> Upload an Excel or CSV file. Ensure you use the exact column headers from the template.</span>
+              <button class="btn btn-sm btn-outline-info bg-white" id="download-template-btn">
+                <i class="bi bi-download me-1"></i>Download Template
+              </button>
+            </div>
+            
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Upload File (.xlsx, .csv)</label>
+                <input type="file" id="bulk-file-input" class="form-control" accept=".xlsx, .xls, .csv">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Assign to Course (Required)</label>
+                <select id="bulk-course-select" class="form-select" required>
+                  <option value="">— Select Target Course —</option>
+                  <!-- Populated by JS -->
+                </select>
+              </div>
+            </div>
+
+            <!-- Upload Preview Area -->
+            <div id="bulk-preview-area" class="d-none">
+              <h6 class="border-bottom pb-2 mb-3">Validation Summary</h6>
+              <div class="d-flex gap-4 mb-3" id="bulk-stats">
+                <div><span class="text-muted small">Total Rows:</span> <strong id="bulk-total">0</strong></div>
+                <div><span class="text-success small">Ready to Insert:</span> <strong id="bulk-valid">0</strong></div>
+                <div><span class="text-danger small">Errors / Skips:</span> <strong id="bulk-errors">0</strong></div>
+              </div>
+
+              <div class="table-responsive" style="max-height: 250px;">
+                <table class="table table-sm table-bordered text-nowrap mb-0" id="bulk-preview-table">
+                  <thead class="table-light sticky-top">
+                    <tr><th>Row</th><th>Status</th><th>URN</th><th>Name</th><th>Roll No</th><th>Dept</th><th>Email</th></tr>
+                  </thead>
+                  <tbody class="small"></tbody>
+                </table>
+              </div>
+
+              <!-- Upload Progress -->
+              <div id="bulk-progress-area" class="mt-3 d-none">
+                <div class="d-flex justify-content-between mb-1">
+                  <span class="small text-muted" id="bulk-progress-text">Processing...</span>
+                  <span class="small fw-bold" id="bulk-progress-percent">0%</span>
+                </div>
+                <div class="progress" style="height: 10px;">
+                  <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" id="bulk-progress-bar" style="width: 0%"></div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-secondary" id="bulk-validate-btn" disabled>Validate File</button>
+            <button type="button" class="btn btn-primary d-none" id="bulk-upload-btn">Confirm & Upload All</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- SheetJS for Excel/CSV Parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script type="module">
+    import { initApp } from '../assets/js/core/router.js';
+    import { createStudentAccount, resetPassword, verifyCurrentPassword } from '../assets/js/core/auth.js';
+    import { CourseService, EnrollmentService, UserService, AttendanceService } from '../services/database.js';
+    import { showToast, closeModal, escapeHtml, LMSLogger, friendlyError, validateEmail, validateExcelHeaders, showConfirm } from '../assets/js/core/utils.js';
+    try {
+      const userData = await initApp(['teacher', 'admin']);
+
+      // Load teacher's courses
+      const courses = userData.role === 'admin'
+        ? await CourseService.getAll()
+        : await CourseService.getByTeacher(userData.uid);
+
+      // Populate course dropdowns
+      const courseOptions = courses.map(c => `<option value="${c.id}">${escapeHtml(c.title)}</option>`).join('');
+      document.getElementById('filter-course').innerHTML += courseOptions;
+      document.getElementById('s-course').innerHTML += courseOptions;
+      document.getElementById('bulk-course-select').innerHTML += courseOptions;
+
+      let allStudents = [];
+
+      // Load students
+      async function loadStudents() {
+        if (userData.role === 'admin') {
+          allStudents = await UserService.getByRole('student');
+        } else {
+          // ── BUG FIX: Merge BOTH enrolled students AND students created by this teacher ──
+          const courseIds = courses.map(c => c.id);
+          const allEnrollments = [];
+          for (const cid of courseIds) {
+            const enrollments = await EnrollmentService.getByCourse(cid);
+            allEnrollments.push(...enrollments.map(e => ({ ...e, courseId: cid })));
+          }
+
+          // Source 1: Students from enrollments
+          const enrolledStudentIds = [...new Set(allEnrollments.map(e => e.studentId))];
+          const enrolledStudents = (await Promise.all(
+            enrolledStudentIds.map(async id => await UserService.get(id))
+          )).filter(Boolean);
+
+          // Source 2: Students created by this teacher (may NOT be enrolled yet)
+          const createdStudents = await UserService.getByCreator(userData.uid);
+
+          // Merge and deduplicate by uid
+          const studentMap = new Map();
+          enrolledStudents.forEach(s => studentMap.set(s.uid, s));
+          createdStudents.forEach(s => { if (!studentMap.has(s.uid)) studentMap.set(s.uid, s); });
+          allStudents = Array.from(studentMap.values());
+
+          // Attach course info to all students
+          allStudents.forEach(s => {
+            const enrolled = allEnrollments.filter(e => e.studentId === s.uid);
+            s._courseIds = enrolled.map(e => e.courseId);
+            s._courseNames = enrolled.map(e => {
+              const course = courses.find(c => c.id === e.courseId);
+              return course ? course.title : '—';
+            });
+          });
+        }
+
+        renderStudents(allStudents);
+      }
+
+    let currentStudentPage = 1;
+    const studentsPageSize = 50;
+
+    function renderStudents(students) {
+      const tbody = document.getElementById('students-tbody');
+      document.getElementById('student-count').textContent = students.length;
+
+      const pageControls = document.getElementById('students-pagination') || (function() {
+         const div = document.createElement('div');
+         div.id = 'students-pagination';
+         div.className = 'd-flex justify-content-between my-3 px-3';
+         tbody.closest('.table-responsive').parentElement.appendChild(div);
+         return div;
+      })();
+
+      if (students.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4"><i class="bi bi-people"></i> No students found matching filters</td></tr>';
+        pageControls.innerHTML = '';
+        return;
+      }
+
+      const totalPages = Math.ceil(students.length / studentsPageSize);
+      if (currentStudentPage > totalPages) currentStudentPage = totalPages;
+      if (currentStudentPage < 1) currentStudentPage = 1;
+
+      const startIdx = (currentStudentPage - 1) * studentsPageSize;
+      const endIdx = startIdx + studentsPageSize;
+      const currentView = students.slice(startIdx, endIdx);
+
+      tbody.innerHTML = currentView.map((s, i) => `
+        <tr>
+          <td>${startIdx + i + 1}</td>
+          <td class="fw-medium">${escapeHtml(s.name || '—')}</td>
+          <td>${s.rollNo || '—'}</td>
+          <td>${s.urn || '—'}</td>
+          <td><span class="badge bg-secondary">${s.department || '—'}</span></td>
+          <td class="text-muted small">${s.email || '—'}</td>
+          <td>${(s._courseNames || []).map(n => `<span class="badge bg-light text-dark border me-1">${escapeHtml(n)}</span>`).join('') || '<span class="text-muted small">Not assigned</span>'}</td>
+          <td>
+            <div class="d-flex gap-1">
+              <button class="btn btn-outline-primary btn-sm profile-btn" data-uid="${s.uid}"><i class="bi bi-person-badge"></i> View Profile</button>
+              <button class="btn btn-outline-danger btn-sm table-delete-btn" data-uid="${s.uid}"><i class="bi bi-trash"></i></button>
+            </div>
+          </td>
+        </tr>`).join('');
+
+      pageControls.innerHTML = `
+        <button class="btn btn-sm btn-outline-primary" id="student-prev" ${currentStudentPage === 1 ? 'disabled' : ''}>Previous</button>
+        <span class="text-muted small align-self-center">Showing ${startIdx + 1} to ${Math.min(endIdx, students.length)} of ${students.length}</span>
+        <button class="btn btn-sm btn-outline-primary" id="student-next" ${currentStudentPage === totalPages ? 'disabled' : ''}>Next</button>
+      `;
+
+      const prevBtn = document.getElementById('student-prev');
+      if(prevBtn) prevBtn.onclick = () => { currentStudentPage--; renderStudents(students); };
+      const nextBtn = document.getElementById('student-next');
+      if(nextBtn) nextBtn.onclick = () => { currentStudentPage++; renderStudents(students); };
+
+      // Table Delete buttons
+      tbody.querySelectorAll('.table-delete-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const s = allStudents.find(x => x.uid === btn.dataset.uid);
+          if(!s) return;
+          
+          const confirmed = await showConfirm(
+             'Delete Student',
+             `Are you sure you want to delete ${escapeHtml(s.name)}? This action cannot be undone.`,
+             { confirmText: 'Delete', type: 'danger' }
+          );
+          
+          if (confirmed) {
+             const originalHtml = btn.innerHTML;
+             btn.disabled = true;
+             btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+             
+             try {
+                await UserService.delete(s.uid);
+                showToast(`Student ${s.name} deleted successfully!`, 'success');
+                await loadStudents();
+                applyFilters();
+             } catch(err) {
+                LMSLogger.database('Student deletion failed', err);
+                showToast(friendlyError(err), 'error');
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+             }
+          }
+        });
+      });
+
+      // Profile buttons
+      tbody.querySelectorAll('.profile-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const s = allStudents.find(x => x.uid === btn.dataset.uid);
+          if(!s) return;
+          
+          document.getElementById('profile-name').textContent = s.name || '—';
+          document.getElementById('profile-email').textContent = s.email || '—';
+          document.getElementById('profile-avatar').textContent = (s.name || 'S')[0].toUpperCase();
+          document.getElementById('profile-urn').textContent = s.urn || '—';
+          document.getElementById('profile-roll').textContent = s.rollNo || '—';
+          document.getElementById('profile-dept').textContent = s.department || '—';
+          
+          let enrollDate = '—';
+          if(s.createdAt && typeof s.createdAt.toDate === 'function') {
+             enrollDate = s.createdAt.toDate().toLocaleDateString();
+          }
+          document.getElementById('profile-enrolled-date').textContent = enrollDate;
+          
+          // Render courses
+          const courseList = document.getElementById('profile-courses');
+          if(s._courseNames && s._courseNames.length > 0) {
+             courseList.innerHTML = s._courseNames.map(n => `<span class="badge bg-light text-dark border p-2">${escapeHtml(n)}</span>`).join('');
+          } else {
+             courseList.innerHTML = '<span class="text-muted small">No courses assigned</span>';
+          }
+          
+          // Async Attendance Fetching for Profile
+          document.getElementById('profile-att-percentage').textContent = 'Loading...';
+          document.getElementById('profile-att-bar').style.width = '0%';
+          document.getElementById('profile-att-bar').className = 'progress-bar bg-secondary';
+          
+          try {
+             let totalLectures = 0;
+             let totalPresent = 0;
+             if(s._courseIds && s._courseIds.length > 0) {
+                // Determine cumulative attendance across assigned courses
+                for(let cid of s._courseIds) {
+                   const atts = await AttendanceService.getByCourse(cid);
+                   const studentAtts = atts.filter(a => a.studentId === s.uid);
+                   totalLectures += [...new Set(atts.map(a => a.date))].length; // unique dates taught
+                   totalPresent += studentAtts.filter(a => a.status === 'present').length;
+                }
+             }
+             
+             if(totalLectures > 0) {
+                const perc = Math.round((totalPresent / totalLectures) * 100);
+                document.getElementById('profile-att-percentage').textContent = `${perc}%`;
+                document.getElementById('profile-att-bar').style.width = `${perc}%`;
+                document.getElementById('profile-att-bar').className = `progress-bar ${perc >= 75 ? 'bg-success' : 'bg-danger'}`;
+             } else {
+                document.getElementById('profile-att-percentage').textContent = 'N/A';
+             }
+          } catch(e) { console.error('Error computing attendance', e); }
+
+          // Wire administrative action buttons
+          document.getElementById('profile-edit-btn').onclick = () => {
+             closeModal('profileStudentModal');
+             document.getElementById('edit-uid').value = s.uid;
+             document.getElementById('edit-name').value = s.name;
+             document.getElementById('edit-roll').value = s.rollNo;
+             document.getElementById('edit-urn').value = s.urn;
+             document.getElementById('edit-department').value = s.department || '';
+             new bootstrap.Modal(document.getElementById('editStudentModal')).show();
+          };
+
+          const resetBtn = document.getElementById('profile-reset-btn');
+          resetBtn.onclick = async () => {
+             resetBtn.disabled = true;
+             resetBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Sending...';
+             try {
+                await resetPassword(s.email);
+                showToast(`Password reset email securely sent to ${s.email}`, 'success');
+             } catch(e) { showToast(e.message, 'error'); }
+             resetBtn.disabled = false;
+             resetBtn.innerHTML = '<i class="bi bi-envelope-at me-1"></i> Send Password Reset Link';
+          };
+          
+          document.getElementById('profile-delete-btn').onclick = () => {
+             closeModal('profileStudentModal');
+             openSecureDelete(s.uid, 'user', `Student: ${s.name}`);
+          };
+
+          new bootstrap.Modal(document.getElementById('profileStudentModal')).show();
+        });
+      });
+    }
+
+    // ── Unified Filter Logic ──
+    function applyFilters() {
+      currentStudentPage = 1; // reset pagination on filter change
+      const q = document.getElementById('student-search').value.toLowerCase().trim();
+      const cid = document.getElementById('filter-course').value;
+      const dept = document.getElementById('filter-department').value;
+
+      const filtered = allStudents.filter(s => {
+        const matchSearch = !q || (
+          (s.name||'').toLowerCase().includes(q) ||
+          (s.email||'').toLowerCase().includes(q) ||
+          (s.rollNo||'').toLowerCase().includes(q) ||
+          (s.urn||'').toLowerCase().includes(q) ||
+          (s.department||'').toLowerCase().includes(q)
+        );
+        const matchCourse = !cid || (s._courseIds && s._courseIds.includes(cid));
+        const matchDept = !dept || s.department === dept;
+
+        return matchSearch && matchCourse && matchDept;
+      });
+
+      renderStudents(filtered);
+    }
+
+    document.getElementById('student-search').addEventListener('input', applyFilters);
+    document.getElementById('filter-course').addEventListener('change', applyFilters);
+    document.getElementById('filter-department').addEventListener('change', applyFilters);
+
+    // Export Student Data handler is defined in the single export block below (line ~966)
+
+    // Add Student form
+    document.getElementById('add-student-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('add-student-btn');
+      const urn = document.getElementById('s-urn').value.trim();
+
+      const emailVal = document.getElementById('s-email').value.trim();
+
+      // URN mandatory validation
+      if (!urn) {
+        showToast('URN number is required', 'error');
+        document.getElementById('s-urn').focus();
+        return;
+      }
+      
+      // Email validation
+      if (!validateEmail(emailVal)) {
+        showToast('Please enter a valid email address', 'error');
+        document.getElementById('s-email').focus();
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Checking URN...';
+
+      // URN uniqueness check
+      const urnUnique = await UserService.isUrnUnique(urn);
+      if (!urnUnique) {
+        showToast('URN already exists! Each student must have a unique URN.', 'error');
+        document.getElementById('s-urn').focus();
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-person-plus me-1"></i>Add Student';
+        return;
+      }
+
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Creating...';
+
+      try {
+        const result = await createStudentAccount({
+          name: document.getElementById('s-name').value.trim(),
+          email: document.getElementById('s-email').value.trim(),
+          password: document.getElementById('s-password').value,
+          rollNo: document.getElementById('s-roll').value.trim(),
+          urn: urn,
+          department: document.getElementById('s-department').value
+        }, userData.uid);
+
+        // Auto-assign to course if selected
+        const courseId = document.getElementById('s-course').value;
+        if (courseId) {
+          await EnrollmentService.assignCourse(result.uid, courseId, userData.uid);
+        }
+
+        showToast(`Student "${result.name}" created successfully!`, 'success');
+        closeModal('addStudentModal');
+        e.target.reset();
+        await loadStudents();
+        applyFilters();
+      } catch (err) {
+        showToast(err.message || 'Failed to create student', 'error');
+      }
+
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-person-plus me-1"></i>Add Student';
+    });
+
+    // Edit Student form
+    document.getElementById('edit-student-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const uid = document.getElementById('edit-uid').value;
+      const btn = e.target.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
+
+      try {
+        await UserService.update(uid, {
+          name: document.getElementById('edit-name').value.trim(),
+          rollNo: document.getElementById('edit-roll').value.trim(),
+          urn: document.getElementById('edit-urn').value.trim(),
+          department: document.getElementById('edit-department').value
+        });
+        showToast('Student updated!', 'success');
+        closeModal('editStudentModal');
+        await loadStudents();
+        applyFilters();
+      } catch (err) { showToast(err.message, 'error'); }
+
+      btn.disabled = false;
+      btn.innerHTML = 'Save Changes';
+    });
+    
+    // ── Secure Delete Logic ──
+    let activeDeleteCall = null;
+    let activeDeleteId = null;
+    
+    function openSecureDelete(id, type, label) {
+       activeDeleteId = id;
+       activeDeleteCall = type;
+       document.getElementById('secure-delete-msg').textContent = `Are you sure you want to permanently delete ${label}?`;
+       document.getElementById('secure-delete-password').value = '';
+       new bootstrap.Modal(document.getElementById('secureDeleteModal')).show();
+    }
+    
+    document.getElementById('secure-delete-password').addEventListener('input', (e) => {
+       document.getElementById('confirm-secure-delete-btn').disabled = (e.target.value.length < 6);
+    });
+    
+    document.getElementById('confirm-secure-delete-btn').addEventListener('click', async (e) => {
+       const pass = document.getElementById('secure-delete-password').value;
+       const btn = e.target;
+       btn.disabled = true;
+       btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Verifying...';
+       
+       try {
+          await verifyCurrentPassword(pass);
+          // Password verified, execute deletion
+          if(activeDeleteCall === 'user') {
+             await UserService.delete(activeDeleteId);
+          }
+          closeModal('secureDeleteModal');
+          showToast('Data securely deleted!', 'success');
+          await loadStudents();
+       } catch(err) {
+          showToast(err.message || 'Incorrect Password', 'error');
+          btn.disabled = false;
+          btn.innerHTML = '<i class="bi bi-trash"></i> Permanently Delete';
+       }
+    });
+
+    // ── Bulk Upload Logic ──
+    
+    let parsedBulkData = [];
+    const validDepts = ['AERO', 'CSE', 'CIVIL', 'MECH', 'EE', 'FOOD', 'AIDS', 'CSE (IOT)'];
+    
+    // Download Template
+    document.getElementById('download-template-btn').addEventListener('click', () => {
+      const headers = ["URN", "Student Name", "Roll No", "Department", "Email"];
+      const example = ["23091045", "Rahul Patil", "101", "CSE", "rahul@gmail.com"];
+      const example2 = ["23091046", "Priya Sharma", "102", "CIVIL", "priya@gmail.com"];
+      const ws = XLSX.utils.aoa_to_sheet([headers, example, example2]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Template");
+      XLSX.writeFile(wb, "Student_Upload_Template.xlsx");
+    });
+
+    const bulkFileInput = document.getElementById('bulk-file-input');
+    const bulkValidateBtn = document.getElementById('bulk-validate-btn');
+    const bulkUploadBtn = document.getElementById('bulk-upload-btn');
+    const bulkPreviewArea = document.getElementById('bulk-preview-area');
+
+    bulkFileInput.addEventListener('change', () => {
+      bulkValidateBtn.disabled = !bulkFileInput.files.length;
+      bulkPreviewArea.classList.add('d-none');
+      bulkUploadBtn.classList.add('d-none');
+      bulkValidateBtn.classList.remove('d-none');
+    });
+
+    // Validate File
+    bulkValidateBtn.addEventListener('click', async () => {
+      const file = bulkFileInput.files[0];
+      if (!file) return;
+
+      bulkValidateBtn.disabled = true;
+      bulkValidateBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Validating...';
+
+      try {
+        const data = await file.arrayBuffer();
+        const workbook = XLSX.read(data);
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonVal = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+        if (jsonVal.length === 0) throw new Error("File is empty.");
+
+        // Excel Column Validation
+        const headerErrors = validateExcelHeaders(jsonVal, ["URN", "Student Name", "Roll No", "Department", "Email"]);
+        if (headerErrors.length > 0) {
+          showToast(headerErrors[0], 'error');
+          bulkValidateBtn.disabled = false;
+          bulkValidateBtn.innerHTML = 'Validate File';
+          return;
+        }
+
+        let existingUrns = allStudents.map(s => s.urn).filter(Boolean);
+        let seenFileUrns = new Set();
+        let validCount = 0;
+        let errorCount = 0;
+
+        // Normalize keys (handle leading/trailing spaces in headers)
+        parsedBulkData = jsonVal.map((row, index) => {
+          const outRow = {};
+          for (let key in row) outRow[key.trim()] = (row[key]||'').toString().trim();
+          outRow._originalIndex = index + 2; // +1 for 0-index, +1 for header row
+          return outRow;
+        });
+
+        const tbody = document.querySelector('#bulk-preview-table tbody');
+        let tableHtml = '';
+
+        parsedBulkData.forEach((row) => {
+          const urn = row["URN"];
+          const name = row["Student Name"];
+          const rollNo = row["Roll No"];
+          const dept = row["Department"];
+          const email = row["Email"];
+
+          let errors = [];
+          if (!urn) errors.push("URN missing");
+          if (!name) errors.push("Name missing");
+          if (!dept) errors.push("Dept missing");
+          if (dept && !validDepts.includes(dept.toUpperCase())) errors.push("Invalid Dept");
+          if (urn && seenFileUrns.has(urn)) errors.push("Duplicate URN in file");
+          if (urn && existingUrns.includes(urn)) errors.push("URN already in system");
+
+          if (urn) seenFileUrns.add(urn);
+
+          row._isValid = errors.length === 0;
+          row._errors = errors.join(', ');
+          row._parsedObj = { urn, name, rollNo, department: dept ? dept.toUpperCase() : '', email };
+
+          if (row._isValid) validCount++; else errorCount++;
+
+          const statusHtml = row._isValid 
+            ? `<span class="badge bg-success"><i class="bi bi-check"></i> Ready</span>` 
+            : `<span class="badge bg-danger" title="${row._errors}"><i class="bi bi-x"></i> Error</span><br><small class="text-danger">${row._errors}</small>`;
+
+          tableHtml += `<tr class="${row._isValid ? '' : 'table-danger'}">
+            <td>${row._originalIndex}</td>
+            <td>${statusHtml}</td>
+            <td>${escapeHtml(urn)}</td>
+            <td>${escapeHtml(name)}</td>
+            <td>${escapeHtml(rollNo)}</td>
+            <td>${escapeHtml(dept)}</td>
+            <td>${escapeHtml(email)}</td>
+          </tr>`;
+        });
+
+        document.getElementById('bulk-total').textContent = parsedBulkData.length;
+        document.getElementById('bulk-valid').textContent = validCount;
+        document.getElementById('bulk-errors').textContent = errorCount;
+        tbody.innerHTML = tableHtml;
+
+        bulkPreviewArea.classList.remove('d-none');
+        
+        if (validCount > 0) {
+          bulkValidateBtn.classList.add('d-none');
+          bulkUploadBtn.classList.remove('d-none');
+          // If they change course dropdown, allow upload. But user might have forgotten.
+        } else {
+           showToast("No valid rows to insert. Fix errors in your file and try again.", "error");
+        }
+
+      } catch (err) {
+        showToast(err.message || 'Error processing Excel/CSV file', 'error');
+      }
+
+      bulkValidateBtn.disabled = false;
+      bulkValidateBtn.innerHTML = 'Validate File';
+    });
+
+    // Confirm Upload Process
+    bulkUploadBtn.addEventListener('click', async () => {
+      const targetCourseId = document.getElementById('bulk-course-select').value;
+      if (!targetCourseId) {
+        showToast('Please select a target course before uploading.', 'warning');
+        return;
+      }
+
+      const validRows = parsedBulkData.filter(r => r._isValid);
+      if (validRows.length === 0) return;
+
+      bulkUploadBtn.disabled = true;
+      const cancelBtn = document.querySelector('#bulkUploadModal .btn-light');
+      cancelBtn.disabled = true;
+      
+      const progArea = document.getElementById('bulk-progress-area');
+      const progText = document.getElementById('bulk-progress-text');
+      const progPercent = document.getElementById('bulk-progress-percent');
+      const progBar = document.getElementById('bulk-progress-bar');
+      
+      progArea.classList.remove('d-none');
+      
+      let successCount = 0;
+      let failCount = 0;
+
+      for (let i = 0; i < validRows.length; i++) {
+        const row = validRows[i];
+        const payload = row._parsedObj;
+        
+        try {
+          // Provide default password for auto-created accounts as requested
+          const accountData = {
+            name: payload.name,
+            email: payload.email || `${payload.urn}@student.lms.com`, // fallback email
+            password: `Adcet@123`, // fixed default password
+            rollNo: payload.rollNo,
+            urn: payload.urn,
+            department: payload.department
+          };
+          
+          // 1. Create auth & profile via module secondary app logic
+          // The createStudentAccount function is already imported at the top.
+          const result = await createStudentAccount(accountData, userData.uid);
+          
+          // 2. Automatically enroll in selected course
+          await EnrollmentService.assignCourse(result.uid, targetCourseId, userData.uid);
+          
+          successCount++;
+        } catch (e) {
+          console.error('Failed on row', i, payload, e);
+          failCount++;
+        }
+
+        // Update Progress UI
+        const perc = Math.round(((i + 1) / validRows.length) * 100);
+        progText.textContent = `Inserting ${i + 1} of ${validRows.length}...`;
+        progPercent.textContent = `${perc}%`;
+        progBar.style.width = `${perc}%`;
+        
+        // Yield to browser UI thread to allow progress bar paint & prevent freezing
+        await new Promise(r => setTimeout(r, 0));
+      } // end loop
+
+      progText.textContent = `Completed! ${successCount} inserted, ${failCount} failed.`;
+      progBar.classList.replace('bg-primary', 'bg-success');
+      progBar.classList.remove('progress-bar-animated');
+      
+      showToast(`Bulk upload complete! ${successCount} inserted successfully.`, 'success');
+
+      // Refresh Data
+      await loadStudents();
+      applyFilters();
+
+    });
+
+    // ── Data Export Logic (Excel) ──
+    document.getElementById('export-students-btn').addEventListener('click', async (e) => {
+       const btn = e.target.closest('button');
+       const originalHtml = btn.innerHTML;
+       btn.disabled = true;
+       btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Exporting...';
+       
+       try {
+          // Fetch required data
+          const enrollments = await EnrollmentService.getAll();
+          const courses = await CourseService.getAll();
+          const courseMap = {};
+          courses.forEach(c => courseMap[c.id] = c.title);
+          
+          const records = await AttendanceService.getAll();
+          
+          // Process data row by row
+          const exportData = allStudents.map(student => {
+             // 1. Course Resolution
+             const myEnrolls = enrollments.filter(e => e.studentId === student.uid);
+             const myCourseNames = myEnrolls.map(e => courseMap[e.courseId] || 'Unknown').join(', ');
+             
+             // 2. Attendance aggregation (All Time across all courses)
+             const myAtt = records.filter(r => r.studentId === student.uid);
+             const totalLectures = myAtt.length;
+             const present = myAtt.filter(r => r.status === 'present').length;
+             const missed = totalLectures - present;
+             const percentage = totalLectures > 0 ? Math.round((present / totalLectures) * 100) : 0;
+             
+             return {
+                "URN": student.urn || '—',
+                "Student Name": student.name || '—',
+                "Roll No": student.rollNo || '—',
+                "Department": student.department || '—',
+                "Email": student.email || '—',
+                "Enrolled Course(s)": myCourseNames || 'Not Enrolled',
+                "Total Lectures Marked": totalLectures,
+                "Attended": present,
+                "Missed": missed,
+                "Attendance %": `${percentage}%`
+             };
+          });
+          
+          if(exportData.length === 0) {
+             showToast('No students available to export.', 'warning');
+             btn.disabled = false;
+             btn.innerHTML = originalHtml;
+             return;
+          }
+          
+          // Trigger File Download
+          const worksheet = XLSX.utils.json_to_sheet(exportData);
+          const workbook = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(workbook, worksheet, "Students_Backup");
+          
+          const dateStr = new Date().toISOString().split('T')[0];
+          XLSX.writeFile(workbook, `Student_Data_Backup_${dateStr}.xlsx`);
+          
+          showToast('Student Data Exported Successfully', 'success');
+       } catch (error) {
+          console.error('Export Failed:', error);
+          showToast('Failed to export data', 'error');
+       }
+       
+       btn.disabled = false;
+       btn.innerHTML = originalHtml;
+    });
+
+      loadStudents();
+    } catch (e) { console.error(e); }
+  </script>
+</body>
+</html>
+```

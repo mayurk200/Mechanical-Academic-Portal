@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attendance — Mechanical Academic Portal</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="main-content">
+    <div class="top-bar">
+      <button class="btn btn-light btn-sm menu-toggle" id="menu-toggle"><i class="bi bi-list"></i></button>
+      <h4><i class="bi bi-calendar-check me-2"></i>Attendance</h4>
+      <div></div>
+    </div>
+
+    <div class="page-body">
+      <!-- TEACHER VIEW -->
+      <div id="teacher-view" class="d-none">
+
+        <!-- Tab Navigation -->
+        <ul class="nav nav-pills mb-4" id="att-tabs">
+          <li class="nav-item"><button class="nav-link active" data-tab="mark">Mark Attendance</button></li>
+          <li class="nav-item"><button class="nav-link" data-tab="overview">Student Overview</button></li>
+          <li class="nav-item"><button class="nav-link" data-tab="history">Lecture History</button></li>
+          <li class="nav-item"><button class="nav-link" data-tab="report">Defaulter Report</button></li>
+        </ul>
+
+        <!-- ═══ TAB 1: MARK ATTENDANCE ═══ -->
+        <div id="tab-mark">
+          <!-- Select Course & Date -->
+          <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+              <h6 class="mb-0"><i class="bi bi-funnel me-2"></i>Mark Attendance</h6>
+              <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#bulkAttendanceModal">
+                <i class="bi bi-file-earmark-spreadsheet me-1"></i>Bulk Upload
+              </button>
+            </div>
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-md-5">
+                  <label class="form-label fw-semibold">Course</label>
+                  <select id="att-course" class="form-select"><option value="">— Select Course —</option></select>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label fw-semibold">Lecture Date</label>
+                  <input type="date" id="att-date" class="form-control">
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                  <button class="btn btn-primary w-100" id="load-students-btn" disabled>
+                    <i class="bi bi-arrow-clockwise me-1"></i>Load Students
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Student Attendance Table -->
+          <div class="card shadow-sm mb-4 d-none" id="attendance-card">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+              <h6 class="mb-0"><i class="bi bi-people me-2"></i>Students</h6>
+              <div class="d-flex gap-2">
+                <button class="btn btn-success btn-sm" id="mark-all-present"><i class="bi bi-check-all me-1"></i>Mark All Present</button>
+                <button class="btn btn-danger btn-sm" id="mark-all-absent"><i class="bi bi-x-circle me-1"></i>Mark All Absent</button>
+              </div>
+            </div>
+            <div class="card-body p-0">
+              <table class="table table-striped table-hover mb-0">
+                <thead class="table-light">
+                  <tr><th>#</th><th>Student Name</th><th>Roll No</th><th>URN</th><th>Dept</th><th class="text-center">Present</th><th class="text-center">Absent</th></tr>
+                </thead>
+                <tbody id="students-tbody"></tbody>
+              </table>
+            </div>
+            <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+              <span class="text-muted small" id="att-summary">0 present, 0 absent</span>
+              <button class="btn btn-primary" id="save-attendance-btn">
+                <i class="bi bi-check-circle me-1"></i>Save Attendance
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ TAB 2: STUDENT OVERVIEW ═══ -->
+        <div id="tab-overview" class="d-none">
+          <!-- Analytics Cards -->
+          <div class="row g-3 mb-4" id="analytics-row">
+            <div class="col-md-3 col-6"><div class="card stat-card shadow-sm"><div class="card-body">
+              <div class="stat-icon blue"><i class="bi bi-journal-check"></i></div>
+              <div class="stat-value" id="stat-lectures">—</div><div class="stat-label">Total Lectures</div>
+            </div></div></div>
+            <div class="col-md-3 col-6"><div class="card stat-card shadow-sm"><div class="card-body">
+              <div class="stat-icon green"><i class="bi bi-graph-up"></i></div>
+              <div class="stat-value" id="stat-avg-att">—</div><div class="stat-label">Avg Attendance</div>
+            </div></div></div>
+            <div class="col-md-3 col-6"><div class="card stat-card shadow-sm"><div class="card-body">
+              <div class="stat-icon red"><i class="bi bi-exclamation-triangle"></i></div>
+              <div class="stat-value" id="stat-below75">—</div><div class="stat-label">Below 75%</div>
+            </div></div></div>
+            <div class="col-md-3 col-6"><div class="card stat-card shadow-sm"><div class="card-body">
+              <div class="stat-icon purple"><i class="bi bi-people"></i></div>
+              <div class="stat-value" id="stat-total-students">—</div><div class="stat-label">Total Students</div>
+            </div></div></div>
+          </div>
+
+          <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+              <h6 class="mb-0"><i class="bi bi-journal-text me-2"></i>Attendance Overview</h6>
+              <div class="d-flex gap-2 flex-wrap text-nowrap">
+                <select id="filter-course" class="form-select form-select-sm" style="width:180px;"><option value="">— Select Course —</option></select>
+                <select id="filter-department" class="form-select form-select-sm" style="width:150px;">
+                  <option value="">All Depts</option>
+                  <option value="AERO">AERO</option>
+                  <option value="CSE">CSE</option>
+                  <option value="CIVIL">CIVIL</option>
+                  <option value="MECH">MECH</option>
+                  <option value="EE">EE</option>
+                  <option value="FOOD">FOOD</option>
+                  <option value="AIDS">AIDS</option>
+                  <option value="CSE (IOT)">CSE (IOT)</option>
+                </select>
+                <select id="filter-range" class="form-select form-select-sm" style="width:150px;">
+                  <option value="all">Show All</option><option value="75">Below 75%</option><option value="60">Below 60%</option>
+                </select>
+                <input type="text" id="search-student" class="form-control form-control-sm" placeholder="🔍 Search name, dept, URN..." style="width:200px;">
+              </div>
+            </div>
+            <div class="card-body p-0 table-responsive" style="max-height: 60vh;">
+              <table class="table table-striped table-hover mb-0">
+                <thead class="table-light" style="position: sticky; top: 0; z-index: 1;">
+                  <tr><th>#</th><th>Student</th><th>Roll No</th><th>URN</th><th>Dept</th><th>Present</th><th>Total Lectures</th><th>Missed</th><th>Attendance %</th></tr>
+                </thead>
+                <tbody id="records-tbody"><tr><td colspan="9" class="text-center text-muted py-3">Select a course</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ TAB 3: LECTURE HISTORY ═══ -->
+        <div id="tab-history" class="d-none">
+          <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+              <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Lecture History</h6>
+              <div class="d-flex gap-2">
+                <select id="history-course" class="form-select form-select-sm" style="width:200px;"><option value="">— Select Course —</option></select>
+                <select id="history-month" class="form-select form-select-sm" style="width:160px;"></select>
+              </div>
+            </div>
+            <div class="card-body p-0">
+              <table class="table table-striped table-hover mb-0">
+                <thead class="table-light"><tr><th>#</th><th>Lecture Date</th><th>Students Present</th><th>Students Absent</th><th>Attendance %</th><th>Action</th></tr></thead>
+                <tbody id="history-tbody"><tr><td colspan="6" class="text-center text-muted py-3">Select a course</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Monthly Summary -->
+          <div class="card shadow-sm d-none" id="monthly-summary-card">
+            <div class="card-header bg-white"><h6 class="mb-0"><i class="bi bi-calendar-month me-2"></i>Monthly Summary</h6></div>
+            <div class="card-body" id="monthly-summary"></div>
+          </div>
+        </div>
+
+        <!-- ═══ TAB 4: DEFAULTER REPORT ═══ -->
+        <div id="tab-report" class="d-none">
+          <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white"><h6 class="mb-0"><i class="bi bi-printer me-2"></i>Generate Defaulter Report</h6></div>
+            <div class="card-body">
+              <p class="text-muted small mb-3">Generate the official <strong>Action Taken Report on Monthly Attendance</strong> for students below 75% attendance.</p>
+              <div class="row g-3">
+                <div class="col-md-5">
+                  <label class="form-label fw-semibold">Course</label>
+                  <select id="report-course" class="form-select"><option value="">— Select Course —</option></select>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label fw-semibold">Month & Year</label>
+                  <select id="report-month" class="form-select"></select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                  <button class="btn btn-danger w-100" id="print-defaulter-btn" disabled>
+                    <i class="bi bi-printer-fill me-1"></i>Print Defaulter Report
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card shadow-sm d-none" id="report-preview-card">
+            <div class="card-header bg-white"><h6 class="mb-0"><i class="bi bi-eye me-2"></i>Report Preview</h6></div>
+            <div class="card-body" id="report-preview"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- STUDENT VIEW -->
+      <div id="student-view" class="d-none">
+        <!-- Student Attendance Summary -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-3 col-6"><div class="card stat-card shadow-sm"><div class="card-body">
+            <div class="stat-icon blue"><i class="bi bi-journal-check"></i></div>
+            <div class="stat-value" id="s-total-lectures">—</div><div class="stat-label">Total Lectures</div>
+          </div></div></div>
+          <div class="col-md-3 col-6"><div class="card stat-card shadow-sm"><div class="card-body">
+            <div class="stat-icon green"><i class="bi bi-check-circle"></i></div>
+            <div class="stat-value" id="s-attended">—</div><div class="stat-label">Attended</div>
+          </div></div></div>
+          <div class="col-md-3 col-6"><div class="card stat-card shadow-sm"><div class="card-body">
+            <div class="stat-icon red"><i class="bi bi-x-circle"></i></div>
+            <div class="stat-value" id="s-missed">—</div><div class="stat-label">Missed</div>
+          </div></div></div>
+          <div class="col-md-3 col-6"><div class="card stat-card shadow-sm"><div class="card-body">
+            <div class="stat-icon purple"><i class="bi bi-percent"></i></div>
+            <div class="stat-value" id="s-percentage">—</div><div class="stat-label">Attendance %</div>
+          </div></div></div>
+        </div>
+
+        <div class="card shadow-sm">
+          <div class="card-header bg-white"><h6 class="mb-0"><i class="bi bi-journal-text me-2"></i>My Attendance Records</h6></div>
+          <div class="card-body p-0">
+            <table class="table table-striped table-hover mb-0">
+              <thead class="table-light"><tr><th>Date</th><th>Course</th><th>Status</th></tr></thead>
+              <tbody id="my-attendance"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk Attendance Upload Modal -->
+  <div class="modal fade" id="bulkAttendanceModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-light">
+          <h5 class="modal-title"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Bulk Upload Attendance</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-info py-2 d-flex justify-content-between align-items-center mb-3">
+            <span class="small"><i class="bi bi-info-circle me-1"></i> Upload an Excel/CSV file with attendance data for a specific lecture.</span>
+            <button class="btn btn-sm btn-outline-info bg-white" id="download-att-template-btn">
+              <i class="bi bi-download me-1"></i>Template
+            </button>
+          </div>
+          
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Course <span class="text-danger">*</span></label>
+              <select id="bulk-att-course" class="form-select" required>
+                <option value="">— Select Course —</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Upload File (.xlsx, .csv) <span class="text-danger">*</span></label>
+              <input type="file" id="bulk-att-file" class="form-control" accept=".xlsx, .xls, .csv">
+            </div>
+          </div>
+
+          <!-- Preview Area -->
+          <div id="bulk-att-preview" class="d-none animate-fade-in">
+            <h6 class="border-bottom pb-2 mb-3">Validation Summary</h6>
+            <div class="d-flex gap-4 mb-3 flex-wrap" id="bulk-att-stats">
+              <div><span class="text-muted small">Total Rows:</span> <strong id="bulk-att-total">0</strong></div>
+              <div><span class="text-success small">Ready (New):</span> <strong id="bulk-att-valid">0</strong></div>
+              <div><span class="text-warning small text-nowrap">Skipped (Duplicate):</span> <strong id="bulk-att-dupes">0</strong></div>
+              <div><span class="text-danger small">Errors:</span> <strong id="bulk-att-errors">0</strong></div>
+            </div>
+
+            <div class="table-responsive" style="max-height: 250px;">
+              <table class="table table-sm table-bordered text-nowrap mb-0" id="bulk-att-table">
+                <thead class="table-light sticky-top">
+                  <tr><th>Row</th><th>Status</th><th>Lecture Date</th><th>URN</th><th>Name</th><th>Mark As</th></tr>
+                </thead>
+                <tbody class="small"></tbody>
+              </table>
+            </div>
+
+            <!-- Upload Progress -->
+            <div id="bulk-att-progress-area" class="mt-3 d-none">
+              <div class="d-flex justify-content-between mb-1">
+                <span class="small text-muted" id="bulk-att-progress-text">Processing...</span>
+                <span class="small fw-bold" id="bulk-att-percent">0%</span>
+              </div>
+              <div class="progress" style="height: 10px;">
+                <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" id="bulk-att-progress-bar" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-secondary" id="bulk-att-validate-btn" disabled>Validate Data</button>
+          <button type="button" class="btn btn-primary d-none" id="bulk-att-upload-btn">Confirm & Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- SheetJS for Excel/CSV Parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script type="module">
+    import { initApp } from '../assets/js/core/router.js';
+    import { AttendanceService, CourseService, EnrollmentService, UserService } from '../services/database.js';
+    import { showToast, formatDate, escapeHtml, LMSLogger, friendlyError, validateExcelHeaders } from '../assets/js/core/utils.js';
+
+    try {
+      const userData = await initApp();
+      const isTeacher = userData.role === 'teacher' || userData.role === 'admin';
+
+      if (isTeacher) {
+        document.getElementById('teacher-view').classList.remove('d-none');
+        document.getElementById('att-date').valueAsDate = new Date();
+
+        // Load courses
+        const courses = userData.role === 'admin' ? await CourseService.getAll() : await CourseService.getByTeacher(userData.uid);
+        const courseMap = {};
+        courses.forEach(c => { courseMap[c.id] = c; });
+
+        // Populate all course selects
+        const courseHTML = courses.map(c => `<option value="${c.id}">${escapeHtml(c.title)}</option>`).join('');
+        document.getElementById('att-course').innerHTML += courseHTML;
+        document.getElementById('filter-course').innerHTML += courseHTML;
+        document.getElementById('history-course').innerHTML += courseHTML;
+        document.getElementById('report-course').innerHTML += courseHTML;
+
+        // Populate month filters
+        const monthSelect = document.getElementById('history-month');
+        const reportMonth = document.getElementById('report-month');
+        const now = new Date();
+        monthSelect.innerHTML = '<option value="">All Months</option>';
+        reportMonth.innerHTML = '<option value="">All Time</option>';
+        for (let i = 0; i < 12; i++) {
+          const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          const val = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+          const label = d.toLocaleString('default', { month: 'long', year: 'numeric' });
+          monthSelect.innerHTML += `<option value="${val}">${label}</option>`;
+          reportMonth.innerHTML += `<option value="${val}">${label}</option>`;
+        }
+
+        // ═══ TAB SWITCHING ═══
+        document.querySelectorAll('#att-tabs .nav-link').forEach(tab => {
+          tab.addEventListener('click', () => {
+            document.querySelectorAll('#att-tabs .nav-link').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            document.querySelectorAll('#tab-mark, #tab-overview, #tab-history, #tab-report').forEach(t => t.classList.add('d-none'));
+            document.getElementById('tab-' + tab.dataset.tab).classList.remove('d-none');
+          });
+        });
+
+        // ═══ TAB 1: MARK ATTENDANCE ═══
+        const courseSelect = document.getElementById('att-course');
+        courseSelect.addEventListener('change', () => {
+          document.getElementById('load-students-btn').disabled = !courseSelect.value;
+        });
+
+        let studentsList = [];
+
+        document.getElementById('load-students-btn').addEventListener('click', async () => {
+          const courseId = courseSelect.value;
+          if (!courseId) return;
+
+          const enrollments = await EnrollmentService.getByCourse(courseId);
+          if (enrollments.length === 0) { showToast('No students enrolled in this course', 'warning'); return; }
+
+          studentsList = (await Promise.all(enrollments.map(async e => await UserService.get(e.studentId)))).filter(Boolean);
+
+          const date = document.getElementById('att-date').value;
+          const existing = await AttendanceService.getByDate(courseId, date);
+          const existingMap = {};
+          existing.forEach(r => { existingMap[r.studentId] = r.status; });
+
+          const tbody = document.getElementById('students-tbody');
+          
+          tbody.innerHTML = studentsList.map((s, i) => {
+            const status = existingMap[s.uid] || '';
+            const isPresent = status === 'present' ? 'checked' : '';
+            const isAbsent = status === 'absent' ? 'checked' : '';
+            return `<tr data-student="${s.uid}" data-name="${escapeHtml(s.name || '')}">
+              <td>${i + 1}</td>
+              <td>${escapeHtml(s.name || '—')}</td>
+              <td>${s.rollNo || '—'}</td>
+              <td>${s.urn || '—'}</td>
+              <td><span class="badge bg-secondary">${s.department || '—'}</span></td>
+              <td class="text-center"><input type="radio" class="form-check-input att-radio" name="att-${s.uid}" value="present" ${isPresent}></td>
+              <td class="text-center"><input type="radio" class="form-check-input att-radio" name="att-${s.uid}" value="absent" ${isAbsent}></td>
+            </tr>`;
+          }).join('');
+
+          document.getElementById('attendance-card').classList.remove('d-none');
+          updateSummary();
+          tbody.querySelectorAll('.att-radio').forEach(r => r.addEventListener('change', updateSummary));
+        });
+
+        document.getElementById('mark-all-present').addEventListener('click', () => {
+          document.querySelectorAll('#students-tbody input[value="present"]').forEach(r => { r.checked = true; });
+          updateSummary();
+        });
+        document.getElementById('mark-all-absent').addEventListener('click', () => {
+          document.querySelectorAll('#students-tbody input[value="absent"]').forEach(r => { r.checked = true; });
+          updateSummary();
+        });
+
+        function updateSummary() {
+          const present = document.querySelectorAll('#students-tbody input[value="present"]:checked').length;
+          const absent = document.querySelectorAll('#students-tbody input[value="absent"]:checked').length;
+          document.getElementById('att-summary').textContent = `${present} present, ${absent} absent`;
+        }
+
+        document.getElementById('save-attendance-btn').addEventListener('click', async () => {
+          const courseId = courseSelect.value;
+          const date = document.getElementById('att-date').value;
+          if (!courseId || !date) { showToast('Select course and date', 'error'); return; }
+
+          const todayDate = new Date().toISOString().split('T')[0];
+          if (date > todayDate) { showToast('Attendance date cannot be in the future', 'warning'); return; }
+
+          let count = 0;
+          let missingStatus = 0;
+          const rows = document.querySelectorAll('#students-tbody tr');
+          
+          // Pre-flight check: ensure all students have a marked status
+          for (const row of rows) {
+            if (!row.querySelector('.att-radio:checked')?.value) missingStatus++;
+          }
+          if (missingStatus > 0) {
+            showToast(`Please mark attendance for all students (${missingStatus} missing)`, 'warning');
+            return;
+          }
+
+          const btn = document.getElementById('save-attendance-btn');
+          btn.disabled = true;
+          btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
+
+          for (const row of rows) {
+            const studentId = row.dataset.student;
+            const studentName = row.dataset.name;
+            const status = row.querySelector('.att-radio:checked')?.value;
+            if (!status) continue;
+            try {
+              await AttendanceService.mark({ courseId, studentId, studentName, date, status, markedBy: userData.uid });
+              count++;
+            } catch (err) { console.error(err); }
+          }
+
+          showToast(`Attendance saved for ${count} student(s)!`, 'success');
+          btn.disabled = false;
+          btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Save Attendance';
+        });
+
+        // ── Bulk Attendance Upload Logic ──
+        let parsedBulkAtt = [];
+        
+        document.getElementById('download-att-template-btn').addEventListener('click', () => {
+          const headers = ["URN", "Student Name", "Department", "Lecture Date", "Attendance Status"];
+          // Format date as YYYY-MM-DD for easy parsing
+          const today = new Date().toISOString().split('T')[0];
+          const example = ["23091045", "Rahul Patil", "CSE", today, "Present"];
+          const example2 = ["23091045", "Rahul Patil", "CSE", "2025-08-02", "Absent"]; 
+          const example3 = ["23091046", "Priya Sharma", "CIVIL", today, "Present"];
+          const ws = XLSX.utils.aoa_to_sheet([headers, example, example2, example3]);
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, "Attendance_Template");
+          XLSX.writeFile(wb, "Bulk_Attendance_Template.xlsx");
+        });
+
+        const bulkAttFile = document.getElementById('bulk-att-file');
+        const validateAttBtn = document.getElementById('bulk-att-validate-btn');
+        const uploadAttBtn = document.getElementById('bulk-att-upload-btn');
+        const previewAttArea = document.getElementById('bulk-att-preview');
+
+        bulkAttFile.addEventListener('change', () => {
+          validateAttBtn.disabled = !bulkAttFile.files.length;
+          previewAttArea.classList.add('d-none');
+          uploadAttBtn.classList.add('d-none');
+          validateAttBtn.classList.remove('d-none');
+        });
+
+        validateAttBtn.addEventListener('click', async () => {
+          const courseId = document.getElementById('bulk-att-course').value;
+          if (!courseId) {
+            showToast('Please select a Course first.', 'warning');
+            return;
+          }
+
+          const file = bulkAttFile.files[0];
+          if (!file) return;
+
+          validateAttBtn.disabled = true;
+          validateAttBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Validating...';
+
+          try {
+            // Fetch enrolled students so we can validate URN existence locally
+            const enrollments = await EnrollmentService.getByCourse(courseId);
+            const enrolledStudents = (await Promise.all(enrollments.map(e => UserService.get(e.studentId)))).filter(Boolean);
+            
+            // Pre-fetch all previous attendance records for this course to block duplicates natively
+            const existingRecords = await AttendanceService.getByCourse(courseId);
+            const dbTracker = new Set(existingRecords.map(r => `${r.urn}_${r.date}`));
+            const fileTracker = new Set();
+            
+            const data = await file.arrayBuffer();
+            const workbook = XLSX.read(data);
+            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonVal = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+            if (jsonVal.length === 0) throw new Error("File is empty.");
+
+            // Excel Column Validation
+            const headerErrors = validateExcelHeaders(jsonVal, ["URN", "Student Name", "Lecture Date", "Attendance Status"]);
+            if (headerErrors.length > 0) {
+              showToast(headerErrors[0], 'error');
+              validateAttBtn.disabled = false;
+              validateAttBtn.innerHTML = 'Validate File';
+              return;
+            }
+
+            let validCount = 0;
+            let errorCount = 0;
+            let duplicateCount = 0;
+
+            parsedBulkAtt = jsonVal.map((row, index) => {
+              const outRow = {};
+              for (let key in row) outRow[key.trim()] = (row[key]||'').toString().trim();
+              outRow._originalIndex = index + 2;
+              return outRow;
+            });
+
+            let tableHtml = '';
+            
+            // Format Excel date to standard YYYY-MM-DD
+            const parseDate = (d) => {
+              if(!d) return "";
+              // if it's an excel serial number
+              if(typeof d === 'number') {
+                const date = new Date(Date.UTC(0, 0, d - 1));
+                return date.toISOString().split('T')[0];
+              }
+              // attempt to parse standard strings (like 2024-05-01 or 05/01/2024)
+              const parsed = new Date(d);
+              if(!isNaN(parsed.getTime())) return parsed.toISOString().split('T')[0];
+              return d.toString().trim(); 
+            };
+
+            parsedBulkAtt.forEach(row => {
+              const urn = row["URN"];
+              const name = row["Student Name"];
+              const dateRaw = row["Lecture Date"] || row["Date"] || "";
+              const statusRaw = row["Attendance Status"] || row["Status"] || "";
+              
+              const dateCorrected = parseDate(dateRaw);
+
+              const statusUpper = statusRaw.toString().toUpperCase().trim();
+              let normalizedStatus = "";
+              if (["PRESENT", "P", "1", "YES"].includes(statusUpper)) normalizedStatus = "present";
+              if (["ABSENT", "A", "0", "NO"].includes(statusUpper)) normalizedStatus = "absent";
+
+              let errors = [];
+              let isDuplicate = false;
+              let isError = false;
+
+              if (!urn) errors.push("URN missing");
+              if (!dateCorrected) errors.push("Lecture Date missing or invalid");
+              if (!normalizedStatus) errors.push("Invalid Status (must be Present/Absent)");
+              
+              // Find matching student
+              let matchedStudent = null;
+              if (urn) {
+                matchedStudent = enrolledStudents.find(s => s.urn === urn);
+                if (!matchedStudent) errors.push(`URN not found in this course`);
+              }
+
+              // Evaluate Duplicates
+              if(urn && dateCorrected && matchedStudent) {
+                const mapKey = `${urn}_${dateCorrected}`;
+                if(fileTracker.has(mapKey)) {
+                   errors.push("Duplicate within this file");
+                   isDuplicate = true;
+                } else if(dbTracker.has(mapKey)) {
+                   errors.push("Already marked in Database");
+                   isDuplicate = true;
+                }
+                fileTracker.add(mapKey);
+              }
+
+              row._isValid = errors.length === 0;
+              row._isDuplicate = isDuplicate;
+              row._errors = errors.join(', ');
+              row._parsedObj = {
+                studentId: matchedStudent ? matchedStudent.uid : null,
+                studentName: name || (matchedStudent ? matchedStudent.name : ''),
+                status: normalizedStatus,
+                urn: urn,
+                date: dateCorrected
+              };
+
+              if (row._isValid) validCount++; 
+              else if (row._isDuplicate) duplicateCount++;
+              else errorCount++;
+
+              let statusHtml = '';
+              if(row._isValid) {
+                 statusHtml = `<span class="badge bg-success"><i class="bi bi-check"></i> Ready</span>`;
+              } else if (row._isDuplicate) {
+                 statusHtml = `<span class="badge bg-warning text-dark" title="${row._errors}"><i class="bi bi-exclamation-triangle"></i> Skipped</span><br><small class="text-warning-emphasis">${row._errors}</small>`;
+              } else {
+                 statusHtml = `<span class="badge bg-danger" title="${row._errors}"><i class="bi bi-x"></i> Error</span><br><small class="text-danger">${row._errors}</small>`;
+              }
+
+              let rowClass = '';
+              if (!row._isValid && !row._isDuplicate) rowClass = 'table-danger';
+              if (row._isDuplicate) rowClass = 'table-warning';
+
+              tableHtml += `<tr class="${rowClass}">
+                <td>${row._originalIndex}</td>
+                <td>${statusHtml}</td>
+                <td>${escapeHtml(dateCorrected)}</td>
+                <td>${escapeHtml(urn)}</td>
+                <td>${escapeHtml(name)}</td>
+                <td class="text-uppercase fw-bold ${normalizedStatus==='present' ? 'text-success' : 'text-danger'}">${normalizedStatus || '—'}</td>
+              </tr>`;
+            });
+
+            document.getElementById('bulk-att-total').textContent = parsedBulkAtt.length;
+            document.getElementById('bulk-att-valid').textContent = validCount;
+            document.getElementById('bulk-att-dupes').textContent = duplicateCount;
+            document.getElementById('bulk-att-errors').textContent = errorCount;
+            document.querySelector('#bulk-att-table tbody').innerHTML = tableHtml;
+
+            previewAttArea.classList.remove('d-none');
+            
+            if (validCount > 0) {
+              validateAttBtn.classList.add('d-none');
+              uploadAttBtn.classList.remove('d-none');
+            } else {
+              showToast("No valid rows. Check errors and try again.", "error");
+            }
+          } catch(e) {
+             showToast(e.message || 'Error processing file', 'error');
+          }
+
+          validateAttBtn.disabled = false;
+          validateAttBtn.innerHTML = 'Validate Data';
+        });
+
+        uploadAttBtn.addEventListener('click', async () => {
+          const courseId = document.getElementById('bulk-att-course').value;
+          
+          if (!courseId) {
+            showToast('Course is required.', 'warning');
+            return;
+          }
+
+          const validRows = parsedBulkAtt.filter(r => r._isValid);
+          if (validRows.length === 0) return;
+
+          uploadAttBtn.disabled = true;
+          document.querySelector('#bulkAttendanceModal .btn-light').disabled = true;
+          
+          const progArea = document.getElementById('bulk-att-progress-area');
+          const progText = document.getElementById('bulk-att-progress-text');
+          const progPercent = document.getElementById('bulk-att-percent');
+          const progBar = document.getElementById('bulk-att-progress-bar');
+          
+          progArea.classList.remove('d-none');
+          progText.classList.add('pulse-loading');
+
+          let successCount = 0;
+          let failCount = 0;
+
+          // Parallel batch implementation for performance
+          const batchSize = 25; 
+          for (let i = 0; i < validRows.length; i += batchSize) {
+            const chunk = validRows.slice(i, i + batchSize);
+            const promises = chunk.map(async (row) => {
+              const { studentId, studentName, status, date, urn } = row._parsedObj;
+              try {
+                // Ensure date is being pushed from the parsed payload correctly
+                await AttendanceService.mark({ 
+                   courseId, 
+                   studentId, 
+                   studentName, 
+                   date, 
+                   status, 
+                   markedBy: userData.uid,
+                   urn: urn
+                });
+                return true;
+              } catch (e) {
+                console.error(e);
+                return false;
+              }
+            });
+            
+            const results = await Promise.all(promises);
+            successCount += results.filter(r => r).length;
+            failCount += results.filter(r => !r).length;
+
+            const currentTotal = Math.min(i + batchSize, validRows.length);
+            const perc = Math.round((currentTotal / validRows.length) * 100);
+            progText.textContent = `Saving ${currentTotal} of ${validRows.length}...`;
+            progPercent.textContent = `${perc}%`;
+            progBar.style.width = `${perc}%`;
+            
+            // Yield to main thread to allow DOM and CSS animations to paint smoothly
+            await new Promise(r => setTimeout(r, 0));
+          }
+
+          progText.classList.remove('pulse-loading');
+          progText.textContent = `Completed! Saved ${successCount}, failed ${failCount}. Skipped: ${document.getElementById('bulk-att-dupes').textContent}`;
+          progBar.classList.replace('bg-primary', 'bg-success');
+          progBar.classList.remove('progress-bar-animated');
+          showToast(`Saved ${successCount} attendance records successfully!`, 'success');
+
+          // Just trigger Overview reload if active, to update all percentages
+          loadOverview();
+          loadHistory();
+
+          setTimeout(() => {
+            closeModal('bulkAttendanceModal');
+            bulkAttFile.value = '';
+            previewAttArea.classList.add('d-none');
+            progArea.classList.add('d-none');
+            uploadAttBtn.classList.add('d-none');
+            validateAttBtn.classList.remove('d-none');
+            
+            progBar.style.width = `0%`;
+            progBar.classList.replace('bg-success', 'bg-primary');
+            progBar.classList.add('progress-bar-animated');
+            document.querySelector('#bulkAttendanceModal .btn-light').disabled = false;
+            uploadAttBtn.disabled = false;
+          }, 3000);
+        });
+
+        // ═══ TAB 2: STUDENT OVERVIEW ═══
+        const filterCourse = document.getElementById('filter-course');
+        const filterRange = document.getElementById('filter-range');
+        const searchStudent = document.getElementById('search-student');
+        let overviewData = [];
+
+        async function loadOverview() {
+          const courseId = filterCourse.value;
+          const range = filterRange.value;
+          const search = searchStudent.value.toLowerCase();
+          const tbody = document.getElementById('records-tbody');
+
+          if (!courseId) {
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-3">Select a course</td></tr>';
+            ['stat-lectures','stat-avg-att','stat-below75','stat-total-students'].forEach(id => document.getElementById(id).textContent = '—');
+            return;
+          }
+
+          tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-3"><span class="spinner-border spinner-border-sm"></span> Loading...</td></tr>';
+
+          try {
+            const records = await AttendanceService.getByCourse(courseId);
+            // Count unique lecture dates = total lectures
+            const lectureDates = [...new Set(records.map(r => r.date))];
+            const totalLectures = lectureDates.length;
+
+            const percentages = await AttendanceService.getCourseStudentPercentages(courseId);
+            overviewData = await Promise.all(percentages.map(async p => {
+              const user = await UserService.get(p.studentId);
+              return { ...p, name: user?.name || p.studentName || '—', rollNo: user?.rollNo || '—', urn: user?.urn || '—', department: user?.department || '—', totalLectures };
+            }));
+
+            // Analytics
+            document.getElementById('stat-lectures').textContent = totalLectures;
+            document.getElementById('stat-total-students').textContent = overviewData.length;
+            const avgAtt = overviewData.length > 0 ? Math.round(overviewData.reduce((s, d) => s + d.percentage, 0) / overviewData.length) : 0;
+            document.getElementById('stat-avg-att').textContent = avgAtt + '%';
+            document.getElementById('stat-below75').textContent = overviewData.filter(d => d.percentage < 75 && d.total > 0).length;
+
+            renderOverview();
+          } catch (err) {
+            console.error('loadOverview error:', err);
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center text-danger py-3"><i class="bi bi-exclamation-triangle me-1"></i>Failed to load</td></tr>';
+          }
+        }
+
+        // ── Unified Search & Filter Logic ──
+        let overviewPage = 1;
+        const overviewPageSize = 50;
+
+        function renderOverview() {
+          const range = document.getElementById('filter-range').value;
+          const search = document.getElementById('search-student').value.toLowerCase().trim();
+          const dept = document.getElementById('filter-department').value;
+          
+          let filtered = [...overviewData];
+
+          if (range === '75') filtered = filtered.filter(s => s.percentage < 75 && s.total > 0);
+          else if (range === '60') filtered = filtered.filter(s => s.percentage < 60 && s.total > 0);
+
+          if (dept) filtered = filtered.filter(s => s.department === dept);
+
+          if (search) {
+            filtered = filtered.filter(s => 
+              s.name.toLowerCase().includes(search) || 
+              (s.rollNo||'').toLowerCase().includes(search) || 
+              (s.urn||'').toLowerCase().includes(search) ||
+              (s.department||'').toLowerCase().includes(search)
+            );
+          }
+
+          const tbody = document.getElementById('records-tbody');
+          const pageControls = document.getElementById('overview-pagination') || (function() {
+             const div = document.createElement('div');
+             div.id = 'overview-pagination';
+             div.className = 'd-flex justify-content-between my-3 px-3';
+             tbody.parentElement.parentElement.appendChild(div);
+             return div;
+          })();
+
+          if (filtered.length === 0) { 
+             tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-3">No students match</td></tr>'; 
+             pageControls.innerHTML = '';
+             return; 
+          }
+
+          const totalPages = Math.ceil(filtered.length / overviewPageSize);
+          if (overviewPage > totalPages) overviewPage = totalPages;
+          if (overviewPage < 1) overviewPage = 1;
+
+          const startIdx = (overviewPage - 1) * overviewPageSize;
+          const endIdx = startIdx + overviewPageSize;
+          const currentView = filtered.slice(startIdx, endIdx);
+
+          tbody.innerHTML = currentView.map((s, i) => {
+            const missed = s.totalLectures - s.present;
+            const isLow = s.percentage < 75 && s.total > 0;
+            const rowStyle = isLow ? 'background-color:#ffe0e0;' : '';
+            const cls = s.percentage >= 75 ? 'text-success' : 'text-danger';
+            const warn = isLow ? ' <span class="badge bg-danger">Low</span>' : '';
+            return `<tr style="${rowStyle}">
+              <td>${startIdx + i + 1}</td>
+              <td>${escapeHtml(s.name)}</td>
+              <td>${s.rollNo}</td>
+              <td>${s.urn}</td>
+              <td><span class="badge bg-secondary">${s.department}</span></td>
+              <td>${s.present}</td><td>${s.totalLectures}</td><td>${missed >= 0 ? missed : '—'}</td>
+              <td class="${cls} fw-bold">${s.percentage}%${warn}</td>
+            </tr>`;
+          }).join('');
+
+          pageControls.innerHTML = `
+            <button class="btn btn-sm btn-outline-primary" id="overview-prev" ${overviewPage === 1 ? 'disabled' : ''}>Previous</button>
+            <span class="text-muted small align-self-center">Showing ${startIdx + 1} to ${Math.min(endIdx, filtered.length)} of ${filtered.length}</span>
+            <button class="btn btn-sm btn-outline-primary" id="overview-next" ${overviewPage === totalPages ? 'disabled' : ''}>Next</button>
+          `;
+
+          const prevBtn = document.getElementById('overview-prev');
+          if(prevBtn) prevBtn.onclick = () => { overviewPage--; renderOverview(); };
+          const nextBtn = document.getElementById('overview-next');
+          if(nextBtn) nextBtn.onclick = () => { overviewPage++; renderOverview(); };
+        }
+
+        filterCourse.addEventListener('change', () => { overviewPage = 1; loadOverview(); });
+        document.getElementById('filter-department').addEventListener('change', () => { overviewPage = 1; renderOverview(); });
+        document.getElementById('filter-range').addEventListener('change', () => { overviewPage = 1; renderOverview(); });
+        document.getElementById('search-student').addEventListener('input', () => { overviewPage = 1; renderOverview(); });
+
+        // ═══ TAB 3: LECTURE HISTORY ═══
+        const historyCourse = document.getElementById('history-course');
+        const historyMonth = document.getElementById('history-month');
+
+        async function loadHistory() {
+          const courseId = historyCourse.value;
+          const month = historyMonth.value;
+          const tbody = document.getElementById('history-tbody');
+
+          if (!courseId) { tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">Select a course</td></tr>'; return; }
+
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3"><span class="spinner-border spinner-border-sm"></span> Loading...</td></tr>';
+
+          try {
+            const records = await AttendanceService.getByCourse(courseId);
+            const enrollments = await EnrollmentService.getByCourse(courseId);
+            const totalStudents = enrollments.length;
+
+            // Group by date
+            const dateMap = {};
+            records.forEach(r => {
+              if (!dateMap[r.date]) dateMap[r.date] = { present: 0, absent: 0 };
+              if (r.status === 'present') dateMap[r.date].present++;
+              else dateMap[r.date].absent++;
+            });
+
+            let dates = Object.entries(dateMap).sort((a, b) => b[0].localeCompare(a[0]));
+
+            // Filter by month
+            if (month) dates = dates.filter(([d]) => d.startsWith(month));
+
+            if (dates.length === 0) {
+              tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">No lectures found</td></tr>';
+              document.getElementById('monthly-summary-card').classList.add('d-none');
+              return;
+            }
+
+            tbody.innerHTML = dates.map(([date, data], i) => {
+              const total = data.present + data.absent;
+              const pct = total > 0 ? Math.round((data.present / total) * 100) : 0;
+              const cls = pct >= 75 ? 'text-success' : 'text-danger';
+              return `<tr>
+                <td>${dates.length - i}</td>
+                <td><i class="bi bi-calendar-event me-1"></i>${date}</td>
+                <td><span class="text-success fw-bold">${data.present}</span></td>
+                <td><span class="text-danger fw-bold">${data.absent}</span></td>
+                <td class="${cls} fw-bold">${pct}%</td>
+                <td><button class="btn btn-outline-primary btn-sm py-0 edit-att-btn" data-date="${date}"><i class="bi bi-pencil me-1"></i>Edit</button></td>
+              </tr>`;
+            }).join('');
+
+            // Edit buttons — click loads that date in Mark tab
+            tbody.querySelectorAll('.edit-att-btn').forEach(btn => {
+              btn.addEventListener('click', () => {
+                document.getElementById('att-course').value = courseId;
+                document.getElementById('att-date').value = btn.dataset.date;
+                document.getElementById('load-students-btn').disabled = false;
+                // Switch to Mark tab
+                document.querySelector('[data-tab="mark"]').click();
+                document.getElementById('load-students-btn').click();
+              });
+            });
+
+            // Monthly summary
+            const summaryCard = document.getElementById('monthly-summary-card');
+            summaryCard.classList.remove('d-none');
+            const totalLectures = dates.length;
+            const avgPresent = Math.round(dates.reduce((s, [, d]) => s + d.present, 0) / totalLectures);
+            const avgPct = Math.round(dates.reduce((s, [, d]) => {
+              const t = d.present + d.absent;
+              return s + (t > 0 ? (d.present / t) * 100 : 0);
+            }, 0) / totalLectures);
+            const title = month ? new Date(month + '-01').toLocaleString('default', { month: 'long', year: 'numeric' }) : 'All Time';
+            document.getElementById('monthly-summary').innerHTML = `
+              <h6 class="mb-3">${title}</h6>
+              <div class="row g-3">
+                <div class="col-md-3 col-6"><strong>${totalLectures}</strong><div class="small text-muted">Total Lectures</div></div>
+                <div class="col-md-3 col-6"><strong>${avgPct}%</strong><div class="small text-muted">Avg Attendance</div></div>
+                <div class="col-md-3 col-6"><strong>${avgPresent}</strong><div class="small text-muted">Avg Present/Lecture</div></div>
+                <div class="col-md-3 col-6"><strong>${totalStudents}</strong><div class="small text-muted">Total Students</div></div>
+              </div>`;
+          } catch (err) {
+            console.error('loadHistory error:', err);
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-3">Failed to load</td></tr>';
+          }
+        }
+
+        historyCourse.addEventListener('change', loadHistory);
+        historyMonth.addEventListener('change', loadHistory);
+
+        // ═══ TAB 4: DEFAULTER REPORT ═══
+        const reportCourse = document.getElementById('report-course');
+        const reportMonthSel = document.getElementById('report-month');
+        const printBtn = document.getElementById('print-defaulter-btn');
+
+        reportCourse.addEventListener('change', () => { printBtn.disabled = !reportCourse.value; });
+
+        printBtn.addEventListener('click', async () => {
+          const courseId = reportCourse.value;
+          if (!courseId) return;
+
+          printBtn.disabled = true;
+          printBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Generating...';
+
+          try {
+            const course = courseMap[courseId];
+            const selectedMonth = reportMonthSel.value; // e.g. '2026-03' or ''
+
+            // Get attendance records (monthly or all-time)
+            const records = selectedMonth
+              ? await AttendanceService.getMonthlyByCourse(courseId, selectedMonth)
+              : await AttendanceService.getByCourse(courseId);
+
+            // Get unique lecture dates
+            const lectureDates = [...new Set(records.map(r => r.date))].sort();
+            const totalLectures = lectureDates.length;
+
+            if (totalLectures === 0) {
+              showToast('No attendance records found for this period', 'warning');
+              printBtn.disabled = false;
+              printBtn.innerHTML = '<i class="bi bi-printer-fill me-1"></i>Print Defaulter Report';
+              return;
+            }
+
+            // Get enrolled students with user profiles
+            const enrollments = await EnrollmentService.getByCourse(courseId);
+            const studentProfiles = (await Promise.all(
+              enrollments.map(async e => await UserService.get(e.studentId))
+            )).filter(Boolean);
+
+            // Build per-student attendance stats
+            const studentStats = studentProfiles.map(s => {
+              const myRecords = records.filter(r => r.studentId === s.uid);
+              const present = myRecords.filter(r => r.status === 'present').length;
+              const total = myRecords.length;
+              const percentage = total > 0 ? Math.round((present / total) * 100) : 0;
+              return {
+                uid: s.uid,
+                name: s.name || '—',
+                urn: s.urn || '—',
+                rollNo: s.rollNo || '—',
+                department: s.department || '—',
+                present,
+                total,
+                totalLectures,
+                percentage
+              };
+            });
+
+            // Defaulters (< 75%)
+            const defaulters = studentStats.filter(s => s.total > 0 && s.percentage < 75);
+
+            // Department-wise stats
+            const departments = ['AERO','CSE','CIVIL','MECH','EE','FOOD','AIDS','CSE (IOT)'];
+            const deptStats = {};
+            departments.forEach(dept => {
+              const deptStudents = studentStats.filter(s => s.department === dept);
+              const deptDefaulters = defaulters.filter(s => s.department === dept);
+              deptStats[dept] = { total: deptStudents.length, defaulters: deptDefaulters.length };
+            });
+
+            // Determine period string
+            let periodStr = 'All Time';
+            let monthYearStr = 'All Time';
+            if (selectedMonth) {
+              const [y, m] = selectedMonth.split('-');
+              const dt = new Date(parseInt(y), parseInt(m)-1, 1);
+              monthYearStr = dt.toLocaleString('default', { month: 'long', year: 'numeric' });
+              periodStr = `${lectureDates[0]} to ${lectureDates[lectureDates.length-1]}`;
+            } else if (lectureDates.length > 0) {
+              periodStr = `${lectureDates[0]} to ${lectureDates[lectureDates.length-1]}`;
+            }
+
+            // Store data and open report
+            const reportData = {
+              collegeName: 'Annasaheb Dange College of Engineering & Technology, Ashta',
+              academicYear: `${now.getFullYear()-1}-${now.getFullYear()}`,
+              courseCode: course.code || '—',
+              courseTitle: course.title || '—',
+              teacherName: userData.name || '—',
+              monthYear: monthYearStr,
+              period: periodStr,
+              totalLectures,
+              departments,
+              deptStats,
+              defaulters: defaulters.sort((a,b) => a.department.localeCompare(b.department) || a.name.localeCompare(b.name)),
+              totalStudents: studentStats.length,
+              generatedDate: new Date().toLocaleDateString('en-IN')
+            };
+
+            sessionStorage.setItem('defaulterReportData', JSON.stringify(reportData));
+            window.open('defaulter-report.html', '_blank');
+
+          } catch (err) {
+            console.error('Report generation error:', err);
+            showToast('Failed to generate report: ' + err.message, 'error');
+          }
+
+          printBtn.disabled = false;
+          printBtn.innerHTML = '<i class="bi bi-printer-fill me-1"></i>Print Defaulter Report';
+        });
+
+      } else {
+        // ═══ STUDENT VIEW ═══
+        document.getElementById('student-view').classList.remove('d-none');
+
+        try {
+          const records = await AttendanceService.getByStudent(userData.uid);
+          const enrolled = await EnrollmentService.getByStudent(userData.uid);
+          const courseIds = enrolled.map(e => e.courseId);
+
+          // Stats
+          const present = records.filter(r => r.status === 'present').length;
+          const totalRecords = records.length;
+          const missed = totalRecords - present;
+          const pct = totalRecords > 0 ? Math.round((present / totalRecords) * 100) : 0;
+
+          document.getElementById('s-total-lectures').textContent = totalRecords;
+          document.getElementById('s-attended').textContent = present;
+          document.getElementById('s-missed').textContent = missed;
+          const pctEl = document.getElementById('s-percentage');
+          pctEl.textContent = pct + '%';
+          pctEl.classList.add(pct >= 75 ? 'text-success' : 'text-danger');
+
+          // Records table
+          const tbody = document.getElementById('my-attendance');
+          if (records.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-3">No attendance records</td></tr>';
+          } else {
+            // Enrich with course names
+            const courseNames = {};
+            for (const cid of courseIds) {
+              const c = await CourseService.get(cid);
+              if (c) courseNames[cid] = c.title;
+            }
+            tbody.innerHTML = records.sort((a, b) => (b.date || '').localeCompare(a.date || '')).map(r => {
+              const cls = r.status === 'present' ? 'text-success' : 'text-danger';
+              const icon = r.status === 'present' ? 'bi-check-circle-fill text-success' : 'bi-x-circle-fill text-danger';
+              return `<tr>
+                <td>${r.date}</td>
+                <td class="text-muted">${courseNames[r.courseId] || '—'}</td>
+                <td><i class="bi ${icon} me-1"></i><span class="${cls} fw-semibold">${r.status}</span></td>
+              </tr>`;
+            }).join('');
+          }
+        } catch (err) {
+          console.error('Student attendance error:', err);
+          document.getElementById('my-attendance').innerHTML = '<tr><td colspan="3" class="text-center text-danger py-3">Failed to load</td></tr>';
+        }
+      }
+
+    } catch (e) { console.error(e); }
+  </script>
+</body>
+</html>

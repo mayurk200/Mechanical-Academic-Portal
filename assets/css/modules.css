@@ -1,0 +1,226 @@
+/* ============================================================
+   LMS Platform — Module-Specific Styles
+   ============================================================ */
+
+/* ── Test Timer ────────────────────────── */
+.test-timer {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 20px; background: var(--bg-card);
+  border: 1px solid var(--border-color); border-radius: var(--radius-lg);
+  font-family: var(--font-heading); font-size: 1.2rem; font-weight: 700;
+  color: var(--accent);
+}
+.test-timer.warning { color: var(--warning); border-color: rgba(245,158,11,0.3); }
+.test-timer.danger { color: var(--danger); border-color: rgba(239,68,68,0.3); animation: pulse 1s infinite; }
+.test-timer .timer-icon { font-size: 1.1rem; }
+
+/* ── Question Card ─────────────────────── */
+.question-card {
+  background: var(--bg-card); border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg); padding: var(--space-lg);
+  margin-bottom: var(--space-md); transition: border-color var(--transition-fast);
+}
+.question-card:hover { border-color: var(--border-light); }
+.question-card .question-number {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; background: rgba(108,99,255,0.15);
+  color: var(--primary-light); border-radius: var(--radius-sm);
+  font-size: 0.8rem; font-weight: 700; margin-bottom: var(--space-sm);
+}
+.question-card .question-text { font-size: 1rem; color: var(--text-heading); margin-bottom: var(--space-md); font-weight: 500; }
+.question-card .question-meta { display: flex; gap: var(--space-md); font-size: 0.75rem; color: var(--text-muted); margin-top: var(--space-md); }
+
+/* ── Option Group ──────────────────────── */
+.option-group { display: flex; flex-direction: column; gap: var(--space-sm); }
+.option-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; background: var(--bg-glass);
+  border: 1.5px solid var(--border-color); border-radius: var(--radius-md);
+  cursor: pointer; transition: all var(--transition-fast);
+}
+.option-item:hover { border-color: var(--primary); background: rgba(108,99,255,0.06); }
+.option-item.selected { border-color: var(--primary); background: rgba(108,99,255,0.12); }
+.option-item.correct { border-color: var(--success); background: rgba(16,185,129,0.1); }
+.option-item.wrong { border-color: var(--danger); background: rgba(239,68,68,0.1); }
+.option-item .option-label {
+  width: 28px; height: 28px; border-radius: var(--radius-full);
+  border: 2px solid var(--border-light); display: flex;
+  align-items: center; justify-content: center; font-size: 0.8rem;
+  font-weight: 600; color: var(--text-muted); flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+.option-item.selected .option-label { background: var(--primary); border-color: var(--primary); color: #fff; }
+.option-item .option-text { font-size: 0.9rem; color: var(--text-primary); }
+
+/* ── Question Navigator ────────────────── */
+.question-nav { display: flex; flex-wrap: wrap; gap: 6px; padding: var(--space-md); }
+.question-nav .q-dot {
+  width: 36px; height: 36px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color); background: var(--bg-glass);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem; font-weight: 600; color: var(--text-muted);
+  cursor: pointer; transition: all var(--transition-fast);
+}
+.question-nav .q-dot:hover { border-color: var(--primary); color: var(--text-primary); }
+.question-nav .q-dot.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+.question-nav .q-dot.answered { background: rgba(16,185,129,0.15); color: var(--success); border-color: rgba(16,185,129,0.3); }
+
+/* ── Test Result ───────────────────────── */
+.result-score-circle {
+  width: 160px; height: 160px; border-radius: 50%;
+  background: conic-gradient(var(--primary) calc(var(--score) * 1%), var(--bg-glass) 0);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto var(--space-lg);
+}
+.result-score-circle .inner {
+  width: 130px; height: 130px; border-radius: 50%;
+  background: var(--bg-secondary); display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+.result-score-circle .score-value { font-family: var(--font-heading); font-size: 2rem; font-weight: 800; color: var(--text-heading); }
+.result-score-circle .score-label { font-size: 0.75rem; color: var(--text-muted); }
+
+/* ── Attendance Grid ───────────────────── */
+.attendance-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--space-md); }
+.attendance-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; background: var(--bg-glass);
+  border: 1px solid var(--border-color); border-radius: var(--radius-md);
+}
+.attendance-item .student-name { font-size: 0.9rem; font-weight: 500; }
+.attendance-status {
+  padding: 4px 12px; border-radius: var(--radius-full);
+  font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+}
+.attendance-status.present { background: rgba(16,185,129,0.15); color: var(--success); }
+.attendance-status.absent { background: rgba(239,68,68,0.15); color: var(--danger); }
+.attendance-status.late { background: rgba(245,158,11,0.15); color: var(--warning); }
+
+/* ── File Upload ───────────────────────── */
+.file-upload-area {
+  border: 2px dashed var(--border-light); border-radius: var(--radius-lg);
+  padding: var(--space-2xl); text-align: center; cursor: pointer;
+  transition: all var(--transition-normal);
+}
+.file-upload-area:hover { border-color: var(--primary); background: rgba(108,99,255,0.04); }
+.file-upload-area.dragging { border-color: var(--accent); background: rgba(0,210,255,0.06); }
+.file-upload-area .upload-icon { font-size: 2.5rem; color: var(--text-muted); margin-bottom: var(--space-md); }
+.file-upload-area h4 { color: var(--text-secondary); margin-bottom: 4px; }
+.file-upload-area p { font-size: 0.8rem; color: var(--text-muted); }
+
+/* ── Notification Item ─────────────────── */
+.notification-item {
+  display: flex; gap: var(--space-md); padding: var(--space-md);
+  border-bottom: 1px solid var(--divider); transition: background var(--transition-fast);
+  cursor: pointer;
+}
+.notification-item:hover { background: var(--bg-glass); }
+.notification-item.unread { background: rgba(108,99,255,0.04); border-left: 3px solid var(--primary); }
+.notification-item .notif-icon {
+  width: 40px; height: 40px; border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; flex-shrink: 0;
+}
+.notification-item .notif-content { flex: 1; }
+.notification-item .notif-title { font-size: 0.9rem; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+.notification-item .notif-text { font-size: 0.8rem; color: var(--text-muted); }
+.notification-item .notif-time { font-size: 0.7rem; color: var(--text-muted); white-space: nowrap; }
+
+/* ── Analytics Charts ──────────────────── */
+.chart-container {
+  background: var(--bg-card); border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg); padding: var(--space-lg);
+}
+.chart-container .chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-md); }
+.chart-container .chart-header h4 { font-size: 1rem; }
+.mini-chart { display: flex; align-items: flex-end; gap: 4px; height: 60px; }
+.mini-chart .bar {
+  flex: 1; background: linear-gradient(180deg, var(--primary), var(--primary-dark));
+  border-radius: 3px 3px 0 0; min-width: 6px;
+  transition: height 0.6s ease;
+}
+
+/* ── Course Card ───────────────────────── */
+.course-card {
+  background: var(--bg-card); border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg); overflow: hidden;
+  transition: all var(--transition-normal);
+}
+.course-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+.course-card .course-banner {
+  height: 140px; background: linear-gradient(135deg, var(--primary-dark), var(--bg-tertiary));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.5rem; position: relative;
+}
+.course-card .course-banner .course-badge {
+  position: absolute; top: 12px; right: 12px;
+}
+.course-card .course-info { padding: var(--space-md); }
+.course-card .course-title { font-size: 1.05rem; font-weight: 600; margin-bottom: 4px; }
+.course-card .course-desc { font-size: 0.8rem; color: var(--text-muted); margin-bottom: var(--space-md); display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.course-card .course-meta { display: flex; align-items: center; justify-content: space-between; font-size: 0.78rem; color: var(--text-muted); }
+
+/* ── Landing Page ──────────────────────── */
+.landing-hero {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  text-align: center; padding: var(--space-3xl); position: relative; overflow: hidden;
+}
+.landing-hero::before {
+  content: ''; position: absolute; width: 500px; height: 500px;
+  background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
+  top: -100px; right: -100px; pointer-events: none;
+}
+.landing-hero::after {
+  content: ''; position: absolute; width: 400px; height: 400px;
+  background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+  bottom: -80px; left: -80px; pointer-events: none;
+}
+.landing-hero h1 { font-size: 3.5rem; margin-bottom: var(--space-md); }
+.landing-hero p { font-size: 1.15rem; max-width: 600px; margin: 0 auto var(--space-xl); }
+.feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-xl); padding: var(--space-3xl); max-width: 1200px; margin: 0 auto; }
+.feature-card {
+  background: var(--bg-card); border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg); padding: var(--space-xl); text-align: center;
+  transition: all var(--transition-normal);
+}
+.feature-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--primary); }
+.feature-card .feature-icon { font-size: 2.5rem; margin-bottom: var(--space-md); }
+.feature-card h3 { margin-bottom: var(--space-sm); font-size: 1.1rem; }
+.feature-card p { font-size: 0.85rem; }
+
+/* Auth Pages */
+.auth-container {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  padding: var(--space-xl); position: relative; overflow: hidden;
+}
+.auth-container::before {
+  content: ''; position: absolute; width: 600px; height: 600px;
+  background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
+  top: -200px; right: -200px; pointer-events: none;
+}
+.auth-card {
+  background: var(--bg-card); border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl); padding: var(--space-2xl);
+  width: 100%; max-width: 440px; backdrop-filter: blur(16px);
+  position: relative; z-index: 1;
+}
+.auth-card .auth-header { text-align: center; margin-bottom: var(--space-xl); }
+.auth-card .auth-header .auth-logo {
+  width: 56px; height: 56px; background: linear-gradient(135deg, var(--primary), var(--accent));
+  border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; color: #fff; font-weight: 800; margin: 0 auto var(--space-md);
+}
+.auth-card .auth-header h2 { margin-bottom: 4px; }
+.auth-card .auth-divider { text-align: center; margin: var(--space-lg) 0; color: var(--text-muted); font-size: 0.8rem; position: relative; }
+.auth-card .auth-divider::before, .auth-card .auth-divider::after {
+  content: ''; position: absolute; top: 50%; width: 40%;
+  height: 1px; background: var(--divider);
+}
+.auth-card .auth-divider::before { left: 0; }
+.auth-card .auth-divider::after { right: 0; }
+.auth-card .auth-footer { text-align: center; margin-top: var(--space-lg); font-size: 0.85rem; color: var(--text-muted); }
+
+@media (max-width: 768px) {
+  .landing-hero h1 { font-size: 2rem; }
+  .feature-grid { grid-template-columns: 1fr; padding: var(--space-xl); }
+}

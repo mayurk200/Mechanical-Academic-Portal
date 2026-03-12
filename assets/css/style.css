@@ -1,0 +1,450 @@
+/* ============================================================
+   Mechanical Academic Portal — Custom Styles (Bootstrap 5 Overrides)
+   Minimal overrides — Bootstrap does the heavy lifting
+   ============================================================ */
+
+:root {
+  --sidebar-width: 250px;
+}
+
+body {
+  background: #f0f2f5;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+}
+
+/* ── Sidebar ─────────────────────────── */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--sidebar-width);
+  height: 100vh;
+  background: #fff;
+  border-right: 1px solid #dee2e6;
+  display: flex;
+  flex-direction: column;
+  z-index: 1040;
+  transition: transform 0.3s;
+}
+.sidebar-brand {
+  padding: 20px;
+  border-bottom: 1px solid #dee2e6;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.sidebar-brand img, .sidebar-brand .brand-icon {
+  width: 36px;
+  height: 36px;
+  font-size: 1.5rem;
+}
+.sidebar-brand h5 { margin: 0; font-weight: 700; }
+.sidebar-brand small { color: #6c757d; font-size: 0.75rem; }
+
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 0;
+}
+.sidebar-nav .nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  color: #495057;
+  font-size: 0.9rem;
+  border-radius: 0;
+  transition: all 0.15s;
+}
+.sidebar-nav .nav-link:hover {
+  background: #e9ecef;
+  color: #0d6efd;
+}
+.sidebar-nav .nav-link.active {
+  background: #e7f1ff;
+  color: #0d6efd;
+  font-weight: 600;
+  border-right: 3px solid #0d6efd;
+}
+.sidebar-nav .nav-link i { font-size: 1.1rem; width: 20px; text-align: center; }
+
+.sidebar-footer {
+  padding: 16px 20px;
+  border-top: 1px solid #dee2e6;
+}
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #0d6efd;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+/* ── Main Content ────────────────────── */
+.main-content {
+  margin-left: var(--sidebar-width);
+  min-height: 100vh;
+}
+.top-bar {
+  background: #fff;
+  border-bottom: 1px solid #dee2e6;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+}
+.top-bar h4 { margin: 0; font-weight: 600; }
+.page-body { padding: 24px; }
+
+/* ── Stat Cards ──────────────────────── */
+.stat-card {
+  border: none;
+  border-radius: 10px;
+  transition: transform 0.15s;
+}
+.stat-card:hover { transform: translateY(-2px); }
+.stat-card .card-body { padding: 20px; }
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  margin-bottom: 12px;
+}
+.stat-icon.blue { background: #e7f1ff; color: #0d6efd; }
+.stat-icon.green { background: #d1fae5; color: #10b981; }
+.stat-icon.orange { background: #fef3c7; color: #f59e0b; }
+.stat-icon.red { background: #fee2e2; color: #ef4444; }
+.stat-icon.purple { background: #ede9fe; color: #8b5cf6; }
+.stat-icon.cyan { background: #cffafe; color: #06b6d4; }
+.stat-value { font-size: 1.8rem; font-weight: 800; color: #1e293b; }
+.stat-label { font-size: 0.85rem; color: #6c757d; }
+
+/* ── Course Cards ────────────────────── */
+.course-card .card-body { padding: 20px; }
+.course-card .course-code { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* ── Auth Pages ──────────────────────── */
+.auth-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+}
+
+/* ── Attendance ──────────────────────── */
+.attendance-status.present { color: #10b981; font-weight: 600; }
+.attendance-status.absent { color: #ef4444; font-weight: 600; }
+.attendance-status.late { color: #f59e0b; font-weight: 600; }
+
+/* ── Toast Container ─────────────────── */
+.toast-container-custom {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+}
+
+/* ── Misc ────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: #6c757d;
+}
+.empty-state i { font-size: 3rem; margin-bottom: 12px; display: block; color: #adb5bd; }
+
+.spinner-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+}
+
+/* ── Mobile ──────────────────────────── */
+.menu-toggle { display: none; }
+
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); box-shadow: 0 0 30px rgba(0,0,0,0.2); }
+  .main-content { margin-left: 0; }
+  .menu-toggle { display: inline-flex; }
+}
+
+/* ── Animations ──────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+@keyframes pulseOpacity {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+.pulse-loading {
+  animation: pulseOpacity 1.5s infinite ease-in-out;
+}
+
+/* ── Toast Slide-In / Slide-Out ─────── */
+@keyframes toastSlideIn {
+  from { opacity: 0; transform: translateX(100px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes toastSlideOut {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(100px) scale(0.95); }
+}
+@keyframes toastProgressShrink {
+  from { width: 100%; }
+  to   { width: 0%; }
+}
+
+.lms-toast-enter {
+  animation: toastSlideIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.lms-toast-exit {
+  animation: toastSlideOut 0.3s ease forwards;
+}
+
+.lms-toast-progress {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 0 0 6px 6px;
+  animation: toastProgressShrink linear forwards;
+}
+
+/* ── Confirmation Modal ─────────────── */
+.lms-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+.lms-confirm-box {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  width: 90%;
+  max-width: 420px;
+  overflow: hidden;
+}
+.lms-confirm-header {
+  padding: 20px 24px 12px;
+}
+.lms-confirm-body {
+  padding: 0 24px 20px;
+  color: #495057;
+}
+.lms-confirm-footer {
+  padding: 12px 24px;
+  border-top: 1px solid #dee2e6;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+@keyframes confirmEnter {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes confirmBoxEnter {
+  from { opacity: 0; transform: scale(0.9) translateY(20px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes confirmExit {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+.lms-confirm-enter {
+  animation: confirmEnter 0.2s ease forwards;
+}
+.lms-confirm-enter .lms-confirm-box {
+  animation: confirmBoxEnter 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.lms-confirm-exit {
+  animation: confirmExit 0.2s ease forwards;
+}
+
+/* ── Card & Table Entrance Animations ── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.card, .stat-card {
+  animation: fadeInUp 0.4s ease-out both;
+}
+
+/* Stagger stat cards */
+.row > .col-md-3:nth-child(1) .stat-card,
+.row > .col-6:nth-child(1) .stat-card { animation-delay: 0.05s; }
+.row > .col-md-3:nth-child(2) .stat-card,
+.row > .col-6:nth-child(2) .stat-card { animation-delay: 0.12s; }
+.row > .col-md-3:nth-child(3) .stat-card,
+.row > .col-6:nth-child(3) .stat-card { animation-delay: 0.19s; }
+.row > .col-md-3:nth-child(4) .stat-card,
+.row > .col-6:nth-child(4) .stat-card { animation-delay: 0.26s; }
+
+/* Table rows fade in */
+@keyframes tableRowFadeIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.table tbody tr {
+  animation: tableRowFadeIn 0.3s ease both;
+}
+.table tbody tr:nth-child(n+2) { animation-delay: calc(0.03s * var(--row-index, 0)); }
+
+/* ── Enhanced Button Micro-Animations ── */
+.btn {
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(0) scale(0.97);
+  transition-duration: 0.08s;
+}
+
+.btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* ── Smooth Tab Content Transitions ──── */
+#tab-mark, #tab-overview, #tab-history, #tab-report,
+.tab-content-animated {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+#tab-mark:not(.d-none), #tab-overview:not(.d-none),
+#tab-history:not(.d-none), #tab-report:not(.d-none) {
+  animation: fadeIn 0.35s ease-out;
+}
+
+/* ── Page Content Entrance ─────────── */
+.page-body {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* ── Nav Pills Animation ────────────── */
+.nav-pills .nav-link {
+  transition: all 0.25s ease;
+}
+.nav-pills .nav-link:hover {
+  transform: translateY(-1px);
+}
+.nav-pills .nav-link.active {
+  box-shadow: 0 3px 10px rgba(13, 110, 253, 0.3);
+}
+
+/* ── Empty State Float ──────────────── */
+.empty-state .empty-icon,
+.empty-state i {
+  animation: floatBounce 3s ease-in-out infinite;
+}
+
+@keyframes floatBounce {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-8px); }
+}
+
+/* ── Modal Backdrop Enhancement ─────── */
+.modal.show .modal-dialog {
+  animation: confirmBoxEnter 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* ── Loading Shimmer ────────────────── */
+.skeleton-row {
+  height: 42px;
+  margin-bottom: 4px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #e9ecef 25%, #f1f3f4 50%, #e9ecef 75%);
+  background-size: 200% 100%;
+  animation: shimmerLight 1.5s infinite;
+}
+
+@keyframes shimmerLight {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Progress Bar Pulse ─────────────── */
+.progress-bar-animated {
+  animation: progress-bar-stripes 1s linear infinite, progressPulse 2s ease-in-out infinite;
+}
+
+@keyframes progressPulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.85; }
+}
+
+/* ── Sidebar Link Hover Slide ────────── */
+.sidebar-nav .nav-link {
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+.sidebar-nav .nav-link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 2px;
+  background: #0d6efd;
+  transition: width 0.3s ease;
+}
+.sidebar-nav .nav-link:hover::after {
+  width: 100%;
+}
+
+/* ── Course Card Hover Glow ─────────── */
+.course-card {
+  transition: all 0.3s ease;
+}
+.course-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}

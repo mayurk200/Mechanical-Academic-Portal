@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Course Details — Mechanical Academic Portal</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="main-content">
+    <div class="top-bar">
+      <button class="btn btn-light btn-sm menu-toggle" id="menu-toggle"><i class="bi bi-list"></i></button>
+      <h4 id="page-title">Course Details</h4>
+      <a href="courses.html" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Back</a>
+    </div>
+
+    <div class="page-body">
+      <!-- Access Denied -->
+      <div id="access-denied" class="d-none">
+        <div class="card shadow-sm mx-auto" style="max-width:500px;margin-top:60px;">
+          <div class="card-body text-center py-5">
+            <i class="bi bi-lock display-1 text-danger mb-3 d-block"></i>
+            <h4 class="text-danger">Access Denied</h4>
+            <p class="text-muted">You are not enrolled in this course. Contact your teacher to get access.</p>
+            <a href="courses.html" class="btn btn-primary"><i class="bi bi-arrow-left me-1"></i>Back to My Courses</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Course Content -->
+      <div id="course-content" class="d-none">
+        <!-- Course Info Card -->
+        <div class="card shadow-sm mb-4" id="course-info"></div>
+
+        <!-- Analytics Cards (Teacher/Admin Only) -->
+        <div class="row g-3 mb-4 d-none" id="analytics-cards">
+          <div class="col-md-3 col-6"><div class="card stat-card shadow-sm"><div class="card-body">
+            <div class="stat-icon blue"><i class="bi bi-people"></i></div>
+            <div class="stat-value" id="stat-total-students">—</div><div class="stat-label">Total Students</div>
+          </div></div></div>
+          <div class="col-md-3 col-6"><div class="card stat-card shadow-sm"><div class="card-body">
+            <div class="stat-icon green"><i class="bi bi-calendar-check"></i></div>
+            <div class="stat-value" id="stat-avg-attendance">—</div><div class="stat-label">Avg Attendance</div>
+          </div></div></div>
+          <div class="col-md-3 col-6"><div class="card stat-card shadow-sm"><div class="card-body">
+            <div class="stat-icon red"><i class="bi bi-exclamation-triangle"></i></div>
+            <div class="stat-value" id="stat-low-att">—</div><div class="stat-label">Below 75%</div>
+          </div></div></div>
+          <div class="col-md-3 col-6"><div class="card stat-card shadow-sm"><div class="card-body">
+            <div class="stat-icon purple"><i class="bi bi-pencil-square"></i></div>
+            <div class="stat-value" id="stat-total-tests">—</div><div class="stat-label">Total Tests</div>
+          </div></div></div>
+        </div>
+
+        <!-- Student List with Attendance (Teacher/Admin Only) -->
+        <div class="card shadow-sm mb-4 d-none" id="enrolled-card">
+          <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h6 class="mb-0"><i class="bi bi-people me-2"></i>Enrolled Students — Attendance</h6>
+            <div class="d-flex gap-2 align-items-center">
+              <input type="text" id="course-student-search" class="form-control form-control-sm" placeholder="🔍 Search name, URN, dept..." style="width:220px;">
+              <select id="att-filter" class="form-select form-select-sm" style="width:140px;">
+                <option value="all">All Students</option>
+                <option value="75">Below 75%</option>
+                <option value="60">Below 60%</option>
+              </select>
+              <span class="badge bg-primary d-flex align-items-center" id="enrolled-count">0</span>
+            </div>
+          </div>
+          <div class="card-body p-0 table-responsive" style="max-height: 60vh;">
+            <table class="table table-striped table-hover mb-0">
+              <thead class="table-light" style="position: sticky; top: 0; z-index: 1;">
+                <tr>
+                  <th>#</th>
+                  <th class="sortable" data-sort="name" style="cursor:pointer;">Student Name <i class="bi bi-arrow-down-up small text-muted"></i></th>
+                  <th>Roll No</th>
+                  <th>URN</th>
+                  <th class="sortable" data-sort="dept" style="cursor:pointer;">Dept <i class="bi bi-arrow-down-up small text-muted"></i></th>
+                  <th class="sortable" data-sort="att" style="cursor:pointer;">Attendance % <i class="bi bi-arrow-down-up small text-muted"></i></th>
+                  <th>Present</th>
+                  <th>Total</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="enrolled-list"><tr><td colspan="9" class="text-center text-muted py-3"><span class="spinner-border spinner-border-sm"></span></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Student View: My Attendance + Upcoming Tests -->
+        <div class="d-none" id="student-view">
+          <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white"><h6 class="mb-0"><i class="bi bi-calendar-check me-2"></i>My Attendance</h6></div>
+            <div class="card-body" id="student-attendance"></div>
+          </div>
+          <div class="card shadow-sm">
+            <div class="card-header bg-white"><h6 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Upcoming Tests</h6></div>
+            <div class="card-body p-0">
+              <table class="table table-striped table-hover mb-0">
+                <thead class="table-light"><tr><th>Title</th><th>Duration</th><th>Status</th></tr></thead>
+                <tbody id="student-tests"><tr><td colspan="3" class="text-center text-muted py-3"><span class="spinner-border spinner-border-sm"></span></td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Teacher: Delete Course -->
+        <div class="d-flex justify-content-end mt-4 d-none" id="delete-course-wrap">
+          <button class="btn btn-outline-danger shadow-sm" id="delete-course-btn">
+            <i class="bi bi-trash-fill me-2"></i>Permanently Delete Course
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Secure Delete Modal -->
+  <div class="modal fade" id="secureDeleteModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered border-danger">
+      <div class="modal-content">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>Secure Delete</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body text-center py-4 text-start">
+          <p class="text-danger fw-bold my-2" id="secure-delete-msg">Are you sure you want to delete this course?</p>
+          <div class="mt-4 text-start">
+            <label class="form-label fw-bold">Confirm Account Password:</label>
+            <input type="password" id="secure-delete-password" class="form-control" placeholder="Enter password to authorize">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" id="confirm-secure-delete-btn" disabled>
+             <i class="bi bi-trash"></i> Permanently Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script type="module">
+    import { initApp } from '../assets/js/core/router.js';
+    import { CourseService, EnrollmentService, UserService, AttendanceService, TestService } from '../services/database.js';
+    import { verifyCurrentPassword } from '../assets/js/core/auth.js';
+    import { showToast, formatDate, escapeHtml, closeModal } from '../assets/js/core/utils.js';
+
+    const courseId = new URLSearchParams(window.location.search).get('id');
+    if (!courseId) window.location.href = 'courses.html';
+
+    // Test state helper
+    function getTestState(test) {
+      const now = Date.now();
+      const start = test.startTime ? (test.startTime.toDate ? test.startTime.toDate().getTime() : new Date(test.startTime).getTime()) : 0;
+      const end = test.endTime ? (test.endTime.toDate ? test.endTime.toDate().getTime() : new Date(test.endTime).getTime()) : Infinity;
+      if (!start && !end) return { state: 'active', label: '<span class="badge bg-success">Active</span>' };
+      if (now < start) return { state: 'upcoming', label: '<span class="badge bg-info">Upcoming</span>' };
+      if (now >= start && now <= end) return { state: 'active', label: '<span class="badge bg-success">Active</span>' };
+      return { state: 'expired', label: '<span class="badge bg-secondary">Expired</span>' };
+    }
+
+    try {
+      const userData = await initApp();
+      const course = await CourseService.get(courseId);
+      if (!course) { showToast('Course not found', 'error'); setTimeout(() => window.location.href = 'courses.html', 1000); throw 'Not found'; }
+
+      // Access protection for students
+      if (userData.role === 'student') {
+        const enrolled = await EnrollmentService.isEnrolled(userData.uid, courseId);
+        if (!enrolled) { document.getElementById('access-denied').classList.remove('d-none'); throw 'Access denied'; }
+      }
+
+      document.getElementById('course-content').classList.remove('d-none');
+      document.getElementById('page-title').textContent = course.title;
+      const isOwner = userData.role === 'admin' || (userData.role === 'teacher' && course.teacherId === userData.uid);
+
+      // Course info
+      document.getElementById('course-info').innerHTML = `<div class="card-body">
+        <h5>${escapeHtml(course.title)}</h5>
+        <p class="text-muted">${escapeHtml(course.description || 'No description')}</p>
+        <div class="d-flex gap-3 small text-muted">
+          <span><i class="bi bi-tag me-1"></i>${course.code || '—'}</span>
+          <span><i class="bi bi-person me-1"></i>${course.teacherName || '—'}</span>
+          <span><i class="bi bi-calendar me-1"></i>${formatDate(course.createdAt)}</span>
+        </div>
+      </div>`;
+
+      if (isOwner) {
+        // ── TEACHER/ADMIN VIEW ──────────────────────
+        document.getElementById('enrolled-card').classList.remove('d-none');
+        document.getElementById('analytics-cards').classList.remove('d-none');
+        document.getElementById('delete-course-wrap').classList.remove('d-none');
+
+        const enrollments = await EnrollmentService.getByCourse(courseId);
+        let students = (await Promise.all(enrollments.map(async e => await UserService.get(e.studentId)))).filter(Boolean);
+        const percentages = await AttendanceService.getCourseStudentPercentages(courseId);
+        const attMap = {};
+        percentages.forEach(p => { attMap[p.studentId] = p; });
+
+        // Tests count
+        const tests = await TestService.getByCourse(courseId);
+        document.getElementById('stat-total-tests').textContent = tests.length;
+
+        // Update Analytics Cards
+        function updateAnalytics() {
+          document.getElementById('stat-total-students').textContent = students.length;
+          document.getElementById('enrolled-count').textContent = students.length;
+
+          // Re-calculate percentages based on active students
+          const activeAtts = students.map(s => attMap[s.uid] || { present: 0, total: 0, percentage: 0 });
+          const totalClasses = activeAtts.length > 0 ? Math.max(...activeAtts.map(p => p.total)) : 0;
+          const avgAtt = activeAtts.length > 0 ? Math.round(activeAtts.reduce((s, p) => s + p.percentage, 0) / activeAtts.length) : 0;
+          document.getElementById('stat-avg-attendance').textContent = avgAtt + '%';
+
+          const lowCount = activeAtts.filter(p => p.percentage < 75 && p.total > 0).length;
+          document.getElementById('stat-low-att').textContent = lowCount;
+        }
+        updateAnalytics();
+
+        // Sort State
+        let currentSort = { col: 'name', dir: 'asc' };
+
+        // Render student table
+        function renderStudents(filteredList) {
+          const tbody = document.getElementById('enrolled-list');
+          if (filteredList.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-3">No students match search/filter</td></tr>';
+            return;
+          }
+
+          tbody.innerHTML = filteredList.map((s, i) => {
+            const isLow = s.att.percentage < 75 && s.att.total > 0;
+            const rowStyle = isLow ? 'background-color:#ffe0e0;' : '';
+            const cls = s.att.total === 0 ? 'text-muted' : s.att.percentage >= 75 ? 'text-success' : 'text-danger';
+            const warn = isLow ? ' <span class="badge bg-danger">Low</span>' : '';
+            return `<tr style="${rowStyle}">
+              <td>${i + 1}</td>
+              <td>${escapeHtml(s.name || '—')}</td>
+              <td>${s.rollNo || '—'}</td>
+              <td>${s.urn || '—'}</td>
+              <td><span class="badge bg-secondary">${s.department || '—'}</span></td>
+              <td class="${cls} fw-bold">${s.att.percentage}%${warn}</td>
+              <td>${s.att.present}</td>
+              <td>${s.att.total}</td>
+              <td>
+                <div class="d-flex gap-1">
+                  <a href="attendance.html" class="btn btn-outline-warning btn-sm py-0" title="Attendance"><i class="bi bi-calendar-check"></i></a>
+                  <button class="btn btn-outline-danger btn-sm py-0 unenroll-btn" data-id="${s.uid}" title="Remove"><i class="bi bi-x"></i></button>
+                </div>
+              </td>
+            </tr>`;
+          }).join('');
+
+          tbody.querySelectorAll('.unenroll-btn').forEach(b => b.addEventListener('click', async (e) => {
+            if (confirm('Remove this student from the course? They will lose access to course materials and tests.')) {
+              const btn = e.currentTarget;
+              btn.disabled = true;
+              btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+              try {
+                const sid = btn.dataset.id;
+                await EnrollmentService.unenroll(sid, courseId);
+                showToast('Student removed successfully', 'success');
+                // Remove from local array
+                students = students.filter(st => st.uid !== sid);
+                updateAnalytics();
+                applyFilters();
+              } catch (err) {
+                showToast('Failed to remove student', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-x"></i>';
+              }
+            }
+          }));
+        }
+
+        // ── Unified Filter & Sort Logic ──
+        function applyFilters() {
+          const q = document.getElementById('course-student-search').value.toLowerCase().trim();
+          const filter = document.getElementById('att-filter').value;
+
+          let filtered = students.map(s => {
+            const att = attMap[s.uid] || { present: 0, total: 0, percentage: 0 };
+            return { ...s, att };
+          });
+
+          // Search Filter
+          if (q) {
+            filtered = filtered.filter(s =>
+              (s.name||'').toLowerCase().includes(q) ||
+              (s.urn||'').toLowerCase().includes(q) ||
+              (s.rollNo||'').toLowerCase().includes(q) ||
+              (s.department||'').toLowerCase().includes(q)
+            );
+          }
+
+          // Attendance Filter
+          if (filter === '75') filtered = filtered.filter(s => s.att.percentage < 75 && s.att.total > 0);
+          else if (filter === '60') filtered = filtered.filter(s => s.att.percentage < 60 && s.att.total > 0);
+
+          // Sorting
+          filtered.sort((a, b) => {
+            let valA, valB;
+            if (currentSort.col === 'name') { valA = a.name || ''; valB = b.name || ''; }
+            else if (currentSort.col === 'dept') { valA = a.department || ''; valB = b.department || ''; }
+            else if (currentSort.col === 'att') { valA = a.att.percentage; valB = b.att.percentage; }
+
+            if (valA < valB) return currentSort.dir === 'asc' ? -1 : 1;
+            if (valA > valB) return currentSort.dir === 'asc' ? 1 : -1;
+            return 0;
+          });
+
+          renderStudents(filtered);
+        }
+
+        // Setup Headers for Sorting
+        document.querySelectorAll('.sortable').forEach(th => {
+          th.addEventListener('click', () => {
+            const col = th.dataset.sort;
+            if (currentSort.col === col) {
+              currentSort.dir = currentSort.dir === 'asc' ? 'desc' : 'asc';
+            } else {
+              currentSort.col = col;
+              currentSort.dir = 'asc';
+            }
+            applyFilters();
+          });
+        });
+
+        document.getElementById('course-student-search').addEventListener('input', applyFilters);
+        document.getElementById('att-filter').addEventListener('change', applyFilters);
+
+        applyFilters();
+
+        // ── Secure Delete Course Logic ──
+        const btnDeleteCourse = document.getElementById('delete-course-btn');
+        btnDeleteCourse.addEventListener('click', () => {
+           document.getElementById('secure-delete-msg').textContent = 'Are you sure you want to delete this course? This will permanently remove all enrollments, attendance, tests, and student results.';
+           document.getElementById('secure-delete-password').value = '';
+           document.getElementById('confirm-secure-delete-btn').disabled = true;
+           new bootstrap.Modal(document.getElementById('secureDeleteModal')).show();
+        });
+        
+        document.getElementById('secure-delete-password').addEventListener('input', (e) => {
+           document.getElementById('confirm-secure-delete-btn').disabled = (e.target.value.length < 6);
+        });
+
+        document.getElementById('confirm-secure-delete-btn').addEventListener('click', async (e) => {
+           const pass = document.getElementById('secure-delete-password').value;
+           const btn = e.target;
+           btn.disabled = true;
+           btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Verifying...';
+           
+           try {
+              await verifyCurrentPassword(pass);
+              await CourseService.cascadeDelete(courseId);
+              closeModal('secureDeleteModal');
+              showToast('Course and all related data fully deleted!', 'success');
+              setTimeout(() => window.location.href = 'courses.html', 800);
+           } catch(err) {
+              showToast(err.message || 'Incorrect Password', 'error');
+              btn.disabled = false;
+              btn.innerHTML = '<i class="bi bi-trash"></i> Permanently Delete';
+           }
+        });
+
+      } else {
+        // ── STUDENT VIEW ────────────────────────────
+        document.getElementById('student-view').classList.remove('d-none');
+
+        // My attendance
+        const att = await AttendanceService.getStudentPercentage(userData.uid, courseId);
+        const cls = att.percentage >= 75 ? 'text-success' : att.percentage > 0 ? 'text-danger' : 'text-muted';
+        const warn = att.percentage > 0 && att.percentage < 75 ? '<div class="alert alert-danger mt-2 mb-0 py-2 small"><i class="bi bi-exclamation-triangle me-1"></i>Low Attendance Warning — your attendance is below 75%</div>' : '';
+        document.getElementById('student-attendance').innerHTML = `
+          <div class="d-flex gap-4 align-items-center">
+            <div class="text-center"><div class="stat-value ${cls}">${att.percentage}%</div><div class="stat-label">Attendance</div></div>
+            <div class="text-center"><div class="stat-value">${att.present}</div><div class="stat-label">Present</div></div>
+            <div class="text-center"><div class="stat-value">${att.total}</div><div class="stat-label">Total Classes</div></div>
+          </div>${warn}`;
+
+        // Upcoming tests
+        const tests = await TestService.getByCourse(courseId);
+        const tbody = document.getElementById('student-tests');
+        if (tests.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-3">No tests</td></tr>';
+        } else {
+          tbody.innerHTML = tests.map(t => {
+            const { label } = getTestState(t);
+            return `<tr><td>${escapeHtml(t.title)}</td><td>${t.duration} min</td><td>${label}</td></tr>`;
+          }).join('');
+        }
+      }
+    } catch (e) { console.error(e); }
+  </script>
+</body>
+</html>

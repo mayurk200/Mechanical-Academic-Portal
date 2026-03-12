@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assignments — Mechanical Academic Portal</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main-content">
+    <div class="top-bar">
+      <button class="btn btn-light btn-sm menu-toggle" id="menu-toggle"><i class="bi bi-list"></i></button>
+      <h4><i class="bi bi-clipboard-check me-2"></i>Assignments</h4>
+      <div id="create-btn-wrap"></div>
+    </div>
+    <div class="page-body">
+      <div id="assignments-list">
+        <div class="text-center text-muted py-5"><span class="spinner-border"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Assignment Modal -->
+  <div class="modal fade" id="createModal">
+    <div class="modal-dialog"><div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Create Assignment</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <form id="create-form">
+        <div class="modal-body">
+          <div class="mb-3"><label class="form-label">Course</label><select id="asgn-course" class="form-select" required><option value="">Select</option></select></div>
+          <div class="mb-3"><label class="form-label">Title</label><input type="text" id="asgn-title" class="form-control" required></div>
+          <div class="mb-3"><label class="form-label">Description</label><textarea id="asgn-desc" class="form-control" rows="3"></textarea></div>
+          <div class="row g-3">
+            <div class="col"><label class="form-label">Deadline</label><input type="datetime-local" id="asgn-deadline" class="form-control"></div>
+            <div class="col"><label class="form-label">Max Score</label><input type="number" id="asgn-maxscore" class="form-control" value="100"></div>
+          </div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary"><i class="bi bi-plus me-1"></i>Create</button></div>
+      </form>
+    </div></div>
+  </div>
+
+  <!-- Submit Assignment Modal -->
+  <div class="modal fade" id="submitModal">
+    <div class="modal-dialog"><div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Submit Assignment</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <form id="submit-form">
+        <input type="hidden" id="submit-asgn-id">
+        <div class="modal-body">
+          <div class="mb-3"><label class="form-label">Your Answer / Work</label><textarea id="submit-content" class="form-control" rows="4" required></textarea></div>
+          <div class="mb-3"><label class="form-label">File URL (optional)</label><input type="url" id="submit-file" class="form-control" placeholder="https://..."></div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary">Submit</button></div>
+      </form>
+    </div></div>
+  </div>
+
+  <!-- Grade Modal -->
+  <div class="modal fade" id="gradeModal">
+    <div class="modal-dialog"><div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Grade Submission</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <form id="grade-form">
+        <input type="hidden" id="grade-sub-id">
+        <div class="modal-body">
+          <div class="mb-3"><label class="form-label">Grade</label><input type="number" id="grade-score" class="form-control" required></div>
+          <div class="mb-3"><label class="form-label">Feedback</label><textarea id="grade-feedback" class="form-control" rows="3"></textarea></div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary">Save Grade</button></div>
+      </form>
+    </div></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script type="module">
+    import { initApp } from '../assets/js/core/router.js';
+    import { AssignmentService, SubmissionService, CourseService, EnrollmentService } from '../services/database.js';
+    import { showToast, formatDate, closeModal, escapeHtml } from '../assets/js/core/utils.js';
+
+    try {
+      const userData = await initApp();
+      const isTeacher = userData.role !== 'student';
+
+      if (isTeacher) {
+        document.getElementById('create-btn-wrap').innerHTML = '<button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createModal"><i class="bi bi-plus me-1"></i>Create</button>';
+        const courses = userData.role === 'admin' ? await CourseService.getAll() : await CourseService.getByTeacher(userData.uid);
+        courses.forEach(c => document.getElementById('asgn-course').innerHTML += `<option value="${c.id}">${escapeHtml(c.title)}</option>`);
+      }
+
+      async function loadAssignments() {
+        let assignments;
+        if (userData.role === 'student') {
+          const enrolled = await EnrollmentService.getByStudent(userData.uid);
+          const courseIds = enrolled.map(e => e.courseId);
+          const all = await AssignmentService.getAll();
+          assignments = all.filter(a => courseIds.includes(a.courseId));
+        } else if (userData.role === 'teacher') {
+          assignments = await AssignmentService.getByCreator(userData.uid);
+        } else {
+          assignments = await AssignmentService.getAll();
+        }
+
+        const container = document.getElementById('assignments-list');
+        if (assignments.length === 0) {
+          container.innerHTML = '<div class="text-center text-muted py-5"><i class="bi bi-clipboard-check display-4 d-block mb-2"></i><p>No assignments</p></div>';
+          return;
+        }
+
+        let html = '';
+        for (const a of assignments) {
+          const submissions = await SubmissionService.getByAssignment(a.id);
+          const mySubmission = submissions.find(s => s.studentId === userData.uid);
+          const isPastDue = a.deadline && new Date(a.deadline) < new Date();
+
+          html += `<div class="card shadow-sm mb-3">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="mb-0">${escapeHtml(a.title)}</h6>
+                <small class="text-muted">Max Score: ${a.maxScore || 100} ${a.deadline ? `· Due: ${formatDate(a.deadline)}` : ''} ${isPastDue ? '<span class="badge bg-danger ms-1">Past Due</span>' : ''}</small>
+              </div>
+              <div class="d-flex gap-2">
+                ${(userData.role === 'student' && !mySubmission)
+                  ? `<button class="btn btn-primary btn-sm submit-btn" data-id="${a.id}"><i class="bi bi-upload me-1"></i>Submit</button>`
+                  : ''}
+                ${isTeacher ? `<button class="btn btn-outline-danger btn-sm del-btn" data-id="${a.id}"><i class="bi bi-trash"></i></button>` : ''}
+              </div>
+            </div>
+            <div class="card-body">
+              <p class="small text-muted">${escapeHtml(a.description || 'No description')}</p>
+              ${mySubmission ? `<div class="alert alert-success py-2 mb-0 small"><i class="bi bi-check-circle me-1"></i>Submitted ${mySubmission.grade !== null ? `· Grade: <strong>${mySubmission.grade}</strong> · ${mySubmission.feedback || ''}` : '· Awaiting grade'}</div>` : ''}
+              ${isTeacher && submissions.length > 0 ? `
+                <h6 class="small fw-semibold mt-2">Submissions (${submissions.length})</h6>
+                <table class="table table-sm table-striped mb-0">
+                  <thead><tr><th>Student</th><th>Content</th><th>Grade</th><th>Action</th></tr></thead>
+                  <tbody>${submissions.map(s => `<tr>
+                    <td class="small">${s.studentName || '—'}</td>
+                    <td class="small text-muted">${escapeHtml((s.content || '').slice(0, 50))}</td>
+                    <td>${s.grade !== null ? `<span class="badge bg-success">${s.grade}</span>` : '<span class="badge bg-warning">Pending</span>'}</td>
+                    <td><button class="btn btn-outline-primary btn-sm py-0 grade-btn" data-id="${s.id}"><i class="bi bi-pencil"></i></button></td>
+                  </tr>`).join('')}</tbody>
+                </table>` : ''}
+            </div>
+          </div>`;
+        }
+        container.innerHTML = html;
+
+        // Submit buttons
+        container.querySelectorAll('.submit-btn').forEach(b => b.addEventListener('click', () => {
+          document.getElementById('submit-asgn-id').value = b.dataset.id;
+          new bootstrap.Modal(document.getElementById('submitModal')).show();
+        }));
+        // Grade buttons
+        container.querySelectorAll('.grade-btn').forEach(b => b.addEventListener('click', () => {
+          document.getElementById('grade-sub-id').value = b.dataset.id;
+          new bootstrap.Modal(document.getElementById('gradeModal')).show();
+        }));
+        // Delete buttons
+        container.querySelectorAll('.del-btn').forEach(b => b.addEventListener('click', async () => {
+          if (confirm('Delete?')) { await AssignmentService.delete(b.dataset.id); showToast('Deleted', 'success'); loadAssignments(); }
+        }));
+      }
+
+      // Create
+      document.getElementById('create-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await AssignmentService.create({
+          courseId: document.getElementById('asgn-course').value,
+          title: document.getElementById('asgn-title').value.trim(),
+          description: document.getElementById('asgn-desc').value.trim(),
+          deadline: document.getElementById('asgn-deadline').value,
+          maxScore: parseInt(document.getElementById('asgn-maxscore').value) || 100,
+          createdBy: userData.uid
+        });
+        showToast('Assignment created!', 'success'); closeModal('createModal'); e.target.reset(); loadAssignments();
+      });
+
+      // Submit
+      document.getElementById('submit-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await SubmissionService.submit({
+          assignmentId: document.getElementById('submit-asgn-id').value,
+          studentId: userData.uid,
+          studentName: userData.name,
+          content: document.getElementById('submit-content').value.trim(),
+          fileUrl: document.getElementById('submit-file').value.trim()
+        });
+        showToast('Submitted!', 'success'); closeModal('submitModal'); e.target.reset(); loadAssignments();
+      });
+
+      // Grade
+      document.getElementById('grade-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await SubmissionService.grade(
+          document.getElementById('grade-sub-id').value,
+          parseInt(document.getElementById('grade-score').value),
+          document.getElementById('grade-feedback').value.trim()
+        );
+        showToast('Graded!', 'success'); closeModal('gradeModal'); e.target.reset(); loadAssignments();
+      });
+
+      loadAssignments();
+    } catch (e) { console.error(e); }
+  </script>
+</body>
+</html>

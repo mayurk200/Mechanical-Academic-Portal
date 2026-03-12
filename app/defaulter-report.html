@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Action Taken Report — Monthly Attendance</title>
+  <style>
+    /* ── Print-Optimized Report Styles ── */
+    @page {
+      size: A4;
+      margin: 15mm 12mm;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 12pt;
+      color: #000;
+      background: #fff;
+      padding: 20px 30px;
+      line-height: 1.4;
+    }
+
+    .report-header {
+      text-align: center;
+      margin-bottom: 18px;
+      border-bottom: 2px solid #000;
+      padding-bottom: 10px;
+    }
+
+    .report-header .college-name {
+      font-size: 16pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .report-header .academic-year {
+      font-size: 11pt;
+      margin: 4px 0;
+    }
+
+    .report-header .report-title {
+      font-size: 14pt;
+      font-weight: bold;
+      margin: 8px 0 4px;
+      text-decoration: underline;
+    }
+
+    .report-header .report-date {
+      font-size: 10pt;
+      color: #333;
+    }
+
+    /* Course info */
+    .course-info {
+      margin: 14px 0;
+      font-size: 11pt;
+    }
+
+    .course-info table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .course-info td {
+      padding: 3px 8px;
+      vertical-align: top;
+    }
+
+    .course-info .label {
+      font-weight: bold;
+      width: 160px;
+    }
+
+    /* Tables */
+    table.report-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+      font-size: 10.5pt;
+    }
+
+    table.report-table th,
+    table.report-table td {
+      border: 1px solid #000;
+      padding: 5px 8px;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    table.report-table th {
+      background-color: #e8e8e8;
+      font-weight: bold;
+      font-size: 10pt;
+    }
+
+    table.report-table td.left {
+      text-align: left;
+    }
+
+    /* Department summary */
+    .section-title {
+      font-size: 11pt;
+      font-weight: bold;
+      margin: 16px 0 6px;
+    }
+
+    /* Warning notice */
+    .warning-notice {
+      border: 1px solid #000;
+      padding: 10px 14px;
+      margin: 14px 0;
+      font-size: 10.5pt;
+      text-align: justify;
+    }
+
+    .warning-notice strong {
+      text-decoration: underline;
+    }
+
+    /* Defaulter count */
+    .defaulter-count {
+      font-size: 11pt;
+      font-weight: bold;
+      margin: 12px 0;
+      text-align: right;
+    }
+
+    /* Low attendance highlight */
+    .very-low {
+      background-color: #ffe0e0 !important;
+      font-weight: bold;
+    }
+
+    /* Signature section */
+    .signature-section {
+      margin-top: 60px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 10.5pt;
+    }
+
+    .signature-block {
+      text-align: center;
+      width: 30%;
+    }
+
+    .signature-block .sig-line {
+      border-top: 1px solid #000;
+      margin-top: 40px;
+      padding-top: 4px;
+      font-weight: bold;
+    }
+
+    /* No data message */
+    .no-data {
+      text-align: center;
+      padding: 40px;
+      font-size: 14pt;
+      color: #666;
+    }
+
+    /* Screen-only controls */
+    .screen-controls {
+      text-align: center;
+      margin-bottom: 20px;
+      padding: 12px;
+      background: #f0f0f0;
+      border-radius: 8px;
+    }
+
+    .screen-controls button {
+      font-size: 14px;
+      padding: 8px 24px;
+      margin: 0 6px;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+
+    .btn-print {
+      background-color: #0d6efd;
+      color: #fff;
+    }
+
+    .btn-print:hover { background-color: #0b5ed7; }
+
+    .btn-close-report {
+      background-color: #6c757d;
+      color: #fff;
+    }
+
+    .btn-close-report:hover { background-color: #5c636a; }
+
+    /* Print-specific */
+    @media print {
+      body { padding: 0; }
+
+      .screen-controls { display: none !important; }
+
+      .very-low {
+        background-color: #ffe0e0 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      table.report-table th {
+        background-color: #e8e8e8 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .signature-section { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Screen-only controls -->
+  <div class="screen-controls" id="screen-controls">
+    <button class="btn-print" onclick="window.print()">🖨️ Print Report</button>
+    <button class="btn-close-report" onclick="window.close()">✖ Close</button>
+  </div>
+
+  <div id="report-content"></div>
+
+  <script>
+    (function() {
+      const raw = sessionStorage.getItem('defaulterReportData');
+      if (!raw) {
+        document.getElementById('report-content').innerHTML = '<div class="no-data">No report data found. Please generate the report from the Attendance page.</div>';
+        return;
+      }
+
+      const data = JSON.parse(raw);
+      const container = document.getElementById('report-content');
+
+      // Build department summary header row
+      const deptHeaders = data.departments.map(d => `<th>${d}</th>`).join('');
+      const deptStudentCounts = data.departments.map(d => `<td>${data.deptStats[d]?.total || 0}</td>`).join('');
+      const deptDefaulterCounts = data.departments.map(d => {
+        const count = data.deptStats[d]?.defaulters || 0;
+        return `<td style="${count > 0 ? 'color:red;font-weight:bold;' : ''}">${count}</td>`;
+      }).join('');
+
+      // Build defaulter rows
+      let defaulterRows = '';
+      if (data.defaulters.length === 0) {
+        defaulterRows = `<tr><td colspan="6" style="text-align:center;padding:16px;color:#666;">No defaulters found — all students have ≥ 75% attendance</td></tr>`;
+      } else {
+        defaulterRows = data.defaulters.map((s, i) => {
+          const isVeryLow = s.percentage < 60;
+          const cls = isVeryLow ? 'class="very-low"' : '';
+          return `<tr ${cls}>
+            <td>${i + 1}</td>
+            <td>${s.urn}</td>
+            <td class="left">${s.name}</td>
+            <td>${s.department}</td>
+            <td>${s.percentage}%</td>
+            <td></td>
+          </tr>`;
+        }).join('');
+      }
+
+      container.innerHTML = `
+        <!-- Report Header -->
+        <div class="report-header">
+          <div class="college-name">${data.collegeName}</div>
+          <div class="academic-year">Academic Year: ${data.academicYear}</div>
+          <div class="report-title">Action Taken Report on Monthly Attendance for Minor Course</div>
+          <div class="report-date">Date: ${data.generatedDate}</div>
+        </div>
+
+        <!-- Course Information -->
+        <div class="course-info">
+          <table>
+            <tr>
+              <td class="label">Course Code & Name:</td>
+              <td>${data.courseCode} — ${data.courseTitle}</td>
+            </tr>
+            <tr>
+              <td class="label">Course Coordinator:</td>
+              <td>${data.teacherName}</td>
+            </tr>
+            <tr>
+              <td class="label">Month & Year:</td>
+              <td>${data.monthYear}</td>
+            </tr>
+            <tr>
+              <td class="label">Period:</td>
+              <td>${data.period}</td>
+            </tr>
+            <tr>
+              <td class="label">Total Lectures Conducted:</td>
+              <td><strong>${data.totalLectures}</strong></td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- Department-Wise Summary -->
+        <div class="section-title">Department-Wise Student Summary</div>
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Particulars</th>
+              ${deptHeaders}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="left"><strong>Number of Students</strong></td>
+              ${deptStudentCounts}
+            </tr>
+            <tr>
+              <td class="left"><strong>Number of Defaulters</strong></td>
+              ${deptDefaulterCounts}
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Attendance Warning -->
+        <div class="warning-notice">
+          <strong>Note:</strong> As per the academic rules, students must maintain a <strong>minimum 75% attendance</strong>
+          in each course during the semester. Students falling below this threshold are identified as defaulters and are
+          liable for disciplinary action as per the institute's attendance policy. The following students have attendance
+          below the required minimum and are hereby notified to improve their attendance immediately.
+        </div>
+
+        <!-- Defaulter Student List -->
+        <div class="section-title">List of Defaulter Students (Attendance Below 75%)</div>
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th style="width:40px;">Sr No</th>
+              <th style="width:100px;">URN</th>
+              <th>Student Name</th>
+              <th style="width:80px;">Department</th>
+              <th style="width:80px;">Attendance %</th>
+              <th style="width:120px;">Student Signature</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${defaulterRows}
+          </tbody>
+        </table>
+
+        <!-- Defaulter Count -->
+        <div class="defaulter-count">
+          Number of Defaulters (Less than 75%): <span style="text-decoration:underline;">${data.defaulters.length}</span>
+          &nbsp;&nbsp;|&nbsp;&nbsp;
+          Total Students: ${data.totalStudents}
+        </div>
+
+        <!-- Signature Section -->
+        <div class="signature-section">
+          <div class="signature-block">
+            <div class="sig-line">Course Coordinator</div>
+          </div>
+          <div class="signature-block">
+            <div class="sig-line">Head of the Department</div>
+          </div>
+          <div class="signature-block">
+            <div class="sig-line">Dean Academics</div>
+          </div>
+        </div>
+      `;
+    })();
+  </script>
+</body>
+</html>
