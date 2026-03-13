@@ -90,10 +90,20 @@ export function buildSidebar(role, userName) {
     </div>`;
 }
 
+// Global auth state listener to handle logouts securely
+onAuthStateChanged(auth, (user) => {
+  if (!user && window.location.pathname.includes('/app/')) {
+    window.location.href = '../login.html';
+  }
+});
+
 // Initialize app — auth guard + RBAC + sidebar
 export async function initApp(requiredRoles = null) {
   return new Promise((resolve, reject) => {
-    onAuthStateChanged(auth, async (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      // Unsubscribe immediately so we don't leak memory on every auth state change.
+      unsubscribe();
+
       if (!user) {
         window.location.href = '../login.html';
         return reject('No user');
@@ -130,7 +140,7 @@ export async function initApp(requiredRoles = null) {
           sidebar.innerHTML = buildSidebar(userData.role, userData.name);
           document.getElementById('logout-btn')?.addEventListener('click', async () => {
             await signOut(auth);
-            window.location.href = '../login.html';
+            // Redirection is handled by the global listener
           });
         }
 

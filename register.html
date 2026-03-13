@@ -42,6 +42,7 @@
             <select id="role" class="form-select" required>
               <option value="student">Student</option>
               <option value="teacher">Teacher</option>
+              <option value="admin">Admin</option>
             </select>
           </div>
           <div class="mb-3">
@@ -70,6 +71,14 @@
     import { registerUser, guardPublicPage } from './assets/js/core/auth.js';
     import { showToast } from './assets/js/core/utils.js';
 
+    // Auto-select role from query param
+    const params = new URLSearchParams(window.location.search);
+    const roleParam = params.get('role');
+    if (roleParam) {
+      const roleSelect = document.getElementById('role');
+      if (roleSelect) roleSelect.value = roleParam;
+    }
+
     guardPublicPage();
 
     document.getElementById('register-form').addEventListener('submit', async (e) => {
@@ -96,6 +105,11 @@
         const map = { admin: 'app/admin-dashboard.html', teacher: 'app/teacher-dashboard.html', student: 'app/student-dashboard.html' };
         setTimeout(() => { window.location.href = map[role] || map.student; }, 800);
       } catch (err) {
+        // Remove existing alert if any
+        document.getElementById('register-error-alert')?.remove();
+        // Add inline alert
+        btn.insertAdjacentHTML('beforebegin', `<div id="register-error-alert" class="alert alert-danger py-2 small mb-3"><i class="bi bi-exclamation-circle me-1"></i>${err.message || 'Registration failed'}</div>`);
+        
         showToast(err.message || 'Registration failed', 'error');
         btn.disabled = false;
         btn.innerHTML = '<i class="bi bi-person-plus me-2"></i>Create Account';

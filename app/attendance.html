@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +8,9 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css">
+
 </head>
+
 <body>
   <aside class="sidebar" id="sidebar"></aside>
 
@@ -36,7 +39,8 @@
           <div class="card shadow-sm mb-4">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
               <h6 class="mb-0"><i class="bi bi-funnel me-2"></i>Mark Attendance</h6>
-              <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#bulkAttendanceModal">
+              <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal"
+                data-bs-target="#bulkAttendanceModal">
                 <i class="bi bi-file-earmark-spreadsheet me-1"></i>Bulk Upload
               </button>
             </div>
@@ -44,15 +48,19 @@
               <div class="row g-3">
                 <div class="col-md-5">
                   <label class="form-label fw-semibold">Course</label>
-                  <select id="att-course" class="form-select"><option value="">— Select Course —</option></select>
+                  <select id="att-course" class="form-select">
+                    <option value="">— Select Course —</option>
+                  </select>
                 </div>
                 <div class="col-md-3">
-                  <label class="form-label fw-semibold">Lecture Date</label>
-                  <input type="date" id="att-date" class="form-control">
+                  <label class="form-label fw-semibold">Month</label>
+                  <select id="att-month" class="form-select">
+                    <!-- Populated via JS -->
+                  </select>
                 </div>
                 <div class="col-md-4 d-flex align-items-end">
-                  <button class="btn btn-primary w-100" id="load-students-btn" disabled>
-                    <i class="bi bi-arrow-clockwise me-1"></i>Load Students
+                  <button class="btn btn-primary w-100" id="load-matrix-btn" disabled>
+                    <i class="bi bi-table me-1"></i>Load Matrix
                   </button>
                 </div>
               </div>
@@ -61,25 +69,48 @@
 
           <!-- Student Attendance Table -->
           <div class="card shadow-sm mb-4 d-none" id="attendance-card">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center">
-              <h6 class="mb-0"><i class="bi bi-people me-2"></i>Students</h6>
-              <div class="d-flex gap-2">
-                <button class="btn btn-success btn-sm" id="mark-all-present"><i class="bi bi-check-all me-1"></i>Mark All Present</button>
-                <button class="btn btn-danger btn-sm" id="mark-all-absent"><i class="bi bi-x-circle me-1"></i>Mark All Absent</button>
+            <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
+              <h6 class="mb-0"><i class="bi bi-grid-3x3 me-2"></i>Attendance Matrix (<span
+                  id="matrix-month-label"></span>)</h6>
+              <div class="d-flex flex-wrap gap-2 align-items-center">
+                <input type="text" id="matrix-search" class="form-control form-control-sm"
+                  placeholder="Search name/URN/roll..." style="width:180px;">
+                <select id="matrix-department" class="form-select form-select-sm" style="width:120px;">
+                  <option value="">All Depts</option>
+                  <option value="AERO">AERO</option>
+                  <option value="CSE">CSE</option>
+                  <option value="CIVIL">CIVIL</option>
+                  <option value="MECH">MECH</option>
+                  <option value="EE">EE</option>
+                  <option value="FOOD">FOOD</option>
+                  <option value="AIDS">AIDS</option>
+                  <option value="CSE (IOT)">CSE (IOT)</option>
+                </select>
+                <div class="vr mx-1"></div>
+                <input type="date" id="new-col-date" class="form-control form-control-sm" style="width:130px;">
+                <button class="btn btn-outline-success btn-sm text-nowrap" id="add-col-btn"><i
+                    class="bi bi-calendar-plus me-1"></i>Add Date</button>
               </div>
             </div>
-            <div class="card-body p-0">
-              <table class="table table-striped table-hover mb-0">
-                <thead class="table-light">
-                  <tr><th>#</th><th>Student Name</th><th>Roll No</th><th>URN</th><th>Dept</th><th class="text-center">Present</th><th class="text-center">Absent</th></tr>
+            <div class="card-body p-0 table-responsive" style="max-height: 60vh;">
+              <table class="table table-bordered table-hover mb-0 text-center" style="white-space:nowrap;">
+                <thead class="table-light sticky-top" style="z-index: 2;">
+                  <tr id="matrix-head">
+                    <th style="width: 50px;">#</th>
+                    <th class="text-start" style="min-width: 100px;">Roll No</th>
+                    <th class="text-start" style="min-width: 120px;">URN</th>
+                    <th class="text-start" style="min-width: 180px;">Student Name</th>
+                    <!-- Dynamic Dates Go Here -->
+                  </tr>
                 </thead>
-                <tbody id="students-tbody"></tbody>
+                <tbody id="matrix-body"></tbody>
               </table>
             </div>
             <div class="card-footer bg-white d-flex justify-content-between align-items-center">
-              <span class="text-muted small" id="att-summary">0 present, 0 absent</span>
-              <button class="btn btn-primary" id="save-attendance-btn">
-                <i class="bi bi-check-circle me-1"></i>Save Attendance
+              <span class="text-muted small" id="att-summary">Click cells to toggle. 1 = Present, 0 = Absent
+                (Deleted).</span>
+              <button class="btn btn-primary" id="save-matrix-btn" disabled>
+                <i class="bi bi-cloud-arrow-up me-1"></i>Save Changes (<span id="pending-changes-count">0</span>)
               </button>
             </div>
           </div>
@@ -89,29 +120,51 @@
         <div id="tab-overview" class="d-none">
           <!-- Analytics Cards -->
           <div class="row g-3 mb-4" id="analytics-row">
-            <div class="col-md-3 col-6"><div class="card stat-card shadow-sm"><div class="card-body">
-              <div class="stat-icon blue"><i class="bi bi-journal-check"></i></div>
-              <div class="stat-value" id="stat-lectures">—</div><div class="stat-label">Total Lectures</div>
-            </div></div></div>
-            <div class="col-md-3 col-6"><div class="card stat-card shadow-sm"><div class="card-body">
-              <div class="stat-icon green"><i class="bi bi-graph-up"></i></div>
-              <div class="stat-value" id="stat-avg-att">—</div><div class="stat-label">Avg Attendance</div>
-            </div></div></div>
-            <div class="col-md-3 col-6"><div class="card stat-card shadow-sm"><div class="card-body">
-              <div class="stat-icon red"><i class="bi bi-exclamation-triangle"></i></div>
-              <div class="stat-value" id="stat-below75">—</div><div class="stat-label">Below 75%</div>
-            </div></div></div>
-            <div class="col-md-3 col-6"><div class="card stat-card shadow-sm"><div class="card-body">
-              <div class="stat-icon purple"><i class="bi bi-people"></i></div>
-              <div class="stat-value" id="stat-total-students">—</div><div class="stat-label">Total Students</div>
-            </div></div></div>
+            <div class="col-md-3 col-6">
+              <div class="card stat-card shadow-sm">
+                <div class="card-body">
+                  <div class="stat-icon blue"><i class="bi bi-journal-check"></i></div>
+                  <div class="stat-value" id="stat-lectures">—</div>
+                  <div class="stat-label">Total Lectures</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3 col-6">
+              <div class="card stat-card shadow-sm">
+                <div class="card-body">
+                  <div class="stat-icon green"><i class="bi bi-graph-up"></i></div>
+                  <div class="stat-value" id="stat-avg-att">—</div>
+                  <div class="stat-label">Avg Attendance</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3 col-6">
+              <div class="card stat-card shadow-sm">
+                <div class="card-body">
+                  <div class="stat-icon red"><i class="bi bi-exclamation-triangle"></i></div>
+                  <div class="stat-value" id="stat-below75">—</div>
+                  <div class="stat-label">Below 75%</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3 col-6">
+              <div class="card stat-card shadow-sm">
+                <div class="card-body">
+                  <div class="stat-icon purple"><i class="bi bi-people"></i></div>
+                  <div class="stat-value" id="stat-total-students">—</div>
+                  <div class="stat-label">Total Students</div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="card shadow-sm">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
               <h6 class="mb-0"><i class="bi bi-journal-text me-2"></i>Attendance Overview</h6>
               <div class="d-flex gap-2 flex-wrap text-nowrap">
-                <select id="filter-course" class="form-select form-select-sm" style="width:180px;"><option value="">— Select Course —</option></select>
+                <select id="filter-course" class="form-select form-select-sm" style="width:180px;">
+                  <option value="">— Select Course —</option>
+                </select>
                 <select id="filter-department" class="form-select form-select-sm" style="width:150px;">
                   <option value="">All Depts</option>
                   <option value="AERO">AERO</option>
@@ -124,17 +177,34 @@
                   <option value="CSE (IOT)">CSE (IOT)</option>
                 </select>
                 <select id="filter-range" class="form-select form-select-sm" style="width:150px;">
-                  <option value="all">Show All</option><option value="75">Below 75%</option><option value="60">Below 60%</option>
+                  <option value="all">Show All</option>
+                  <option value="75">Below 75%</option>
+                  <option value="60">Below 60%</option>
                 </select>
-                <input type="text" id="search-student" class="form-control form-control-sm" placeholder="🔍 Search name, dept, URN..." style="width:200px;">
+                <input type="text" id="search-student" class="form-control form-control-sm"
+                  placeholder="🔍 Search name, dept, URN..." style="width:200px;">
               </div>
             </div>
             <div class="card-body p-0 table-responsive" style="max-height: 60vh;">
               <table class="table table-striped table-hover mb-0">
                 <thead class="table-light" style="position: sticky; top: 0; z-index: 1;">
-                  <tr><th>#</th><th>Student</th><th>Roll No</th><th>URN</th><th>Dept</th><th>Present</th><th>Total Lectures</th><th>Missed</th><th>Attendance %</th></tr>
+                  <tr>
+                    <th>#</th>
+                    <th>Student</th>
+                    <th>Roll No</th>
+                    <th>URN</th>
+                    <th>Dept</th>
+                    <th>Present</th>
+                    <th>Total Lectures</th>
+                    <th>Missed</th>
+                    <th>Attendance %</th>
+                  </tr>
                 </thead>
-                <tbody id="records-tbody"><tr><td colspan="9" class="text-center text-muted py-3">Select a course</td></tr></tbody>
+                <tbody id="records-tbody">
+                  <tr>
+                    <td colspan="9" class="text-center text-muted py-3">Select a course</td>
+                  </tr>
+                </tbody>
               </table>
             </div>
           </div>
@@ -146,21 +216,41 @@
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
               <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Lecture History</h6>
               <div class="d-flex gap-2">
-                <select id="history-course" class="form-select form-select-sm" style="width:200px;"><option value="">— Select Course —</option></select>
+                <select id="history-course" class="form-select form-select-sm" style="width:200px;">
+                  <option value="">— Select Course —</option>
+                </select>
                 <select id="history-month" class="form-select form-select-sm" style="width:160px;"></select>
+                <button class="btn btn-outline-success btn-sm" id="export-history-btn" disabled>
+                  <i class="bi bi-file-earmark-excel me-1"></i>Export
+                </button>
               </div>
             </div>
             <div class="card-body p-0">
               <table class="table table-striped table-hover mb-0">
-                <thead class="table-light"><tr><th>#</th><th>Lecture Date</th><th>Students Present</th><th>Students Absent</th><th>Attendance %</th><th>Action</th></tr></thead>
-                <tbody id="history-tbody"><tr><td colspan="6" class="text-center text-muted py-3">Select a course</td></tr></tbody>
+                <thead class="table-light">
+                  <tr>
+                    <th>#</th>
+                    <th>Lecture Date</th>
+                    <th>Students Present</th>
+                    <th>Students Absent</th>
+                    <th>Attendance %</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="history-tbody">
+                  <tr>
+                    <td colspan="6" class="text-center text-muted py-3">Select a course</td>
+                  </tr>
+                </tbody>
               </table>
             </div>
           </div>
 
           <!-- Monthly Summary -->
           <div class="card shadow-sm d-none" id="monthly-summary-card">
-            <div class="card-header bg-white"><h6 class="mb-0"><i class="bi bi-calendar-month me-2"></i>Monthly Summary</h6></div>
+            <div class="card-header bg-white">
+              <h6 class="mb-0"><i class="bi bi-calendar-month me-2"></i>Monthly Summary</h6>
+            </div>
             <div class="card-body" id="monthly-summary"></div>
           </div>
         </div>
@@ -168,13 +258,18 @@
         <!-- ═══ TAB 4: DEFAULTER REPORT ═══ -->
         <div id="tab-report" class="d-none">
           <div class="card shadow-sm mb-4">
-            <div class="card-header bg-white"><h6 class="mb-0"><i class="bi bi-printer me-2"></i>Generate Defaulter Report</h6></div>
+            <div class="card-header bg-white">
+              <h6 class="mb-0"><i class="bi bi-printer me-2"></i>Generate Defaulter Report</h6>
+            </div>
             <div class="card-body">
-              <p class="text-muted small mb-3">Generate the official <strong>Action Taken Report on Monthly Attendance</strong> for students below 75% attendance.</p>
+              <p class="text-muted small mb-3">Generate the official <strong>Action Taken Report on Monthly
+                  Attendance</strong> for students below 75% attendance.</p>
               <div class="row g-3">
                 <div class="col-md-5">
                   <label class="form-label fw-semibold">Course</label>
-                  <select id="report-course" class="form-select"><option value="">— Select Course —</option></select>
+                  <select id="report-course" class="form-select">
+                    <option value="">— Select Course —</option>
+                  </select>
                 </div>
                 <div class="col-md-3">
                   <label class="form-label fw-semibold">Month & Year</label>
@@ -189,7 +284,9 @@
             </div>
           </div>
           <div class="card shadow-sm d-none" id="report-preview-card">
-            <div class="card-header bg-white"><h6 class="mb-0"><i class="bi bi-eye me-2"></i>Report Preview</h6></div>
+            <div class="card-header bg-white">
+              <h6 class="mb-0"><i class="bi bi-eye me-2"></i>Report Preview</h6>
+            </div>
             <div class="card-body" id="report-preview"></div>
           </div>
         </div>
@@ -200,29 +297,57 @@
       <div id="student-view" class="d-none">
         <!-- Student Attendance Summary -->
         <div class="row g-3 mb-4">
-          <div class="col-md-3 col-6"><div class="card stat-card shadow-sm"><div class="card-body">
-            <div class="stat-icon blue"><i class="bi bi-journal-check"></i></div>
-            <div class="stat-value" id="s-total-lectures">—</div><div class="stat-label">Total Lectures</div>
-          </div></div></div>
-          <div class="col-md-3 col-6"><div class="card stat-card shadow-sm"><div class="card-body">
-            <div class="stat-icon green"><i class="bi bi-check-circle"></i></div>
-            <div class="stat-value" id="s-attended">—</div><div class="stat-label">Attended</div>
-          </div></div></div>
-          <div class="col-md-3 col-6"><div class="card stat-card shadow-sm"><div class="card-body">
-            <div class="stat-icon red"><i class="bi bi-x-circle"></i></div>
-            <div class="stat-value" id="s-missed">—</div><div class="stat-label">Missed</div>
-          </div></div></div>
-          <div class="col-md-3 col-6"><div class="card stat-card shadow-sm"><div class="card-body">
-            <div class="stat-icon purple"><i class="bi bi-percent"></i></div>
-            <div class="stat-value" id="s-percentage">—</div><div class="stat-label">Attendance %</div>
-          </div></div></div>
+          <div class="col-md-3 col-6">
+            <div class="card stat-card shadow-sm">
+              <div class="card-body">
+                <div class="stat-icon blue"><i class="bi bi-journal-check"></i></div>
+                <div class="stat-value" id="s-total-lectures">—</div>
+                <div class="stat-label">Total Lectures</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3 col-6">
+            <div class="card stat-card shadow-sm">
+              <div class="card-body">
+                <div class="stat-icon green"><i class="bi bi-check-circle"></i></div>
+                <div class="stat-value" id="s-attended">—</div>
+                <div class="stat-label">Attended</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3 col-6">
+            <div class="card stat-card shadow-sm">
+              <div class="card-body">
+                <div class="stat-icon red"><i class="bi bi-x-circle"></i></div>
+                <div class="stat-value" id="s-missed">—</div>
+                <div class="stat-label">Missed</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3 col-6">
+            <div class="card stat-card shadow-sm">
+              <div class="card-body">
+                <div class="stat-icon purple"><i class="bi bi-percent"></i></div>
+                <div class="stat-value" id="s-percentage">—</div>
+                <div class="stat-label">Attendance %</div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="card shadow-sm">
-          <div class="card-header bg-white"><h6 class="mb-0"><i class="bi bi-journal-text me-2"></i>My Attendance Records</h6></div>
+          <div class="card-header bg-white">
+            <h6 class="mb-0"><i class="bi bi-journal-text me-2"></i>My Attendance Records</h6>
+          </div>
           <div class="card-body p-0">
             <table class="table table-striped table-hover mb-0">
-              <thead class="table-light"><tr><th>Date</th><th>Course</th><th>Status</th></tr></thead>
+              <thead class="table-light">
+                <tr>
+                  <th>Date</th>
+                  <th>Course</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
               <tbody id="my-attendance"></tbody>
             </table>
           </div>
@@ -241,12 +366,13 @@
         </div>
         <div class="modal-body">
           <div class="alert alert-info py-2 d-flex justify-content-between align-items-center mb-3">
-            <span class="small"><i class="bi bi-info-circle me-1"></i> Upload an Excel/CSV file with attendance data for a specific lecture.</span>
+            <span class="small"><i class="bi bi-info-circle me-1"></i> Upload an Excel/CSV file with attendance data for
+              a specific lecture.</span>
             <button class="btn btn-sm btn-outline-info bg-white" id="download-att-template-btn">
               <i class="bi bi-download me-1"></i>Template
             </button>
           </div>
-          
+
           <div class="row g-3 mb-3">
             <div class="col-md-6">
               <label class="form-label">Course <span class="text-danger">*</span></label>
@@ -266,14 +392,22 @@
             <div class="d-flex gap-4 mb-3 flex-wrap" id="bulk-att-stats">
               <div><span class="text-muted small">Total Rows:</span> <strong id="bulk-att-total">0</strong></div>
               <div><span class="text-success small">Ready (New):</span> <strong id="bulk-att-valid">0</strong></div>
-              <div><span class="text-warning small text-nowrap">Skipped (Duplicate):</span> <strong id="bulk-att-dupes">0</strong></div>
+              <div><span class="text-warning small text-nowrap">Skipped (Duplicate):</span> <strong
+                  id="bulk-att-dupes">0</strong></div>
               <div><span class="text-danger small">Errors:</span> <strong id="bulk-att-errors">0</strong></div>
             </div>
 
             <div class="table-responsive" style="max-height: 250px;">
               <table class="table table-sm table-bordered text-nowrap mb-0" id="bulk-att-table">
                 <thead class="table-light sticky-top">
-                  <tr><th>Row</th><th>Status</th><th>Lecture Date</th><th>URN</th><th>Name</th><th>Mark As</th></tr>
+                  <tr>
+                    <th>Row</th>
+                    <th>Status</th>
+                    <th>Lecture Date</th>
+                    <th>URN</th>
+                    <th>Name</th>
+                    <th>Mark As</th>
+                  </tr>
                 </thead>
                 <tbody class="small"></tbody>
               </table>
@@ -286,7 +420,8 @@
                 <span class="small fw-bold" id="bulk-att-percent">0%</span>
               </div>
               <div class="progress" style="height: 10px;">
-                <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" id="bulk-att-progress-bar" style="width: 0%"></div>
+                <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+                  id="bulk-att-progress-bar" style="width: 0%"></div>
               </div>
             </div>
           </div>
@@ -314,7 +449,6 @@
 
       if (isTeacher) {
         document.getElementById('teacher-view').classList.remove('d-none');
-        document.getElementById('att-date').valueAsDate = new Date();
 
         // Load courses
         const courses = userData.role === 'admin' ? await CourseService.getAll() : await CourseService.getByTeacher(userData.uid);
@@ -331,16 +465,19 @@
         // Populate month filters
         const monthSelect = document.getElementById('history-month');
         const reportMonth = document.getElementById('report-month');
+        const attMonth = document.getElementById('att-month');
         const now = new Date();
         monthSelect.innerHTML = '<option value="">All Months</option>';
         reportMonth.innerHTML = '<option value="">All Time</option>';
         for (let i = 0; i < 12; i++) {
           const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-          const val = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+          const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
           const label = d.toLocaleString('default', { month: 'long', year: 'numeric' });
           monthSelect.innerHTML += `<option value="${val}">${label}</option>`;
           reportMonth.innerHTML += `<option value="${val}">${label}</option>`;
+          attMonth.innerHTML += `<option value="${val}">${label}</option>`;
         }
+        document.getElementById('new-col-date').valueAsDate = new Date();
 
         // ═══ TAB SWITCHING ═══
         document.querySelectorAll('#att-tabs .nav-link').forEach(tab => {
@@ -352,115 +489,287 @@
           });
         });
 
-        // ═══ TAB 1: MARK ATTENDANCE ═══
+        // ═══ TAB 1: MARK ATTENDANCE MATRIX ═══
         const courseSelect = document.getElementById('att-course');
+        const loadMatrixBtn = document.getElementById('load-matrix-btn');
+
         courseSelect.addEventListener('change', () => {
-          document.getElementById('load-students-btn').disabled = !courseSelect.value;
+          loadMatrixBtn.disabled = !courseSelect.value;
         });
 
-        let studentsList = [];
+        let matrixStudents = [];
+        let matrixDates = [];
+        let matrixState = {}; // In-memory map: [studentId][date] = 1 or 0
+        let originalState = {}; // To calculate diffs 
+        let pendingChanges = 0;
+        let rollSortDir = 'asc';
 
-        document.getElementById('load-students-btn').addEventListener('click', async () => {
-          const courseId = courseSelect.value;
-          if (!courseId) return;
-
-          const enrollments = await EnrollmentService.getByCourse(courseId);
-          if (enrollments.length === 0) { showToast('No students enrolled in this course', 'warning'); return; }
-
-          studentsList = (await Promise.all(enrollments.map(async e => await UserService.get(e.studentId)))).filter(Boolean);
-
-          const date = document.getElementById('att-date').value;
-          const existing = await AttendanceService.getByDate(courseId, date);
-          const existingMap = {};
-          existing.forEach(r => { existingMap[r.studentId] = r.status; });
-
-          const tbody = document.getElementById('students-tbody');
-          
-          tbody.innerHTML = studentsList.map((s, i) => {
-            const status = existingMap[s.uid] || '';
-            const isPresent = status === 'present' ? 'checked' : '';
-            const isAbsent = status === 'absent' ? 'checked' : '';
-            return `<tr data-student="${s.uid}" data-name="${escapeHtml(s.name || '')}">
-              <td>${i + 1}</td>
-              <td>${escapeHtml(s.name || '—')}</td>
-              <td>${s.rollNo || '—'}</td>
-              <td>${s.urn || '—'}</td>
-              <td><span class="badge bg-secondary">${s.department || '—'}</span></td>
-              <td class="text-center"><input type="radio" class="form-check-input att-radio" name="att-${s.uid}" value="present" ${isPresent}></td>
-              <td class="text-center"><input type="radio" class="form-check-input att-radio" name="att-${s.uid}" value="absent" ${isAbsent}></td>
-            </tr>`;
-          }).join('');
-
-          document.getElementById('attendance-card').classList.remove('d-none');
-          updateSummary();
-          tbody.querySelectorAll('.att-radio').forEach(r => r.addEventListener('change', updateSummary));
-        });
-
-        document.getElementById('mark-all-present').addEventListener('click', () => {
-          document.querySelectorAll('#students-tbody input[value="present"]').forEach(r => { r.checked = true; });
-          updateSummary();
-        });
-        document.getElementById('mark-all-absent').addEventListener('click', () => {
-          document.querySelectorAll('#students-tbody input[value="absent"]').forEach(r => { r.checked = true; });
-          updateSummary();
-        });
-
-        function updateSummary() {
-          const present = document.querySelectorAll('#students-tbody input[value="present"]:checked').length;
-          const absent = document.querySelectorAll('#students-tbody input[value="absent"]:checked').length;
-          document.getElementById('att-summary').textContent = `${present} present, ${absent} absent`;
+        function sortMatrixStudents() {
+          matrixStudents.sort((a, b) => {
+            const rA = a.rollNo || '';
+            const rB = b.rollNo || '';
+            const cmp = rA.localeCompare(rB, undefined, { numeric: true, sensitivity: 'base' });
+            if (cmp !== 0) return rollSortDir === 'asc' ? cmp : -cmp;
+            return a.name.localeCompare(b.name);
+          });
         }
 
-        document.getElementById('save-attendance-btn').addEventListener('click', async () => {
+        loadMatrixBtn.addEventListener('click', async () => {
           const courseId = courseSelect.value;
-          const date = document.getElementById('att-date').value;
-          if (!courseId || !date) { showToast('Select course and date', 'error'); return; }
+          const month = document.getElementById('att-month').value;
+          if (!courseId || !month) return;
 
-          const todayDate = new Date().toISOString().split('T')[0];
-          if (date > todayDate) { showToast('Attendance date cannot be in the future', 'warning'); return; }
+          loadMatrixBtn.disabled = true;
+          loadMatrixBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Loading...';
 
-          let count = 0;
-          let missingStatus = 0;
-          const rows = document.querySelectorAll('#students-tbody tr');
-          
-          // Pre-flight check: ensure all students have a marked status
-          for (const row of rows) {
-            if (!row.querySelector('.att-radio:checked')?.value) missingStatus++;
+          try {
+            // 1. Fetch Students
+            const enrollments = await EnrollmentService.getByCourse(courseId);
+            if (enrollments.length === 0) {
+              showToast('No students enrolled in this course', 'warning');
+              loadMatrixBtn.disabled = false;
+              loadMatrixBtn.innerHTML = '<i class="bi bi-table me-1"></i>Load Matrix';
+              return;
+            }
+            matrixStudents = (await Promise.all(enrollments.map(async e => await UserService.get(e.studentId)))).filter(Boolean);
+            sortMatrixStudents();
+
+            // 2. Fetch Attendance for the given Month & Course
+            const records = await AttendanceService.getMonthlyByCourse(courseId, month);
+
+            // Extract unique dates
+            matrixDates = [...new Set(records.map(r => r.date))].sort();
+
+            // Build Matrix State map
+            matrixState = {};
+            originalState = {};
+            matrixStudents.forEach(s => {
+              matrixState[s.uid] = {};
+              originalState[s.uid] = {};
+              matrixDates.forEach(d => {
+                matrixState[s.uid][d] = 0;
+                originalState[s.uid][d] = 0;
+              });
+            });
+
+            // Populate Map with explicitly present records (1)
+            records.forEach(r => {
+              if (r.status === 'present' && matrixState[r.studentId]) {
+                matrixState[r.studentId][r.date] = 1;
+                originalState[r.studentId][r.date] = 1;
+              }
+            });
+
+            const monthLabel = document.getElementById('att-month').options[document.getElementById('att-month').selectedIndex].text;
+            document.getElementById('matrix-month-label').textContent = monthLabel;
+
+            renderMatrix();
+            document.getElementById('attendance-card').classList.remove('d-none');
+
+          } catch (e) {
+            console.error('Failed to load matrix:', e);
+            showToast('Failed to load attendance matrix', 'error');
           }
-          if (missingStatus > 0) {
-            showToast(`Please mark attendance for all students (${missingStatus} missing)`, 'warning');
+
+          loadMatrixBtn.disabled = false;
+          loadMatrixBtn.innerHTML = '<i class="bi bi-table me-1"></i>Load Matrix';
+        });
+
+        // Add New Date Column
+        document.getElementById('add-col-btn').addEventListener('click', () => {
+          const newDate = document.getElementById('new-col-date').value;
+          if (!newDate) {
+            showToast('Please select a valid date first', 'warning');
+            return;
+          }
+          if (matrixDates.includes(newDate)) {
+            showToast('This date is already in the matrix', 'warning');
             return;
           }
 
-          const btn = document.getElementById('save-attendance-btn');
-          btn.disabled = true;
-          btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
+          matrixDates.push(newDate);
+          matrixDates.sort(); // Re-sort chronologically
 
-          for (const row of rows) {
-            const studentId = row.dataset.student;
-            const studentName = row.dataset.name;
-            const status = row.querySelector('.att-radio:checked')?.value;
-            if (!status) continue;
-            try {
-              await AttendanceService.mark({ courseId, studentId, studentName, date, status, markedBy: userData.uid });
-              count++;
-            } catch (err) { console.error(err); }
+          // Initialize state for new column
+          matrixStudents.forEach(s => {
+            matrixState[s.uid][newDate] = 1;      // Default to Present (1)
+            originalState[s.uid][newDate] = 0;    // But baseline is absent (0) so it counts as a pending change
+          });
+
+          renderMatrix();
+        });
+
+        // Search, Filter & Sort listeners
+        document.getElementById('matrix-search').addEventListener('input', renderMatrix);
+        document.getElementById('matrix-department').addEventListener('change', renderMatrix);
+        document.getElementById('matrix-head').addEventListener('click', (e) => {
+          if (e.target.closest('#matrix-sort-roll')) {
+            rollSortDir = rollSortDir === 'asc' ? 'desc' : 'asc';
+            sortMatrixStudents();
+            renderMatrix();
+          }
+        });
+
+        function renderMatrix() {
+          const theadTr = document.getElementById('matrix-head');
+          const tbody = document.getElementById('matrix-body');
+
+          const search = document.getElementById('matrix-search').value.toLowerCase().trim();
+          const dept = document.getElementById('matrix-department').value;
+
+          // Render Header
+          let headersHTML = `
+            <th style="width: 50px;">#</th>
+            <th class="text-start" style="min-width: 100px; cursor: pointer; user-select: none;" id="matrix-sort-roll" title="Sort by Roll No">
+              Roll No <i class="bi bi-arrow-${rollSortDir === 'asc' ? 'down' : 'up'} text-muted float-end"></i>
+            </th>
+            <th class="text-start" style="min-width: 120px;">URN</th>
+            <th class="text-start" style="min-width: 180px;">Student Name</th>`;
+
+          matrixDates.forEach(date => {
+            // e.g. "01-03" from "2026-03-01"
+            const shortDate = date.split('-').slice(1).reverse().join('-');
+            headersHTML += `<th class="text-center" style="min-width: 60px;" title="${date}">${shortDate}</th>`;
+          });
+          theadTr.innerHTML = headersHTML;
+
+          // Filter Students
+          let visibleStudents = matrixStudents;
+          if (dept) {
+            visibleStudents = visibleStudents.filter(s => s.department === dept);
+          }
+          if (search) {
+            visibleStudents = visibleStudents.filter(s =>
+              s.name.toLowerCase().includes(search) ||
+              (s.rollNo || '').toLowerCase().includes(search) ||
+              (s.urn || '').toLowerCase().includes(search)
+            );
           }
 
-          showToast(`Attendance saved for ${count} student(s)!`, 'success');
-          btn.disabled = false;
-          btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Save Attendance';
+          if (visibleStudents.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="${4 + matrixDates.length}" class="text-center text-muted py-4">No students match your filters</td></tr>`;
+            updateSaveButtonState();
+            return;
+          }
+
+          // Render Body
+          tbody.innerHTML = visibleStudents.map((s, idx) => {
+            let rowHTML = `
+              <tr>
+                <td>${idx + 1}</td>
+                <td class="text-start">${s.rollNo || '—'}</td>
+                <td class="text-start">${s.urn || '—'}</td>
+                <td class="text-start font-monospace text-truncate" style="max-width:200px;" title="${escapeHtml(s.name)}">${escapeHtml(s.name)}</td>
+            `;
+
+            matrixDates.forEach(date => {
+              const val = matrixState[s.uid][date];
+              // visual cue
+              const bgClass = val === 1 ? 'bg-success text-white' : 'bg-light text-muted';
+              // Check if pending change
+              const isChanged = originalState[s.uid][date] !== val;
+              const borderClass = isChanged ? 'border border-2 border-warning' : '';
+
+              rowHTML += `<td class="p-0 align-middle">
+                  <div class="att-cell ${bgClass} ${borderClass}" 
+                       style="cursor:pointer; width:100%; height:100%; min-height:35px; display:flex; align-items:center; justify-content:center; user-select:none; font-weight:bold; transition: 0.1s ease;"
+                       data-student="${s.uid}" data-date="${date}">
+                     ${val}
+                  </div>
+                </td>`;
+            });
+
+            rowHTML += `</tr>`;
+            return rowHTML;
+          }).join('');
+
+          // Attach click listeners to cells
+          document.querySelectorAll('.att-cell').forEach(cell => {
+            cell.addEventListener('click', () => {
+              const sid = cell.dataset.student;
+              const date = cell.dataset.date;
+              // Toggle
+              matrixState[sid][date] = matrixState[sid][date] === 1 ? 0 : 1;
+              renderMatrix(); // Re-render to update UI and diff count
+            });
+          });
+
+          updateSaveButtonState();
+        }
+
+        function updateSaveButtonState() {
+          pendingChanges = 0;
+          matrixStudents.forEach(s => {
+            matrixDates.forEach(d => {
+              if (matrixState[s.uid][d] !== originalState[s.uid][d]) {
+                pendingChanges++;
+              }
+            });
+          });
+
+          const btn = document.getElementById('save-matrix-btn');
+          document.getElementById('pending-changes-count').textContent = pendingChanges;
+          btn.disabled = pendingChanges === 0;
+          btn.classList.toggle('btn-primary', pendingChanges > 0);
+          btn.classList.toggle('btn-secondary', pendingChanges === 0);
+        }
+
+        document.getElementById('save-matrix-btn').addEventListener('click', async () => {
+          if (pendingChanges === 0) return;
+
+          const courseId = courseSelect.value;
+          const btn = document.getElementById('save-matrix-btn');
+          btn.disabled = true;
+          btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Processing...';
+
+          let success = 0;
+          let failures = 0;
+
+          // Process Diffs
+          const promises = [];
+          matrixStudents.forEach(s => {
+            matrixDates.forEach(d => {
+              const current = matrixState[s.uid][d];
+              const original = originalState[s.uid][d];
+
+              if (current !== original) {
+                if (current === 1) {
+                  // Create or Update Present record
+                  promises.push(
+                    AttendanceService.mark({ courseId, studentId: s.uid, studentName: s.name, date: d, status: 'present', markedBy: userData.uid })
+                      .then(() => { originalState[s.uid][d] = 1; success++; })
+                      .catch(e => { console.error('Save fail', e); failures++; })
+                  );
+                } else if (current === 0) {
+                  // Delete record
+                  promises.push(
+                    AttendanceService.unmark(courseId, s.uid, d)
+                      .then(() => { originalState[s.uid][d] = 0; success++; })
+                      .catch(e => { console.error('Delete fail', e); failures++; })
+                  );
+                }
+              }
+            });
+          });
+
+          await Promise.all(promises);
+
+          showToast(`Saved ${success} changes successfully.` + (failures > 0 ? ` (${failures} failed)` : ''), failures > 0 ? 'warning' : 'success');
+          renderMatrix(); // Reflect applied state and clear yellow borders
+          btn.innerHTML = `<i class="bi bi-cloud-arrow-up me-1"></i>Save Changes (<span id="pending-changes-count">0</span>)`;
         });
+
+
 
         // ── Bulk Attendance Upload Logic ──
         let parsedBulkAtt = [];
-        
+
         document.getElementById('download-att-template-btn').addEventListener('click', () => {
           const headers = ["URN", "Student Name", "Department", "Lecture Date", "Attendance Status"];
           // Format date as YYYY-MM-DD for easy parsing
           const today = new Date().toISOString().split('T')[0];
           const example = ["23091045", "Rahul Patil", "CSE", today, "Present"];
-          const example2 = ["23091045", "Rahul Patil", "CSE", "2025-08-02", "Absent"]; 
+          const example2 = ["23091045", "Rahul Patil", "CSE", "2025-08-02", "Absent"];
           const example3 = ["23091046", "Priya Sharma", "CIVIL", today, "Present"];
           const ws = XLSX.utils.aoa_to_sheet([headers, example, example2, example3]);
           const wb = XLSX.utils.book_new();
@@ -497,12 +806,12 @@
             // Fetch enrolled students so we can validate URN existence locally
             const enrollments = await EnrollmentService.getByCourse(courseId);
             const enrolledStudents = (await Promise.all(enrollments.map(e => UserService.get(e.studentId)))).filter(Boolean);
-            
+
             // Pre-fetch all previous attendance records for this course to block duplicates natively
             const existingRecords = await AttendanceService.getByCourse(courseId);
             const dbTracker = new Set(existingRecords.map(r => `${r.urn}_${r.date}`));
             const fileTracker = new Set();
-            
+
             const data = await file.arrayBuffer();
             const workbook = XLSX.read(data);
             const worksheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -525,25 +834,25 @@
 
             parsedBulkAtt = jsonVal.map((row, index) => {
               const outRow = {};
-              for (let key in row) outRow[key.trim()] = (row[key]||'').toString().trim();
+              for (let key in row) outRow[key.trim()] = (row[key] || '').toString().trim();
               outRow._originalIndex = index + 2;
               return outRow;
             });
 
             let tableHtml = '';
-            
+
             // Format Excel date to standard YYYY-MM-DD
             const parseDate = (d) => {
-              if(!d) return "";
+              if (!d) return "";
               // if it's an excel serial number
-              if(typeof d === 'number') {
+              if (typeof d === 'number') {
                 const date = new Date(Date.UTC(0, 0, d - 1));
                 return date.toISOString().split('T')[0];
               }
               // attempt to parse standard strings (like 2024-05-01 or 05/01/2024)
               const parsed = new Date(d);
-              if(!isNaN(parsed.getTime())) return parsed.toISOString().split('T')[0];
-              return d.toString().trim(); 
+              if (!isNaN(parsed.getTime())) return parsed.toISOString().split('T')[0];
+              return d.toString().trim();
             };
 
             parsedBulkAtt.forEach(row => {
@@ -551,7 +860,7 @@
               const name = row["Student Name"];
               const dateRaw = row["Lecture Date"] || row["Date"] || "";
               const statusRaw = row["Attendance Status"] || row["Status"] || "";
-              
+
               const dateCorrected = parseDate(dateRaw);
 
               const statusUpper = statusRaw.toString().toUpperCase().trim();
@@ -566,7 +875,7 @@
               if (!urn) errors.push("URN missing");
               if (!dateCorrected) errors.push("Lecture Date missing or invalid");
               if (!normalizedStatus) errors.push("Invalid Status (must be Present/Absent)");
-              
+
               // Find matching student
               let matchedStudent = null;
               if (urn) {
@@ -575,14 +884,14 @@
               }
 
               // Evaluate Duplicates
-              if(urn && dateCorrected && matchedStudent) {
+              if (urn && dateCorrected && matchedStudent) {
                 const mapKey = `${urn}_${dateCorrected}`;
-                if(fileTracker.has(mapKey)) {
-                   errors.push("Duplicate within this file");
-                   isDuplicate = true;
-                } else if(dbTracker.has(mapKey)) {
-                   errors.push("Already marked in Database");
-                   isDuplicate = true;
+                if (fileTracker.has(mapKey)) {
+                  errors.push("Duplicate within this file");
+                  isDuplicate = true;
+                } else if (dbTracker.has(mapKey)) {
+                  errors.push("Already marked in Database");
+                  isDuplicate = true;
                 }
                 fileTracker.add(mapKey);
               }
@@ -598,17 +907,17 @@
                 date: dateCorrected
               };
 
-              if (row._isValid) validCount++; 
+              if (row._isValid) validCount++;
               else if (row._isDuplicate) duplicateCount++;
               else errorCount++;
 
               let statusHtml = '';
-              if(row._isValid) {
-                 statusHtml = `<span class="badge bg-success"><i class="bi bi-check"></i> Ready</span>`;
+              if (row._isValid) {
+                statusHtml = `<span class="badge bg-success"><i class="bi bi-check"></i> Ready</span>`;
               } else if (row._isDuplicate) {
-                 statusHtml = `<span class="badge bg-warning text-dark" title="${row._errors}"><i class="bi bi-exclamation-triangle"></i> Skipped</span><br><small class="text-warning-emphasis">${row._errors}</small>`;
+                statusHtml = `<span class="badge bg-warning text-dark" title="${row._errors}"><i class="bi bi-exclamation-triangle"></i> Skipped</span><br><small class="text-warning-emphasis">${row._errors}</small>`;
               } else {
-                 statusHtml = `<span class="badge bg-danger" title="${row._errors}"><i class="bi bi-x"></i> Error</span><br><small class="text-danger">${row._errors}</small>`;
+                statusHtml = `<span class="badge bg-danger" title="${row._errors}"><i class="bi bi-x"></i> Error</span><br><small class="text-danger">${row._errors}</small>`;
               }
 
               let rowClass = '';
@@ -621,7 +930,7 @@
                 <td>${escapeHtml(dateCorrected)}</td>
                 <td>${escapeHtml(urn)}</td>
                 <td>${escapeHtml(name)}</td>
-                <td class="text-uppercase fw-bold ${normalizedStatus==='present' ? 'text-success' : 'text-danger'}">${normalizedStatus || '—'}</td>
+                <td class="text-uppercase fw-bold ${normalizedStatus === 'present' ? 'text-success' : 'text-danger'}">${normalizedStatus || '—'}</td>
               </tr>`;
             });
 
@@ -632,15 +941,15 @@
             document.querySelector('#bulk-att-table tbody').innerHTML = tableHtml;
 
             previewAttArea.classList.remove('d-none');
-            
+
             if (validCount > 0) {
               validateAttBtn.classList.add('d-none');
               uploadAttBtn.classList.remove('d-none');
             } else {
               showToast("No valid rows. Check errors and try again.", "error");
             }
-          } catch(e) {
-             showToast(e.message || 'Error processing file', 'error');
+          } catch (e) {
+            showToast(e.message || 'Error processing file', 'error');
           }
 
           validateAttBtn.disabled = false;
@@ -649,7 +958,7 @@
 
         uploadAttBtn.addEventListener('click', async () => {
           const courseId = document.getElementById('bulk-att-course').value;
-          
+
           if (!courseId) {
             showToast('Course is required.', 'warning');
             return;
@@ -660,12 +969,12 @@
 
           uploadAttBtn.disabled = true;
           document.querySelector('#bulkAttendanceModal .btn-light').disabled = true;
-          
+
           const progArea = document.getElementById('bulk-att-progress-area');
           const progText = document.getElementById('bulk-att-progress-text');
           const progPercent = document.getElementById('bulk-att-percent');
           const progBar = document.getElementById('bulk-att-progress-bar');
-          
+
           progArea.classList.remove('d-none');
           progText.classList.add('pulse-loading');
 
@@ -673,21 +982,21 @@
           let failCount = 0;
 
           // Parallel batch implementation for performance
-          const batchSize = 25; 
+          const batchSize = 25;
           for (let i = 0; i < validRows.length; i += batchSize) {
             const chunk = validRows.slice(i, i + batchSize);
             const promises = chunk.map(async (row) => {
               const { studentId, studentName, status, date, urn } = row._parsedObj;
               try {
                 // Ensure date is being pushed from the parsed payload correctly
-                await AttendanceService.mark({ 
-                   courseId, 
-                   studentId, 
-                   studentName, 
-                   date, 
-                   status, 
-                   markedBy: userData.uid,
-                   urn: urn
+                await AttendanceService.mark({
+                  courseId,
+                  studentId,
+                  studentName,
+                  date,
+                  status,
+                  markedBy: userData.uid,
+                  urn: urn
                 });
                 return true;
               } catch (e) {
@@ -695,7 +1004,7 @@
                 return false;
               }
             });
-            
+
             const results = await Promise.all(promises);
             successCount += results.filter(r => r).length;
             failCount += results.filter(r => !r).length;
@@ -705,7 +1014,7 @@
             progText.textContent = `Saving ${currentTotal} of ${validRows.length}...`;
             progPercent.textContent = `${perc}%`;
             progBar.style.width = `${perc}%`;
-            
+
             // Yield to main thread to allow DOM and CSS animations to paint smoothly
             await new Promise(r => setTimeout(r, 0));
           }
@@ -727,7 +1036,7 @@
             progArea.classList.add('d-none');
             uploadAttBtn.classList.add('d-none');
             validateAttBtn.classList.remove('d-none');
-            
+
             progBar.style.width = `0%`;
             progBar.classList.replace('bg-success', 'bg-primary');
             progBar.classList.add('progress-bar-animated');
@@ -750,7 +1059,7 @@
 
           if (!courseId) {
             tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-3">Select a course</td></tr>';
-            ['stat-lectures','stat-avg-att','stat-below75','stat-total-students'].forEach(id => document.getElementById(id).textContent = '—');
+            ['stat-lectures', 'stat-avg-att', 'stat-below75', 'stat-total-students'].forEach(id => document.getElementById(id).textContent = '—');
             return;
           }
 
@@ -790,7 +1099,7 @@
           const range = document.getElementById('filter-range').value;
           const search = document.getElementById('search-student').value.toLowerCase().trim();
           const dept = document.getElementById('filter-department').value;
-          
+
           let filtered = [...overviewData];
 
           if (range === '75') filtered = filtered.filter(s => s.percentage < 75 && s.total > 0);
@@ -799,27 +1108,27 @@
           if (dept) filtered = filtered.filter(s => s.department === dept);
 
           if (search) {
-            filtered = filtered.filter(s => 
-              s.name.toLowerCase().includes(search) || 
-              (s.rollNo||'').toLowerCase().includes(search) || 
-              (s.urn||'').toLowerCase().includes(search) ||
-              (s.department||'').toLowerCase().includes(search)
+            filtered = filtered.filter(s =>
+              s.name.toLowerCase().includes(search) ||
+              (s.rollNo || '').toLowerCase().includes(search) ||
+              (s.urn || '').toLowerCase().includes(search) ||
+              (s.department || '').toLowerCase().includes(search)
             );
           }
 
           const tbody = document.getElementById('records-tbody');
-          const pageControls = document.getElementById('overview-pagination') || (function() {
-             const div = document.createElement('div');
-             div.id = 'overview-pagination';
-             div.className = 'd-flex justify-content-between my-3 px-3';
-             tbody.parentElement.parentElement.appendChild(div);
-             return div;
+          const pageControls = document.getElementById('overview-pagination') || (function () {
+            const div = document.createElement('div');
+            div.id = 'overview-pagination';
+            div.className = 'd-flex justify-content-between my-3 px-3';
+            tbody.parentElement.parentElement.appendChild(div);
+            return div;
           })();
 
-          if (filtered.length === 0) { 
-             tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-3">No students match</td></tr>'; 
-             pageControls.innerHTML = '';
-             return; 
+          if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-3">No students match</td></tr>';
+            pageControls.innerHTML = '';
+            return;
           }
 
           const totalPages = Math.ceil(filtered.length / overviewPageSize);
@@ -854,9 +1163,9 @@
           `;
 
           const prevBtn = document.getElementById('overview-prev');
-          if(prevBtn) prevBtn.onclick = () => { overviewPage--; renderOverview(); };
+          if (prevBtn) prevBtn.onclick = () => { overviewPage--; renderOverview(); };
           const nextBtn = document.getElementById('overview-next');
-          if(nextBtn) nextBtn.onclick = () => { overviewPage++; renderOverview(); };
+          if (nextBtn) nextBtn.onclick = () => { overviewPage++; renderOverview(); };
         }
 
         filterCourse.addEventListener('change', () => { overviewPage = 1; loadOverview(); });
@@ -915,15 +1224,19 @@
               </tr>`;
             }).join('');
 
-            // Edit buttons — click loads that date in Mark tab
+            // Edit buttons — click loads that month in Matrix tab
             tbody.querySelectorAll('.edit-att-btn').forEach(btn => {
               btn.addEventListener('click', () => {
+                const clickDate = btn.dataset.date;
+                const clickMonth = clickDate.substring(0, 7); // e.g. '2026-03'
+
                 document.getElementById('att-course').value = courseId;
-                document.getElementById('att-date').value = btn.dataset.date;
-                document.getElementById('load-students-btn').disabled = false;
+                document.getElementById('att-month').value = clickMonth;
+                document.getElementById('load-matrix-btn').disabled = false;
+
                 // Switch to Mark tab
                 document.querySelector('[data-tab="mark"]').click();
-                document.getElementById('load-students-btn').click();
+                document.getElementById('load-matrix-btn').click();
               });
             });
 
@@ -951,8 +1264,88 @@
           }
         }
 
-        historyCourse.addEventListener('change', loadHistory);
+        historyCourse.addEventListener('change', () => {
+          document.getElementById('export-history-btn').disabled = !historyCourse.value;
+          loadHistory();
+        });
         historyMonth.addEventListener('change', loadHistory);
+
+        // ── Export History Data Logic (Excel) ──
+        document.getElementById('export-history-btn').addEventListener('click', async (e) => {
+          const courseId = historyCourse.value;
+          const month = historyMonth.value;
+
+          if (!courseId) {
+            showToast('Please select a course to export', 'warning');
+            return;
+          }
+
+          const btn = e.target.closest('button');
+          const originalHtml = btn.innerHTML;
+          btn.disabled = true;
+          btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Exporting...';
+
+          try {
+            // Get attendance records
+            let records = await AttendanceService.getByCourse(courseId);
+
+            // Filter by month if selected
+            if (month) {
+              records = records.filter(r => r.date && r.date.startsWith(month));
+            }
+
+            if (records.length === 0) {
+              showToast('No attendance records found to export.', 'warning');
+              btn.disabled = false;
+              btn.innerHTML = originalHtml;
+              return;
+            }
+
+            // Get enrolled students to enrich data with roll no and department
+            const enrollments = await EnrollmentService.getByCourse(courseId);
+            const studentProfiles = (await Promise.all(
+              enrollments.map(async e => await UserService.get(e.studentId))
+            )).filter(Boolean);
+
+            const profileMap = {};
+            studentProfiles.forEach(s => {
+              profileMap[s.uid] = s;
+            });
+
+            // Map to Excel format
+            const exportData = records.sort((a, b) => b.date.localeCompare(a.date)).map(r => {
+              const student = profileMap[r.studentId] || {};
+              return {
+                "Lecture Date": r.date || '—',
+                "URN": student.urn || r.urn || '—',
+                "Student Name": r.studentName || student.name || '—',
+                "Roll No": student.rollNo || '—',
+                "Department": student.department || '—',
+                "Status": r.status ? r.status.toUpperCase() : '—'
+              };
+            });
+
+            // Make sure the course title is known for the filename
+            const courseTitleText = historyCourse.options[historyCourse.selectedIndex].text;
+            const safeCourseTitle = courseTitleText.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            const dateStr = month ? month : new Date().toISOString().split('T')[0];
+
+            // Trigger File Download
+            const worksheet = XLSX.utils.json_to_sheet(exportData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance_Backup");
+
+            XLSX.writeFile(workbook, `Attendance_${safeCourseTitle}_${dateStr}.xlsx`);
+
+            showToast('Attendance Data Exported Successfully', 'success');
+          } catch (error) {
+            console.error('Export Failed:', error);
+            showToast('Failed to export data. ' + (error.message || ''), 'error');
+          }
+
+          btn.disabled = false;
+          btn.innerHTML = originalHtml;
+        });
 
         // ═══ TAB 4: DEFAULTER REPORT ═══
         const reportCourse = document.getElementById('report-course');
@@ -1017,7 +1410,7 @@
             const defaulters = studentStats.filter(s => s.total > 0 && s.percentage < 75);
 
             // Department-wise stats
-            const departments = ['AERO','CSE','CIVIL','MECH','EE','FOOD','AIDS','CSE (IOT)'];
+            const departments = ['AERO', 'CSE', 'CIVIL', 'MECH', 'EE', 'FOOD', 'AIDS', 'CSE (IOT)'];
             const deptStats = {};
             departments.forEach(dept => {
               const deptStudents = studentStats.filter(s => s.department === dept);
@@ -1030,17 +1423,17 @@
             let monthYearStr = 'All Time';
             if (selectedMonth) {
               const [y, m] = selectedMonth.split('-');
-              const dt = new Date(parseInt(y), parseInt(m)-1, 1);
+              const dt = new Date(parseInt(y), parseInt(m) - 1, 1);
               monthYearStr = dt.toLocaleString('default', { month: 'long', year: 'numeric' });
-              periodStr = `${lectureDates[0]} to ${lectureDates[lectureDates.length-1]}`;
+              periodStr = `${lectureDates[0]} to ${lectureDates[lectureDates.length - 1]}`;
             } else if (lectureDates.length > 0) {
-              periodStr = `${lectureDates[0]} to ${lectureDates[lectureDates.length-1]}`;
+              periodStr = `${lectureDates[0]} to ${lectureDates[lectureDates.length - 1]}`;
             }
 
             // Store data and open report
             const reportData = {
               collegeName: 'Annasaheb Dange College of Engineering & Technology, Ashta',
-              academicYear: `${now.getFullYear()-1}-${now.getFullYear()}`,
+              academicYear: `${now.getFullYear() - 1}-${now.getFullYear()}`,
               courseCode: course.code || '—',
               courseTitle: course.title || '—',
               teacherName: userData.name || '—',
@@ -1049,7 +1442,7 @@
               totalLectures,
               departments,
               deptStats,
-              defaulters: defaulters.sort((a,b) => a.department.localeCompare(b.department) || a.name.localeCompare(b.name)),
+              defaulters: defaulters.sort((a, b) => a.department.localeCompare(b.department) || a.name.localeCompare(b.name)),
               totalStudents: studentStats.length,
               generatedDate: new Date().toLocaleDateString('en-IN')
             };
@@ -1118,4 +1511,5 @@
     } catch (e) { console.error(e); }
   </script>
 </body>
+
 </html>

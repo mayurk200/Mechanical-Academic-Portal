@@ -1,13 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard — Mechanical Academic Portal</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+  <link rel="dns-prefetch" href="https://www.gstatic.com">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css">
 </head>
+
 <body>
   <aside class="sidebar" id="sidebar"></aside>
 
@@ -57,19 +63,20 @@
             </div>
           </div>
         </div>
-        <div class="col-md-3 col-sm-6">
-          <div class="card stat-card bg-primary text-white h-100 shadow-sm border-0">
+          <div class="card stat-card shadow-sm border-0">
             <div class="card-body">
-              <h6 class="card-title text-white-50"><i class="bi bi-calendar-check me-2"></i>Lectures</h6>
-              <h2 class="display-5 fw-bold mb-0" id="stat-lectures"><span class="spinner-border spinner-border-sm"></span></h2>
+              <h6 class="card-title text-muted"><i class="bi bi-calendar-check me-2"></i>Lectures</h6>
+              <h2 class="display-5 fw-bold mb-0" id="stat-lectures"><span
+                  class="spinner-border spinner-border-sm"></span></h2>
             </div>
           </div>
         </div>
         <div class="col-md-3 col-sm-6">
-          <div class="card stat-card bg-danger text-white h-100 shadow-sm border-0">
+          <div class="card stat-card shadow-sm border-0">
             <div class="card-body">
-              <h6 class="card-title text-white-50"><i class="bi bi-exclamation-octagon me-2"></i>Low Attendance (<75%)</h6>
-              <h2 class="display-5 fw-bold mb-0" id="stat-low-attendance"><span class="spinner-border spinner-border-sm"></span></h2>
+              <h6 class="card-title text-muted"><i class="bi bi-exclamation-octagon me-2"></i>Low Attendance (<75%)</h6>
+                  <h2 class="display-5 fw-bold mb-0" id="stat-low-attendance"><span
+                      class="spinner-border spinner-border-sm"></span></h2>
             </div>
           </div>
         </div>
@@ -77,14 +84,23 @@
 
       <!-- Quick Actions -->
       <div class="card shadow-sm mb-4">
-        <div class="card-header bg-white"><h6 class="mb-0"><i class="bi bi-lightning me-2"></i>Quick Actions</h6></div>
+        <div class="card-header bg-white">
+          <h6 class="mb-0"><i class="bi bi-lightning me-2"></i>Quick Actions</h6>
+        </div>
         <div class="card-body d-flex flex-wrap gap-2">
           <a href="courses.html" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle me-1"></i>Create Course</a>
-          <a href="test-page.html" class="btn btn-success btn-sm"><i class="bi bi-pencil-square me-1"></i>Manage Tests</a>
-          <a href="assignments.html" class="btn btn-info btn-sm text-white"><i class="bi bi-clipboard-check me-1"></i>Assignments</a>
-          <a href="attendance.html" class="btn btn-warning btn-sm"><i class="bi bi-calendar-check me-1"></i>Attendance</a>
-          <a href="analytics.html" class="btn btn-outline-secondary btn-sm"><i class="bi bi-bar-chart me-1"></i>Analytics</a>
-          <button id="download-snapshot-btn" class="btn btn-dark btn-sm ms-auto"><i class="bi bi-cloud-download me-1"></i>Download Snapshot</button>
+          <a href="test-page.html" class="btn btn-success btn-sm"><i class="bi bi-pencil-square me-1"></i>Manage
+            Tests</a>
+          <a href="assignments.html" class="btn btn-info btn-sm text-white"><i
+              class="bi bi-clipboard-check me-1"></i>Assignments</a>
+          <a href="attendance.html" class="btn btn-warning btn-sm"><i
+              class="bi bi-calendar-check me-1"></i>Attendance</a>
+          <a href="analytics.html" class="btn btn-outline-secondary btn-sm"><i
+              class="bi bi-bar-chart me-1"></i>Analytics</a>
+          <a href="admin-users.html?action=add-admin" class="btn btn-outline-danger btn-sm"><i
+              class="bi bi-person-plus me-1"></i>Create Admin</a>
+          <button id="download-snapshot-btn" class="btn btn-outline-secondary btn-sm ms-auto"><i
+              class="bi bi-cloud-download me-1"></i>Download Snapshot</button>
         </div>
       </div>
 
@@ -98,9 +114,17 @@
             </div>
             <div class="card-body p-0" style="max-height:400px;overflow-y:auto;">
               <table class="table table-striped table-hover mb-0">
-                <thead class="table-light"><tr><th>Name</th><th>Email</th><th>Role</th></tr></thead>
+                <thead class="table-light">
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                  </tr>
+                </thead>
                 <tbody id="users-table">
-                  <tr><td colspan="3" class="text-center text-muted py-4">Loading...</td></tr>
+                  <tr>
+                    <td colspan="3" class="text-center text-muted py-4">Loading...</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -116,9 +140,17 @@
             </div>
             <div class="card-body p-0" style="max-height:400px;overflow-y:auto;">
               <table class="table table-striped table-hover mb-0">
-                <thead class="table-light"><tr><th>Title</th><th>Teacher</th><th>Code</th></tr></thead>
+                <thead class="table-light">
+                  <tr>
+                    <th>Title</th>
+                    <th>Teacher</th>
+                    <th>Code</th>
+                  </tr>
+                </thead>
                 <tbody id="courses-table">
-                  <tr><td colspan="3" class="text-center text-muted py-4">Loading...</td></tr>
+                  <tr>
+                    <td colspan="3" class="text-center text-muted py-4">Loading...</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -132,13 +164,23 @@
           <div class="card shadow-sm mb-4">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
               <h6 class="mb-0"><i class="bi bi-activity text-danger me-2"></i>Recent System Activity</h6>
-              <button class="btn btn-sm btn-outline-secondary" onclick="location.reload()"><i class="bi bi-arrow-clockwise"></i></button>
+              <button class="btn btn-sm btn-outline-secondary" onclick="location.reload()"><i
+                  class="bi bi-arrow-clockwise"></i></button>
             </div>
             <div class="card-body p-0" style="max-height:300px;overflow-y:auto;">
               <table class="table table-striped table-hover mb-0 small">
-                <thead class="table-light"><tr><th>Time</th><th>Action</th><th>Details</th><th>User ID</th></tr></thead>
+                <thead class="table-light">
+                  <tr>
+                    <th>Time</th>
+                    <th>Action</th>
+                    <th>Details</th>
+                    <th>User ID</th>
+                  </tr>
+                </thead>
                 <tbody id="activity-logs-table">
-                  <tr><td colspan="4" class="text-center text-muted py-4">Loading logs...</td></tr>
+                  <tr>
+                    <td colspan="4" class="text-center text-muted py-4">Loading logs...</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -148,6 +190,10 @@
     </div>
   </div>
 
+  <footer class="text-center py-3 mt-4 text-muted small border-top">
+    System Version: <span id="version"></span>
+  </footer>
+  <script src="../js/version.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script type="module">
     import { initApp } from '../assets/js/core/router.js';
@@ -177,15 +223,15 @@
       coursesTable.innerHTML = stats.courses.length === 0
         ? '<tr><td colspan="3" class="text-center text-muted py-4">No courses</td></tr>'
         : stats.courses.map(c => `<tr><td>${c.title || '—'}</td><td class="text-muted">${c.teacherName || '—'}</td><td><span class="badge bg-secondary">${c.code || '—'}</span></td></tr>`).join('');
-        
+
       // Load Activity Logs
       const logsTable = document.getElementById('activity-logs-table');
       const recentLogs = await ActivityLogService.getRecent(15);
       logsTable.innerHTML = recentLogs.length === 0
         ? '<tr><td colspan="4" class="text-center text-muted py-4">No recent activity</td></tr>'
         : recentLogs.map(l => {
-           let timeStr = l.timestamp ? formatDate(l.timestamp) : '—';
-           return `<tr>
+          let timeStr = l.timestamp ? formatDate(l.timestamp) : '—';
+          return `<tr>
              <td class="text-muted">${timeStr}</td>
              <td class="fw-medium">${l.action}</td>
              <td>${l.details || '—'}</td>
@@ -196,14 +242,23 @@
       // Wire up Download Snapshot button
       const downloadBtn = document.getElementById('download-snapshot-btn');
       downloadBtn.addEventListener('click', async () => {
-         await withLoadingButton(downloadBtn, async () => {
-            await exportDatabaseSnapshot();
-            showToast('Snapshot exported successfully!', 'success');
-            await ActivityLogService.log('Admin', 'DOWNLOAD_SNAPSHOT', 'Exported full JSON database snapshot');
-         }, '<i class="bi bi-cloud-download me-1"></i>Download Snapshot');
+        await withLoadingButton(downloadBtn, async () => {
+          await exportDatabaseSnapshot();
+          showToast('Snapshot exported successfully!', 'success');
+          await ActivityLogService.log('Admin', 'DOWNLOAD_SNAPSHOT', 'Exported full JSON database snapshot');
+        }, '<i class="bi bi-cloud-download me-1"></i>Download Snapshot');
       });
+
+      // Auto-cleanup: delete activity logs older than 7 days
+      try {
+        const deletedCount = await ActivityLogService.deleteOlderThan(7);
+        if (deletedCount > 0) {
+          console.log(`Auto-cleaned ${deletedCount} activity logs older than 7 days.`);
+        }
+      } catch (e) { console.warn('Log cleanup skipped:', e); }
 
     } catch (e) { console.error(e); }
   </script>
 </body>
+
 </html>

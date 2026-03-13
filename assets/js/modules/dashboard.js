@@ -11,8 +11,8 @@ import {
 
 export async function loadAdminStats() {
   try {
-    // Phase 2: Massive Performance Optimization.
-    // Replace fetching thousands of documents with getCountFromServer()
+    // Performance: Use getCountFromServer for counts, fetch only small result sets
+    // REMOVED: Full attendance collection scan — now uses student aggregate counters
     const [
       usersCountSnap,
       coursesCountSnap,
@@ -20,10 +20,9 @@ export async function loadAdminStats() {
       enrollmentsCountSnap,
       recentUsersSnap,
       recentCoursesSnap,
-      studentCountSnap,
       teacherCountSnap,
       attendanceCountSnap,
-      attendanceSnap
+      studentsSnap
     ] = await Promise.all([
       getCountFromServer(collection(db, 'users')),
       getCountFromServer(collection(db, 'courses')),
@@ -31,47 +30,38 @@ export async function loadAdminStats() {
       getCountFromServer(collection(db, 'enrollments')),
       getDocs(query(collection(db, 'users'), orderBy('createdAt', 'desc'), limit(10))),
       getDocs(query(collection(db, 'courses'), orderBy('createdAt', 'desc'), limit(10))),
-      getCountFromServer(query(collection(db, 'users'), where('role', '==', 'student'))),
       getCountFromServer(query(collection(db, 'users'), where('role', '==', 'teacher'))),
       getCountFromServer(collection(db, 'attendance')),
-      getDocs(collection(db, 'attendance')) // Need records to calculate < 75%
+      getDocs(query(collection(db, 'users'), where('role', '==', 'student')))
     ]);
 
-    // Calculate students below 75% attendance globally
-    const attendanceRecords = attendanceSnap.docs.map(d => d.data());
-    const studentStats = {};
-    
-    attendanceRecords.forEach(record => {
-       if (record.records) {
-          Object.entries(record.records).forEach(([studentId, status]) => {
-             if (!studentStats[studentId]) studentStats[studentId] = { present: 0, total: 0 };
-             studentStats[studentId].total++;
-             if (status === 'Present') studentStats[studentId].present++;
-          });
-       }
-    });
-
+    // Calculate low attendance using aggregate counters already stored on student docs
+    // This avoids fetching thousands of attendance records
     let lowAttendanceCount = 0;
-    Object.values(studentStats).forEach(stat => {
-       const percentage = (stat.present / stat.total) * 100;
-       if (percentage < 75) lowAttendanceCount++;
+    const studentDocs = studentsSnap.docs;
+    studentDocs.forEach(d => {
+      const data = d.data();
+      if (typeof data.aggTotalClasses === 'number' && data.aggTotalClasses > 0) {
+        const pct = ((data.aggTotalPresent || 0) / data.aggTotalClasses) * 100;
+        if (pct < 75) lowAttendanceCount++;
+      }
     });
 
     return {
-      totalStudents: studentCountSnap.data().count,
+      totalStudents: studentDocs.length,
       totalTeachers: teacherCountSnap.data().count,
       totalCourses: coursesCountSnap.data().count,
       totalTests: testsCountSnap.data().count,
       totalEnrollments: enrollmentsCountSnap.data().count,
       totalUsers: usersCountSnap.data().count,
       totalLectures: attendanceCountSnap.data().count,
-      lowAttendanceCount: lowAttendanceCount,
+      lowAttendanceCount,
       users: recentUsersSnap.docs.map(d => ({ uid: d.id, ...d.data() })),
       courses: recentCoursesSnap.docs.map(d => ({ id: d.id, ...d.data() }))
     };
   } catch (err) {
     console.error('loadAdminStats error:', err);
-    return { totalStudents: 0, totalTeachers: 0, totalCourses: 0, totalTests: 0, totalEnrollments: 0, totalUsers: 0, users: [], courses: [] };
+    return { totalStudents: 0, totalTeachers: 0, totalCourses: 0, totalTests: 0, totalEnrollments: 0, totalUsers: 0, totalLectures: 0, lowAttendanceCount: 0, users: [], courses: [] };
   }
 }
 

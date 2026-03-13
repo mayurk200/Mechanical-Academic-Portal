@@ -448,3 +448,19 @@ body {
   transform: translateY(-4px);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
 }
+
+/* ── Password Prompt Modal ──────────── */
+#lms-password-modal .input-group {
+  border-radius: 8px;
+  overflow: hidden;
+}
+#lms-password-modal .input-group .form-control:focus {
+  box-shadow: none;
+  border-color: #dc3545;
+}
+#lms-password-modal .input-group-text {
+  border-color: #dee2e6;
+}
+#lms-password-modal .lms-confirm-header h5 {
+  color: #dc3545;
+}

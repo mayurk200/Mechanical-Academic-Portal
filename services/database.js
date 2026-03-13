@@ -69,7 +69,7 @@ export const UserService = {
 
     await deleteDoc(doc(db, 'users', uid));
     _userCache.delete(uid);
-    
+
     ActivityLogService.log('System', 'DELETE_USER', `Deleted ${userDoc.role}: ${userDoc.name || uid}`).catch(console.error);
   },
 
@@ -133,9 +133,9 @@ export const CourseService = {
     if (_courseCache.has(id)) return _courseCache.get(id);
     const snap = await getDoc(doc(db, 'courses', id));
     if (snap.exists()) {
-       const data = { id: snap.id, ...snap.data() };
-       _courseCache.set(id, data);
-       return data;
+      const data = { id: snap.id, ...snap.data() };
+      _courseCache.set(id, data);
+      return data;
     }
     return null;
   },
@@ -167,11 +167,11 @@ export const CourseService = {
   // Cascade delete: course + enrollments + tests + results + attendance + assignments + question bank
   async cascadeDelete(id) {
     const courseDoc = await this.get(id);
-    
+
     // 1. Delete enrollments for this course
     const enrollSnap = await getDocs(query(collection(db, 'enrollments'), where('courseId', '==', id)));
     for (const d of enrollSnap.docs) await deleteDoc(d.ref);
-    
+
     // 2. Delete tests and results
     const testSnap = await getDocs(query(collection(db, 'tests'), where('courseId', '==', id)));
     for (const d of testSnap.docs) {
@@ -187,23 +187,23 @@ export const CourseService = {
     // 4. Delete assignments and submissions
     const assignSnap = await getDocs(query(collection(db, 'assignments'), where('courseId', '==', id)));
     for (const d of assignSnap.docs) {
-       const subSnap = await getDocs(query(collection(db, 'submissions'), where('assignmentId', '==', d.id)));
-       for (const s of subSnap.docs) await deleteDoc(s.ref);
-       await deleteDoc(d.ref);
+      const subSnap = await getDocs(query(collection(db, 'submissions'), where('assignmentId', '==', d.id)));
+      for (const s of subSnap.docs) await deleteDoc(s.ref);
+      await deleteDoc(d.ref);
     }
 
     // 5. Delete question bank items
     const qSnap = await getDocs(query(collection(db, 'question_bank'), where('courseId', '==', id)));
     for (const d of qSnap.docs) await deleteDoc(d.ref);
-    
+
     // 6. Delete sections
     const secSnap = await getDocs(query(collection(db, 'sections'), where('courseId', '==', id)));
     for (const d of secSnap.docs) await deleteDoc(d.ref);
-    
+
     // 7. Delete course
     await deleteDoc(doc(db, 'courses', id));
     _courseCache.delete(id);
-    
+
     if (courseDoc) {
       ActivityLogService.log('System', 'CASCADE_DELETE_COURSE', `Deleted course and all dependencies: ${courseDoc.title}`).catch(console.error);
     }
@@ -273,11 +273,11 @@ export const EnrollmentService = {
       teacherId,
       assignedDate: serverTimestamp()
     });
-    
+
     // Invalidate enrollment caches
     _enrollmentCache.delete(courseId);
     _enrollCourseCache.delete(studentId);
-    
+
     return result;
   },
 
@@ -303,7 +303,7 @@ export const EnrollmentService = {
     ));
     const promises = snap.docs.map(d => deleteDoc(d.ref));
     await Promise.all(promises);
-    
+
     _enrollmentCache.delete(courseId);
     _enrollCourseCache.delete(studentId);
   },
@@ -625,15 +625,15 @@ export const AttendanceService = {
       where('studentId', '==', data.studentId),
       where('date', '==', data.date)
     ));
-    
+
     let previousStatus = null;
     let oldDocsCount = 0;
-    
+
     // 2. Clean up any accidental duplicates for the same day (should be 1)
-    for (const d of existing.docs) { 
-       previousStatus = d.data().status;
-       await deleteDoc(d.ref); 
-       oldDocsCount++;
+    for (const d of existing.docs) {
+      previousStatus = d.data().status;
+      await deleteDoc(d.ref);
+      oldDocsCount++;
     }
 
     // 3. Insert new official record
@@ -646,36 +646,69 @@ export const AttendanceService = {
       markedBy: data.markedBy,
       createdAt: serverTimestamp()
     });
-    
+
     // 4. Update the Student Document with Fast-Aggregate Counters
     // By keeping a running tally on the student object, we never have to query 1000s of attendance documents again just to calc a percentage.
     try {
-       const userRef = doc(db, 'users', data.studentId);
-       let classIncrement = 0;
-       let presentIncrement = 0;
-       
-       if(oldDocsCount === 0) {
-          // New entirely
-          classIncrement = 1;
-          if(data.status === 'present') presentIncrement = 1;
-       } else {
-          // Updating an existing record
-          if(previousStatus === 'absent' && data.status === 'present') presentIncrement = 1;
-          if(previousStatus === 'present' && data.status === 'absent') presentIncrement = -1;
-       }
-       
-       if(classIncrement !== 0 || presentIncrement !== 0) {
-          const updates = {};
-          if(classIncrement !== 0) updates.aggTotalClasses = increment(classIncrement);
-          if(presentIncrement !== 0) updates.aggTotalPresent = increment(presentIncrement);
-          await updateDoc(userRef, updates);
-          _userCache.delete(data.studentId); // flush cache
-       }
-    } catch(e) {
-       console.error("Failed to update student aggregate logic:", e);
+      const userRef = doc(db, 'users', data.studentId);
+      let classIncrement = 0;
+      let presentIncrement = 0;
+
+      if (oldDocsCount === 0) {
+        // New entirely
+        classIncrement = 1;
+        if (data.status === 'present') presentIncrement = 1;
+      } else {
+        // Updating an existing record
+        if (previousStatus === 'absent' && data.status === 'present') presentIncrement = 1;
+        if (previousStatus === 'present' && data.status === 'absent') presentIncrement = -1;
+      }
+
+      if (classIncrement !== 0 || presentIncrement !== 0) {
+        const updates = {};
+        if (classIncrement !== 0) updates.aggTotalClasses = increment(classIncrement);
+        if (presentIncrement !== 0) updates.aggTotalPresent = increment(presentIncrement);
+        await updateDoc(userRef, updates);
+        _userCache.delete(data.studentId); // flush cache
+      }
+    } catch (e) {
+      console.error("Failed to update student aggregate logic:", e);
     }
-    
+
     return result;
+  },
+
+  async unmark(courseId, studentId, date) {
+    const existing = await getDocs(query(
+      collection(db, 'attendance'),
+      where('courseId', '==', courseId),
+      where('studentId', '==', studentId),
+      where('date', '==', date)
+    ));
+
+    let previousStatus = null;
+    let oldDocsCount = 0;
+
+    for (const d of existing.docs) {
+      previousStatus = d.data().status;
+      await deleteDoc(d.ref);
+      oldDocsCount++;
+    }
+
+    if (oldDocsCount > 0) {
+      try {
+        const userRef = doc(db, 'users', studentId);
+        let presentDecrement = previousStatus === 'present' ? -1 : 0;
+        await updateDoc(userRef, {
+          aggTotalClasses: increment(-1),
+          aggTotalPresent: increment(presentDecrement)
+        });
+        _userCache.delete(studentId);
+      } catch (e) {
+        console.error("Failed to update student aggregate on unmark:", e);
+      }
+    }
+    return true;
   },
 
   // Fixed: removed orderBy to avoid requiring composite index — sort client-side
@@ -724,19 +757,19 @@ export const AttendanceService = {
       const total = records.length;
       return { percentage: Math.round((present / total) * 100), present, total };
     }
-    
+
     // Global percentage lookup: O(1) read using the new aggregate counters
     const student = await UserService.get(studentId);
-    if(student && typeof student.aggTotalClasses === 'number') {
-       const total = student.aggTotalClasses;
-       const present = student.aggTotalPresent || 0;
-       return { 
-          percentage: total > 0 ? Math.round((present / total) * 100) : 0, 
-          present, 
-          total 
-       };
+    if (student && typeof student.aggTotalClasses === 'number') {
+      const total = student.aggTotalClasses;
+      const present = student.aggTotalPresent || 0;
+      return {
+        percentage: total > 0 ? Math.round((present / total) * 100) : 0,
+        present,
+        total
+      };
     }
-    
+
     // Fallback: If legacy student from before optimizations
     const q = query(collection(db, 'attendance'), where('studentId', '==', studentId));
     const snap = await getDocs(q);
@@ -844,5 +877,30 @@ export const ActivityLogService = {
       limit(limitCount)
     ));
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  },
+
+  async getAll() {
+    const snap = await getDocs(query(
+      collection(db, 'activity_logs'),
+      orderBy('timestamp', 'desc')
+    ));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  },
+
+  async deleteOlderThan(days = 7) {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+    const cutoffTimestamp = Timestamp.fromDate(cutoff);
+
+    const snap = await getDocs(query(
+      collection(db, 'activity_logs'),
+      where('timestamp', '<', cutoffTimestamp)
+    ));
+
+    if (snap.empty) return 0;
+
+    const deletePromises = snap.docs.map(d => deleteDoc(d.ref));
+    await Promise.all(deletePromises);
+    return snap.size;
   }
 };

@@ -37,7 +37,10 @@
             <!-- Questions Builder -->
             <h6>Questions</h6>
             <div id="questions-container"></div>
-            <button type="button" class="btn btn-outline-primary btn-sm mb-3" id="add-question-btn"><i class="bi bi-plus me-1"></i>Add Question</button>
+            <div class="d-flex gap-2 mb-3">
+              <button type="button" class="btn btn-outline-primary btn-sm" id="add-question-btn"><i class="bi bi-plus me-1"></i>Add Question</button>
+              <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#bulkQuestionModal"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Bulk Upload Questions</button>
+            </div>
 
             <div class="mb-3 form-check">
               <input type="checkbox" class="form-check-input" id="test-show-results">
@@ -105,7 +108,56 @@
     </div>
   </div>
 
+  <!-- Bulk Upload Questions Modal -->
+  <div class="modal fade" id="bulkQuestionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-light">
+          <h5 class="modal-title"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Bulk Upload Questions</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-info py-2 d-flex justify-content-between align-items-center mb-3">
+            <span class="small"><i class="bi bi-info-circle me-1"></i>Upload an Excel or CSV with columns: <strong>Question, Type, Option A, Option B, Option C, Option D, Correct Answer, Marks</strong></span>
+            <button class="btn btn-sm btn-outline-info bg-white" id="download-question-template-btn">
+              <i class="bi bi-download me-1"></i>Download Template
+            </button>
+          </div>
+
+          <div class="mb-3">
+            <input type="file" id="bulk-question-file" class="form-control" accept=".xlsx,.xls,.csv">
+          </div>
+
+          <!-- Preview -->
+          <div id="bulk-q-preview" class="d-none">
+            <h6 class="border-bottom pb-2 mb-3">Validation Preview</h6>
+            <div class="d-flex gap-4 mb-3">
+              <div><span class="text-muted small">Total:</span> <strong id="bq-total">0</strong></div>
+              <div><span class="text-success small">Valid:</span> <strong id="bq-valid">0</strong></div>
+              <div><span class="text-danger small">Errors:</span> <strong id="bq-errors">0</strong></div>
+            </div>
+            <div class="table-responsive" style="max-height: 300px;">
+              <table class="table table-sm table-bordered text-nowrap mb-0">
+                <thead class="table-light sticky-top">
+                  <tr><th>Row</th><th>Status</th><th>Question</th><th>Type</th><th>Options</th><th>Correct</th><th>Marks</th></tr>
+                </thead>
+                <tbody id="bq-preview-tbody" class="small"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-secondary" id="bq-validate-btn" disabled>Validate File</button>
+          <button type="button" class="btn btn-primary d-none" id="bq-import-btn"><i class="bi bi-plus-circle me-1"></i>Import Questions</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- SheetJS for Excel/CSV Parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
   <script type="module">
     import { initApp } from '../assets/js/core/router.js';
     import { TestService, CourseService, ResultService, EnrollmentService } from '../services/database.js';
@@ -370,6 +422,182 @@
             marks: parseInt(card.querySelector('.q-marks').value) || 1
           };
         }).filter(q => q.question);
+      }
+
+      // ── Bulk Question Upload Logic ──
+      if (isTeacher) {
+        let parsedQuestions = [];
+        const validTypes = ['mcq', 'truefalse', 'true/false', 'short', 'short answer'];
+
+        // Download Template
+        document.getElementById('download-question-template-btn').addEventListener('click', () => {
+          const headers = ['Question', 'Type', 'Option A', 'Option B', 'Option C', 'Option D', 'Correct Answer', 'Marks'];
+          const ex1 = ['What is 2+2?', 'MCQ', '3', '4', '5', '6', '1', '2'];
+          const ex2 = ['The sun is a star', 'True/False', '', '', '', '', 'true', '1'];
+          const ex3 = ['Capital of India?', 'Short Answer', '', '', '', '', 'New Delhi', '1'];
+          const ws = XLSX.utils.aoa_to_sheet([headers, ex1, ex2, ex3]);
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, 'Questions_Template');
+          XLSX.writeFile(wb, 'Question_Upload_Template.xlsx');
+        });
+
+        const bqFile = document.getElementById('bulk-question-file');
+        const bqValidateBtn = document.getElementById('bq-validate-btn');
+        const bqImportBtn = document.getElementById('bq-import-btn');
+        const bqPreview = document.getElementById('bulk-q-preview');
+
+        bqFile.addEventListener('change', () => {
+          bqValidateBtn.disabled = !bqFile.files.length;
+          bqPreview.classList.add('d-none');
+          bqImportBtn.classList.add('d-none');
+          bqValidateBtn.classList.remove('d-none');
+        });
+
+        // Validate
+        bqValidateBtn.addEventListener('click', async () => {
+          const file = bqFile.files[0];
+          if (!file) return;
+
+          bqValidateBtn.disabled = true;
+          bqValidateBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Validating...';
+
+          try {
+            const data = await file.arrayBuffer();
+            const workbook = XLSX.read(data);
+            const ws = workbook.Sheets[workbook.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+            if (rows.length === 0) throw new Error('File is empty');
+
+            // Check required columns
+            const firstRow = rows[0];
+            const requiredCols = ['Question', 'Type', 'Correct Answer'];
+            const missingCols = requiredCols.filter(c => !(c in firstRow));
+            if (missingCols.length > 0) {
+              throw new Error('Missing columns: ' + missingCols.join(', ') + '. Check the template.');
+            }
+
+            let validCount = 0, errorCount = 0;
+            parsedQuestions = [];
+
+            const tbody = document.getElementById('bq-preview-tbody');
+            let html = '';
+
+            rows.forEach((row, idx) => {
+              const q = (row['Question'] || '').toString().trim();
+              let rawType = (row['Type'] || 'mcq').toString().trim().toLowerCase();
+              const optA = (row['Option A'] || '').toString().trim();
+              const optB = (row['Option B'] || '').toString().trim();
+              const optC = (row['Option C'] || '').toString().trim();
+              const optD = (row['Option D'] || '').toString().trim();
+              const correct = (row['Correct Answer'] || '').toString().trim();
+              const marks = parseInt(row['Marks']) || 1;
+
+              // Normalize type
+              let type = 'mcq';
+              if (rawType === 'truefalse' || rawType === 'true/false' || rawType === 'tf') type = 'trueFalse';
+              else if (rawType === 'short' || rawType === 'short answer') type = 'short';
+              else type = 'mcq';
+
+              let errors = [];
+              if (!q) errors.push('No question text');
+              if (!correct) errors.push('No correct answer');
+              if (type === 'mcq' && (!optA || !optB)) errors.push('MCQ needs at least Option A & B');
+              if (type === 'mcq') {
+                const idx = parseInt(correct);
+                if (isNaN(idx) || idx < 0 || idx > 3) errors.push('MCQ correct answer should be 0-3 (A=0, B=1, C=2, D=3)');
+              }
+              if (type === 'trueFalse' && !['true', 'false'].includes(correct.toLowerCase())) errors.push('True/False answer must be true or false');
+
+              const isValid = errors.length === 0;
+              if (isValid) validCount++; else errorCount++;
+
+              const options = type === 'mcq' ? [optA, optB, optC, optD].filter(o => o) : [];
+              const parsed = { question: q, type, options, correctAnswer: correct, marks, _valid: isValid, _errors: errors.join(', ') };
+              parsedQuestions.push(parsed);
+
+              const statusHtml = isValid
+                ? '<span class="badge bg-success"><i class="bi bi-check"></i> OK</span>'
+                : `<span class="badge bg-danger"><i class="bi bi-x"></i></span><br><small class="text-danger">${escapeHtml(parsed._errors)}</small>`;
+
+              const optDisplay = type === 'mcq' ? options.join(' | ') : (type === 'trueFalse' ? 'True / False' : '—');
+
+              html += `<tr class="${isValid ? '' : 'table-danger'}">
+                <td>${idx + 2}</td>
+                <td>${statusHtml}</td>
+                <td>${escapeHtml(q).substring(0, 50)}${q.length > 50 ? '...' : ''}</td>
+                <td><span class="badge bg-secondary">${type}</span></td>
+                <td>${escapeHtml(optDisplay).substring(0, 40)}</td>
+                <td>${escapeHtml(correct)}</td>
+                <td>${marks}</td>
+              </tr>`;
+            });
+
+            document.getElementById('bq-total').textContent = rows.length;
+            document.getElementById('bq-valid').textContent = validCount;
+            document.getElementById('bq-errors').textContent = errorCount;
+            tbody.innerHTML = html;
+
+            bqPreview.classList.remove('d-none');
+
+            if (validCount > 0) {
+              bqValidateBtn.classList.add('d-none');
+              bqImportBtn.classList.remove('d-none');
+            } else {
+              showToast('No valid questions found. Fix errors and try again.', 'error');
+            }
+          } catch (err) {
+            showToast(err.message || 'Error processing file', 'error');
+          }
+
+          bqValidateBtn.disabled = false;
+          bqValidateBtn.innerHTML = 'Validate File';
+        });
+
+        // Import valid questions into the form
+        bqImportBtn.addEventListener('click', () => {
+          const validQs = parsedQuestions.filter(q => q._valid);
+          if (validQs.length === 0) return;
+
+          validQs.forEach(q => {
+            qCount++;
+            const div = document.createElement('div');
+            div.className = 'card mb-2';
+            div.id = `q-${qCount}`;
+            div.innerHTML = `<div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <strong class="small">Question ${qCount}</strong>
+                <button type="button" class="btn btn-outline-danger btn-sm py-0" onclick="document.getElementById('q-${qCount}').remove()"><i class="bi bi-trash"></i></button>
+              </div>
+              <div class="row g-2 mb-2">
+                <div class="col-md-6"><input type="text" class="form-control q-text" value="${escapeHtml(q.question)}" required></div>
+                <div class="col-md-3"><select class="form-select q-type"><option value="mcq" ${q.type==='mcq'?'selected':''}>MCQ</option><option value="trueFalse" ${q.type==='trueFalse'?'selected':''}>True/False</option><option value="short" ${q.type==='short'?'selected':''}>Short Answer</option></select></div>
+                <div class="col-md-3"><input type="number" class="form-control q-marks" value="${q.marks}" min="1"></div>
+              </div>
+              <div class="q-options" style="${q.type === 'mcq' ? '' : 'display:none'}">
+                <div class="row g-2"><div class="col-6"><input type="text" class="form-control form-control-sm opt" placeholder="Option A" value="${escapeHtml(q.options[0] || '')}"></div><div class="col-6"><input type="text" class="form-control form-control-sm opt" placeholder="Option B" value="${escapeHtml(q.options[1] || '')}"></div></div>
+                <div class="row g-2 mt-1"><div class="col-6"><input type="text" class="form-control form-control-sm opt" placeholder="Option C" value="${escapeHtml(q.options[2] || '')}"></div><div class="col-6"><input type="text" class="form-control form-control-sm opt" placeholder="Option D" value="${escapeHtml(q.options[3] || '')}"></div></div>
+              </div>
+              <div class="mt-2"><input type="text" class="form-control form-control-sm q-answer" placeholder="Correct answer" value="${escapeHtml(q.correctAnswer)}"></div>
+            </div>`;
+            document.getElementById('questions-container').appendChild(div);
+
+            div.querySelector('.q-type').addEventListener('change', function() {
+              div.querySelector('.q-options').style.display = this.value === 'mcq' ? '' : 'none';
+            });
+          });
+
+          closeModal('bulkQuestionModal');
+          showToast(`${validQs.length} question(s) imported successfully!`, 'success');
+
+          // Reset modal state
+          bqFile.value = '';
+          bqPreview.classList.add('d-none');
+          bqImportBtn.classList.add('d-none');
+          bqValidateBtn.classList.remove('d-none');
+          bqValidateBtn.disabled = true;
+          parsedQuestions = [];
+        });
       }
 
     } catch (e) { console.error(e); }

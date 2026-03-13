@@ -9,7 +9,8 @@ import { auth, db } from '../../../config/firebase-config.js';
 import {
   createUserWithEmailAndPassword, signInWithEmailAndPassword,
   signOut, sendPasswordResetEmail, onAuthStateChanged,
-  reauthenticateWithCredential, EmailAuthProvider, updatePassword
+  reauthenticateWithCredential, EmailAuthProvider, updatePassword,
+  signInWithCredential
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { doc, setDoc, getDoc, getDocs, collection, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { LMSLogger, friendlyError } from './utils.js';
@@ -23,42 +24,29 @@ const dashboardMap = {
 
 // ── Login with Email ──────────────────────
 export async function loginUser(email, password) {
-  try {
-    const cred = await signInWithEmailAndPassword(auth, email, password);
-    const userDoc = await getDoc(doc(db, 'users', cred.user.uid));
-    
-    // Auto-provision Super Admin if matches special credentials
-    if (email === 'mayurkudale2006@gmail.com' && password === 'mayur200') {
-      if (!userDoc.exists() || userDoc.data().role !== 'admin') {
-         const adminData = {
-           name: 'Super Admin',
-           email: email,
-           role: 'admin',
-           createdAt: serverTimestamp()
-         };
-         await setDoc(doc(db, 'users', cred.user.uid), adminData, { merge: true });
-         return { uid: cred.user.uid, ...adminData };
-      }
-    }
+  const cred = await signInWithEmailAndPassword(auth, email, password);
+  const userDoc = await getDoc(doc(db, 'users', cred.user.uid));
+  
+  if (!userDoc.exists()) throw new Error('User profile not found');
+  return { uid: cred.user.uid, ...userDoc.data() };
+}
 
-    if (!userDoc.exists()) throw new Error('User profile not found');
-    return { uid: cred.user.uid, ...userDoc.data() };
-  } catch (err) {
-    // If credentials match Super Admin but account doesn't exist yet, create it
-    if (email === 'mayurkudale2006@gmail.com' && password === 'mayur200' && 
-        (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password')) {
-       const cred = await createUserWithEmailAndPassword(auth, email, password);
-       const adminData = {
-         name: 'Super Admin',
-         email: email,
-         role: 'admin',
-         createdAt: serverTimestamp()
-       };
-       await setDoc(doc(db, 'users', cred.user.uid), adminData);
-       return { uid: cred.user.uid, ...adminData };
-    }
-    throw err;
-  }
+// ── Register User (Public) ────────────────
+export async function registerUser(data) {
+  const { email, password, name, role, urn, rollNo } = data;
+  const cred = await createUserWithEmailAndPassword(auth, email, password);
+  
+  const userData = {
+    name: name || '',
+    email: email,
+    role: role || 'student',
+    urn: urn || '',
+    rollNo: rollNo || '',
+    createdAt: serverTimestamp()
+  };
+
+  await setDoc(doc(db, 'users', cred.user.uid), userData);
+  return { uid: cred.user.uid, ...userData };
 }
 
 // ── Login with URN (Student only) ─────────
@@ -88,51 +76,111 @@ export async function resetPassword(email) {
   await sendPasswordResetEmail(auth, email);
 }
 
-// ── Create Student Account (Teacher/Admin only) ───
-// Creates Firebase Auth account + Firestore profile
-export async function createStudentAccount(data, createdByUid) {
+// ── Helper to Get or Create Secondary App ────────────────
+async function getSecondaryAuth() {
+  const { initializeApp, getApps, getApp } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
+  const { getAuth: getAuth2 } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
+
+  const appName = 'SecondaryApp';
+  let secondaryApp;
+  
+  if (getApps().some(a => a.name === appName)) {
+    secondaryApp = getApp(appName);
+  } else {
+    secondaryApp = initializeApp(auth.app.options, appName);
+  }
+  
+  return getAuth2(secondaryApp);
+}
+
+// ── Create Staff Account (Admin only, avoid logout) ──
+export async function createStaffAccount(data, adminUid) {
+  const { email, password, name, role } = data;
+  const secondaryAuth = await getSecondaryAuth();
+  const { createUserWithEmailAndPassword: createUser2, signOut: signOut2 } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
+
+  const cred = await createUser2(secondaryAuth, email, password);
+  const userData = {
+    name,
+    email,
+    role: role || 'teacher',
+    createdBy: adminUid,
+    createdAt: serverTimestamp()
+  };
+  await setDoc(doc(db, 'users', cred.user.uid), userData);
+  await signOut2(secondaryAuth);
+  return { uid: cred.user.uid, ...userData };
+}
+
+// ── Create Student Account (Teacher/Admin, avoid logout) ──
+export async function createStudentAccount(data, creatorUid) {
   const { email, password, name, rollNo, urn, department } = data;
+  const secondaryAuth = await getSecondaryAuth();
+  const { createUserWithEmailAndPassword: createUser2, signOut: signOut2 } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
 
-  if (!email || !password || !name) {
-    throw new Error('Name, email, and password are required');
-  }
-  if (password.length < 6) {
-    throw new Error('Password must be at least 6 characters');
-  }
+  const cred = await createUser2(secondaryAuth, email, password);
+  const userData = {
+    name: name || '',
+    email,
+    role: 'student',
+    rollNo: rollNo || '',
+    urn: urn || '',
+    department: department || '',
+    createdBy: creatorUid,
+    createdAt: serverTimestamp()
+  };
+  await setDoc(doc(db, 'users', cred.user.uid), userData);
+  await signOut2(secondaryAuth);
+  return { uid: cred.user.uid, ...userData };
+}
 
-  // Create account using a secondary Firebase app to avoid signing out the teacher
-  const { initializeApp, deleteApp } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
+// ── Bulk Student Creation Helper (reuses ONE secondary Firebase app) ──
+export async function createBulkStudentHelper(creatorUid) {
+  const { initializeApp, getApps, getApp, deleteApp } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
   const { getAuth: getAuth2, createUserWithEmailAndPassword: createUser2 } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
 
-  // Create a temporary secondary app
-  const secondaryApp = initializeApp(auth.app.options, 'SecondaryApp_' + Date.now());
+  const appName = 'BulkUploadApp';
+  let secondaryApp;
+  
+  if (getApps().some(a => a.name === appName)) {
+    secondaryApp = getApp(appName);
+  } else {
+    secondaryApp = initializeApp(auth.app.options, appName);
+  }
+  
   const secondaryAuth = getAuth2(secondaryApp);
 
-  try {
-    const cred = await createUser2(secondaryAuth, email, password);
-
-    // Create Firestore profile
-    await setDoc(doc(db, 'users', cred.user.uid), {
-      name,
-      email,
-      role: 'student',
-      rollNo: rollNo || '',
-      urn: urn || '',
-      department: department || '',
-      phone: '',
-      profilePhoto: '',
-      createdBy: createdByUid,
-      createdAt: serverTimestamp()
-    });
-
-    // Sign out from secondary auth
-    await secondaryAuth.signOut();
-
-    return { uid: cred.user.uid, email, name };
-  } finally {
-    // Clean up secondary app
-    await deleteApp(secondaryApp);
-  }
+  return {
+    async createOne(data) {
+      const { email, password, name, rollNo, urn, department } = data;
+      try {
+        const cred = await createUser2(secondaryAuth, email, password);
+        const userData = {
+          name: name || '',
+          email,
+          role: 'student',
+          rollNo: rollNo || '',
+          urn: urn || '',
+          department: department || '',
+          createdBy: creatorUid,
+          createdAt: serverTimestamp()
+        };
+        await setDoc(doc(db, 'users', cred.user.uid), userData);
+        // NO signOut here — avoids auth state race condition in rapid loops
+        // Small delay to prevent Firebase Auth rate-limiting
+        await new Promise(r => setTimeout(r, 150));
+        return { uid: cred.user.uid, ...userData };
+      } catch (err) {
+        console.error("Firebase auth creation error:", err);
+        throw err;
+      }
+    },
+    async cleanup() {
+      try { await deleteApp(secondaryApp); } catch (e) {
+        console.error("Cleanup error in Bulk Upload:", e);
+      }
+    }
+  };
 }
 
 // ── Secure Password Change (re-authentication required) ───

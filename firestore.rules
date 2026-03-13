@@ -1,0 +1,91 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && getUserRole() == 'admin';
+    }
+    
+    function isTeacherOrAdmin() {
+      return isAuthenticated() && (getUserRole() == 'teacher' || getUserRole() == 'admin');
+    }
+    
+    // Globally deny unauthorized access by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // users collection
+    match /users/{userId} {
+      // Users can read their own profile, or admins/teachers can read all
+      allow read: if isTeacherOrAdmin() || (isAuthenticated() && request.auth.uid == userId);
+      // Only admins can create/update/delete users, except users can update their own profile photo or basic info if needed
+      allow write: if isAdmin() || (isAuthenticated() && request.auth.uid == userId);
+    }
+    
+    // courses collection
+    match /courses/{courseId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    
+    // attendance collection
+    match /attendance/{attendanceId} {
+      // Students can read their own attendance
+      allow read: if isTeacherOrAdmin() || (isAuthenticated() && resource.data.studentId == request.auth.uid);
+      allow write: if isTeacherOrAdmin();
+    }
+    
+    // enrollments collection
+    match /enrollments/{enrollmentId} {
+      allow read: if isTeacherOrAdmin() || (isAuthenticated() && resource.data.studentId == request.auth.uid);
+      allow write: if isTeacherOrAdmin();
+    }
+
+    // tests and test_results collections
+    match /tests/{testId} {
+      allow read: if isAuthenticated();
+      allow write: if isTeacherOrAdmin();
+    }
+    
+    match /test_results/{resultId} {
+      allow read: if isTeacherOrAdmin() || (isAuthenticated() && resource.data.studentId == request.auth.uid);
+      allow write: if isAuthenticated() && request.auth.uid == request.resource.data.studentId;
+    }
+
+    // General collections that only staff modify but anyone authenticated reads
+    match /sections/{sectionId} {
+      allow read: if isAuthenticated();
+      allow write: if isTeacherOrAdmin();
+    }
+    
+    match /assignments/{assignmentId} {
+      allow read: if isAuthenticated();
+      allow write: if isTeacherOrAdmin();
+    }
+    
+    match /question_bank/{questionId} {
+      allow read: if isAuthenticated();
+      allow write: if isTeacherOrAdmin();
+    }
+
+    match /submissions/{submissionId} {
+      allow read: if isTeacherOrAdmin() || (isAuthenticated() && resource.data.studentId == request.auth.uid);
+      allow write: if isTeacherOrAdmin() || (isAuthenticated() && request.auth.uid == request.resource.data.studentId);
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow write: if isTeacherOrAdmin();
+    }
+  }
+}
