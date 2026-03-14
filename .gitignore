@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+
+# Environment & Secrets
+.env
+.env.local
+.env.production
+config/firebase-credentials.js
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+database-debug.log
+*.log
+
+# OS Files
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*~
+
+# IDE
+.idea/
+*.sublime-*
+*.code-workspace
+
+# Build output
+dist/
+build/
+.cache/
+
+# Coverage
+coverage/
+
+# Temporary
+tmp/
+temp/
+*.tmp
