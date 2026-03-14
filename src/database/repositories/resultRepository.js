@@ -5,7 +5,7 @@
 
 import {
   db, collection, addDoc, getDocs,
-  query, where, serverTimestamp
+  query, where, serverTimestamp, limit
 } from '../firestore.js';
 import { COLLECTIONS } from '../../config/constants.js';
 
@@ -37,7 +37,7 @@ export const ResultRepository = {
 
   async getByTest(testId) {
     try {
-      const snap = await getDocs(query(collection(db, COL), where('testId', '==', testId)));
+      const snap = await getDocs(query(collection(db, COL), where('testId', '==', testId), limit(5000)));
       return snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.score || 0) - (a.score || 0));
     } catch (err) {
       console.error('ResultRepository.getByTest error:', err);
@@ -47,7 +47,7 @@ export const ResultRepository = {
 
   async getByStudent(studentId) {
     try {
-      const snap = await getDocs(query(collection(db, COL), where('studentId', '==', studentId)));
+      const snap = await getDocs(query(collection(db, COL), where('studentId', '==', studentId), limit(500)));
       return snap.docs.map(d => ({ id: d.id, ...d.data() }));
     } catch (err) {
       console.error('ResultRepository.getByStudent error:', err);
@@ -57,7 +57,7 @@ export const ResultRepository = {
 
   async getByCourse(courseId) {
     try {
-      const snap = await getDocs(query(collection(db, COL), where('courseId', '==', courseId)));
+      const snap = await getDocs(query(collection(db, COL), where('courseId', '==', courseId), limit(500)));
       return snap.docs.map(d => ({ id: d.id, ...d.data() }));
     } catch (err) {
       console.error('ResultRepository.getByCourse error:', err);

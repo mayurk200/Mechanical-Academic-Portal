@@ -5,7 +5,7 @@
 
 import {
   db, collection, doc, addDoc, getDoc, getDocs, updateDoc, deleteDoc,
-  query, where, orderBy, serverTimestamp
+  query, where, orderBy, serverTimestamp, limit
 } from '../firestore.js';
 import { COLLECTIONS } from '../../config/constants.js';
 
@@ -43,7 +43,7 @@ export const TestRepository = {
   },
 
   async getAll() {
-    const snap = await getDocs(query(collection(db, COL), orderBy('createdAt', 'desc')));
+    const snap = await getDocs(query(collection(db, COL), orderBy('createdAt', 'desc'), limit(500)));
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
   },
 

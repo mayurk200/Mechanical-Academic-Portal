@@ -832,18 +832,34 @@
           document.addEventListener('keydown', onKeyDown);
 
           // DOM Tamper Protection
+          let domTamperTimeout = null;
           domObserver = new MutationObserver((mutations) => {
             if (!isTestActive) return;
-            let tampering = false;
-            for (const m of mutations) {
-              if (m.type === 'childList' && (m.addedNodes.length > 0 || m.removedNodes.length > 0)) {
-                tampering = true;
-                break;
+            
+            // Debounce to prevent CPU spikes from rapid safe changes
+            if (domTamperTimeout) clearTimeout(domTamperTimeout);
+            
+            domTamperTimeout = setTimeout(() => {
+              let tampering = false;
+              for (const m of mutations) {
+                // Ignore attribute changes (like class updates for selected options)
+                if (m.type === 'attributes') continue;
+                
+                // Only alert on unexpected node injections/removals
+                if (m.type === 'childList') {
+                  const hasSuspiciousAdditions = Array.from(m.addedNodes).some(n => 
+                    n.nodeType === 1 && !n.classList.contains('text-success') // Ignore standard test UI updates
+                  );
+                  if (hasSuspiciousAdditions || m.removedNodes.length > 0) {
+                    tampering = true;
+                    break;
+                  }
+                }
               }
-            }
-            if (tampering) {
-               showViolationWarning('devtools', 'DOM manipulation detected! Tampering with the exam is prohibited.');
-            }
+              if (tampering) {
+                 showViolationWarning('devtools', 'DOM manipulation detected! Tampering with the exam is prohibited.');
+              }
+            }, 1000);
           });
           domObserver.observe(tb, { childList: true, subtree: true });
         }

@@ -106,14 +106,26 @@
       if (userData.role === 'student') {
         // ── STUDENT VIEW: check visibility before showing results ──
         const results = await ResultService.getByStudent(userData.uid);
-        const visibleResults = [];
+        
+        // Optimize: Cache test fetching to avoid duplicate queries for multiple attempts of same test,
+        // and resolve all promises concurrently.
+        const testCache = new Map();
+        
+        const resolveTest = async (testId) => {
+          if (!testCache.has(testId)) testCache.set(testId, TestService.get(testId));
+          return testCache.get(testId);
+        };
 
-        for (const r of results) {
-          const test = await TestService.get(r.testId);
+        const resolvedTests = await Promise.all(results.map(r => resolveTest(r.testId)));
+        
+        const visibleResults = results.filter((r, idx) => {
+          const test = resolvedTests[idx];
           if (test && test.showResultToStudents === true) {
-            visibleResults.push({ ...r, testTitle: test.title });
+            r.testTitle = test.title;
+            return true;
           }
-        }
+          return false;
+        });
 
         if (visibleResults.length === 0) {
           document.getElementById('results-table').innerHTML =
@@ -139,25 +151,32 @@
         if (tests.length === 0) {
           mgmtTbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No tests</td></tr>';
         } else {
-          const rows = await Promise.all(tests.map(async t => {
-            const results = await ResultService.getByTest(t.id);
-            const avg = results.length > 0 ? Math.round(results.reduce((s, r) => s + (r.percentage || 0), 0) / results.length) : 0;
-            const vis = t.showResultToStudents ? true : false;
-            return `<tr>
-              <td class="fw-medium">${escapeHtml(t.title)}</td>
-              <td class="text-muted small">${courseMap[t.courseId] || '—'}</td>
-              <td>${results.length}</td>
-              <td>${avg}%</td>
-              <td>
-                <div class="form-check form-switch">
-                  <input class="form-check-input toggle-vis" type="checkbox" data-id="${t.id}" ${vis ? 'checked' : ''}>
-                  <label class="form-check-label small">${vis ? '<span class="text-success">ON</span>' : '<span class="text-danger">OFF</span>'}</label>
-                </div>
-              </td>
-              <td><a href="#" class="btn btn-outline-primary btn-sm view-results-btn" data-id="${t.id}"><i class="bi bi-eye me-1"></i>View</a></td>
-            </tr>`;
-          }));
-          mgmtTbody.innerHTML = rows.join('');
+          // Optimize: chunk concurrent promises to prevent network backlog/crashing if tests array is huge
+          const CHUNK_SIZE = 10;
+          let htmlRows = [];
+          for (let i = 0; i < tests.length; i += CHUNK_SIZE) {
+            const chunk = tests.slice(i, i + CHUNK_SIZE);
+            const chunkRows = await Promise.all(chunk.map(async t => {
+              const results = await ResultService.getByTest(t.id);
+              const avg = results.length > 0 ? Math.round(results.reduce((s, r) => s + (r.percentage || 0), 0) / results.length) : 0;
+              const vis = t.showResultToStudents ? true : false;
+              return `<tr>
+                <td class="fw-medium">${escapeHtml(t.title)}</td>
+                <td class="text-muted small">${courseMap[t.courseId] || '—'}</td>
+                <td>${results.length}</td>
+                <td>${avg}%</td>
+                <td>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input toggle-vis" type="checkbox" data-id="${t.id}" ${vis ? 'checked' : ''}>
+                    <label class="form-check-label small">${vis ? '<span class="text-success">ON</span>' : '<span class="text-danger">OFF</span>'}</label>
+                  </div>
+                </td>
+                <td><a href="#" class="btn btn-outline-primary btn-sm view-results-btn" data-id="${t.id}"><i class="bi bi-eye me-1"></i>View</a></td>
+              </tr>`;
+            }));
+            htmlRows.push(...chunkRows);
+          }
+          mgmtTbody.innerHTML = htmlRows.join('');
 
           // Toggle visibility
           mgmtTbody.querySelectorAll('.toggle-vis').forEach(toggle => {
