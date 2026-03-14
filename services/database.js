@@ -16,6 +16,14 @@ const _courseCache = new Map();
 const _enrollmentCache = new Map();
 const _enrollCourseCache = new Map();
 
+// ── DepartmentService ────────────────────
+export const DepartmentService = {
+  async getAll() {
+    const snap = await getDocs(query(collection(db, 'departments'), orderBy('code', 'asc')));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  }
+};
+
 // ── UserService ──────────────────────────
 export const UserService = {
   async create(uid, data) {

@@ -11,15 +11,10 @@ async function loadSystemVersion() {
         
         const data = await response.json();
         
-        // Format dates as "13 March 2026"
-        const dateObj = new Date(data.buildDate);
-        const options = { day: 'numeric', month: 'long', year: 'numeric' };
-        const formattedDate = dateObj.toLocaleDateString('en-GB', options);
-        
         // Insert version config inside the footer's span
         const versionSpan = document.getElementById('version');
         if (versionSpan) {
-            versionSpan.innerHTML = `v${data.version} <br> Last Updated: ${formattedDate}`;
+            versionSpan.innerHTML = `v${data.version}`;
         }
     } catch (error) {
         console.error('Error fetching version payload:', error);

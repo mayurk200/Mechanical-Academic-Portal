@@ -87,6 +87,9 @@ export function buildSidebar(role, userName) {
       <button class="btn btn-outline-secondary btn-sm w-100" id="logout-btn">
         <i class="bi bi-box-arrow-left me-1"></i>Logout
       </button>
+      <div class="text-center mt-2 opacity-50">
+        <small class="text-muted fw-bold" style="font-size:0.7rem;" id="sidebar-version">v...</small>
+      </div>
     </div>`;
 }
 
@@ -142,6 +145,16 @@ export async function initApp(requiredRoles = null) {
             await signOut(auth);
             // Redirection is handled by the global listener
           });
+          
+          // Inject dynamic version
+          try {
+             const vRes = await fetch('../config/version.json');
+             if(vRes.ok) {
+                 const vData = await vRes.json();
+                 const vSpan = document.getElementById('sidebar-version');
+                 if(vSpan) vSpan.textContent = `v${vData.version}`;
+             }
+          } catch(e) {}
         }
 
         // Mobile toggle

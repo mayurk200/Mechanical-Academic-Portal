@@ -42,9 +42,45 @@
               <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#bulkQuestionModal"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Bulk Upload Questions</button>
             </div>
 
-            <div class="mb-3 form-check">
-              <input type="checkbox" class="form-check-input" id="test-show-results">
-              <label class="form-check-label" for="test-show-results">Show results to students after submission</label>
+            <!-- Test Settings Panel -->
+            <h6 class="mt-4"><i class="bi bi-shield-lock me-2"></i>Test Settings & Security</h6>
+            <div class="card bg-light mb-3 border-0 shadow-sm">
+              <div class="card-body py-2">
+                <div class="row g-2">
+                  <div class="col-md-6 pe-md-3">
+                    <div class="form-check form-switch border-bottom pb-1 mb-1">
+                      <input type="checkbox" class="form-check-input" id="test-show-results" checked>
+                      <label class="form-check-label small" for="test-show-results">Show results after submission</label>
+                    </div>
+                    <div class="form-check form-switch border-bottom pb-1 mb-1">
+                      <input type="checkbox" class="form-check-input" id="test-shuffle-questions" checked>
+                      <label class="form-check-label small" for="test-shuffle-questions" title="Randomize the order of questions">Shuffle Questions</label>
+                    </div>
+                    <div class="form-check form-switch border-bottom pb-1 mb-1">
+                      <input type="checkbox" class="form-check-input" id="test-randomize-options" checked>
+                      <label class="form-check-label small" for="test-randomize-options">Randomize Options (MCQ)</label>
+                    </div>
+                    <div class="mt-2 d-flex align-items-center justify-content-between">
+                      <label class="small me-2" for="test-max-attempt">Questions to Attempt:</label>
+                      <input type="number" id="test-max-attempt" class="form-control form-control-sm w-50" placeholder="All" min="1">
+                    </div>
+                  </div>
+                  <div class="col-md-6 ps-md-3 border-start">
+                    <div class="form-check form-switch border-bottom pb-1 mb-1">
+                      <input type="checkbox" class="form-check-input" id="test-disable-copy" checked>
+                      <label class="form-check-label small text-danger fw-bold" for="test-disable-copy">Disable Copy/Paste & Selection</label>
+                    </div>
+                    <div class="form-check form-switch border-bottom pb-1 mb-1">
+                      <input type="checkbox" class="form-check-input" id="test-detect-tab" checked>
+                      <label class="form-check-label small text-danger fw-bold" for="test-detect-tab" title="Auto-submit on 3rd tab switch">Tab Change Detection (3 strikes)</label>
+                    </div>
+                    <div class="form-check form-switch pb-1 mb-1">
+                      <input type="checkbox" class="form-check-input" id="test-auto-submit-timeout" checked>
+                      <label class="form-check-label small" for="test-auto-submit-timeout">Auto Submit on Timeout</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div class="d-flex gap-2">
@@ -118,7 +154,7 @@
         </div>
         <div class="modal-body">
           <div class="alert alert-info py-2 d-flex justify-content-between align-items-center mb-3">
-            <span class="small"><i class="bi bi-info-circle me-1"></i>Upload an Excel or CSV with columns: <strong>Question, Type, Option A, Option B, Option C, Option D, Correct Answer, Marks</strong></span>
+            <span class="small"><i class="bi bi-info-circle me-1"></i>Upload an Excel or CSV with columns: <strong>Question, Option A, Option B, Option C, Option D, Correct Answer, Marks</strong></span>
             <button class="btn btn-sm btn-outline-info bg-white" id="download-question-template-btn">
               <i class="bi bi-download me-1"></i>Download Template
             </button>
@@ -139,7 +175,7 @@
             <div class="table-responsive" style="max-height: 300px;">
               <table class="table table-sm table-bordered text-nowrap mb-0">
                 <thead class="table-light sticky-top">
-                  <tr><th>Row</th><th>Status</th><th>Question</th><th>Type</th><th>Options</th><th>Correct</th><th>Marks</th></tr>
+                  <tr><th>Row</th><th>Status</th><th>Question</th><th>Options</th><th>Correct (Mapped)</th><th>Marks</th></tr>
                 </thead>
                 <tbody id="bq-preview-tbody" class="small"></tbody>
               </table>
@@ -158,6 +194,8 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <!-- SheetJS for Excel/CSV Parsing -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <!-- SortableJS for Drag and Drop -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
   <script type="module">
     import { initApp } from '../assets/js/core/router.js';
     import { TestService, CourseService, ResultService, EnrollmentService } from '../services/database.js';
@@ -186,8 +224,155 @@
         const courses = userData.role === 'admin' ? await CourseService.getAll() : await CourseService.getByTeacher(userData.uid);
         courses.forEach(c => document.getElementById('test-course').innerHTML += `<option value="${c.id}">${escapeHtml(c.title)}</option>`);
 
-        document.getElementById('add-question-btn').addEventListener('click', addQuestion);
+        document.getElementById('add-question-btn').addEventListener('click', () => addQuestion());
         addQuestion(); // Start with 1
+        
+        // Initialize Sortable
+        new Sortable(document.getElementById('questions-container'), {
+          handle: '.drag-handle',
+          animation: 150,
+          ghostClass: 'bg-light'
+        });
+
+        // Event delegation for the question builder
+        document.getElementById('questions-container').addEventListener('click', (e) => {
+          const card = e.target.closest('.q-card');
+          if (!card) return;
+
+          // Delete Question
+          if (e.target.closest('.btn-delete-q')) {
+            if (confirm('Are you sure you want to delete this question?')) {
+              card.remove();
+            }
+          }
+
+          // Duplicate Question
+          if (e.target.closest('.btn-duplicate-q')) {
+             try {
+                const type = card.querySelector('.q-type').value;
+                const questionText = card.querySelector('.q-text').value;
+                const marks = parseInt(card.querySelector('.q-marks').value) || 1;
+                let options = [];
+                let correctAnswer = '0';
+                
+                if (type === 'mcq') {
+                   const optRows = card.querySelectorAll('.option-row');
+                   optRows.forEach((row, i) => {
+                      options.push(row.querySelector('.opt-val').value);
+                      if (row.querySelector('.correct-radio').checked) correctAnswer = i.toString();
+                   });
+                } else if (type === 'trueFalse') {
+                   const checked = card.querySelector('.tf-radio:checked');
+                   if (checked) correctAnswer = checked.value;
+                } else {
+                   correctAnswer = card.querySelector('.short-ans').value;
+                }
+                
+                // Use the builder to generate a flawless UI copy
+                addQuestion({ type, question: questionText, marks, options: options.length ? options : null, correctAnswer });
+                
+                // Move the newly generated question right below the duplicated one
+                const container = document.getElementById('questions-container');
+                const newlyAdded = container.lastElementChild;
+                container.insertBefore(newlyAdded, card.nextSibling);
+                
+                showToast('Question duplicated', 'success');
+             } catch(err) { console.error(err); }
+          }
+
+          // Collapse/Expand Toggle
+          if (e.target.closest('.btn-collapse-q')) {
+            const body = card.querySelector('.q-body');
+            const icon = e.target.closest('.btn-collapse-q').querySelector('i');
+            if (body.style.display === 'none') {
+              body.style.display = 'block';
+              icon.className = 'bi bi-chevron-up';
+            } else {
+              body.style.display = 'none';
+              icon.className = 'bi bi-chevron-down';
+            }
+          }
+
+          // Add Option
+          if (e.target.closest('.btn-add-opt')) {
+            const optsContainer = card.querySelector('.options-container');
+            const currentOpts = optsContainer.querySelectorAll('.option-row').length;
+            if (currentOpts >= 6) return; // Max 6
+
+            const optLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
+            const newLabel = optLetters[currentOpts];
+            const nameGrp = card.id + '_ans';
+            
+            const div = document.createElement('div');
+            div.className = 'option-row d-flex align-items-center mb-2 input-group input-group-sm';
+            div.innerHTML = `
+              <div class="input-group-text">
+                <input class="form-check-input mt-0 correct-radio" type="radio" name="${nameGrp}" value="${currentOpts}">
+                <span class="ms-2 fw-bold">${newLabel}</span>
+              </div>
+              <input type="text" class="form-control opt-val" placeholder="Option text">
+              <button type="button" class="btn btn-outline-danger btn-remove-opt"><i class="bi bi-x"></i></button>
+            `;
+            optsContainer.appendChild(div);
+
+            // Update limits
+            if (currentOpts + 1 >= 6) e.target.closest('.btn-add-opt').classList.add('d-none');
+            const removes = optsContainer.querySelectorAll('.btn-remove-opt');
+            removes.forEach(btn => btn.disabled = false);
+          }
+
+          // Remove Option
+          if (e.target.closest('.btn-remove-opt')) {
+            const optsContainer = card.querySelector('.options-container');
+            const currentOpts = optsContainer.querySelectorAll('.option-row');
+            if (currentOpts.length <= 2) return; // Min 2
+
+            e.target.closest('.option-row').remove();
+            
+            // Re-label remaining options
+            const optLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
+            const remaining = optsContainer.querySelectorAll('.option-row');
+            remaining.forEach((row, idx) => {
+              row.querySelector('span.fw-bold').textContent = optLetters[idx];
+              row.querySelector('input[type="radio"]').value = idx;
+            });
+
+            // Update limits
+            card.querySelector('.btn-add-opt').classList.remove('d-none');
+            if (remaining.length <= 2) {
+              remaining.forEach(r => r.querySelector('.btn-remove-opt').disabled = true);
+            }
+          }
+        });
+
+        // Type Change Event Delegation
+        document.getElementById('questions-container').addEventListener('change', (e) => {
+          if (e.target.classList.contains('q-type')) {
+            const card = e.target.closest('.q-card');
+            const optSec = card.querySelector('.options-section');
+            const tfSec = card.querySelector('.tf-section');
+            const shortSec = card.querySelector('.short-section');
+
+            optSec.classList.add('d-none');
+            tfSec.classList.add('d-none');
+            shortSec.classList.add('d-none');
+
+            if (e.target.value === 'mcq') optSec.classList.remove('d-none');
+            else if (e.target.value === 'trueFalse') tfSec.classList.remove('d-none');
+            else if (e.target.value === 'short') shortSec.classList.remove('d-none');
+          }
+        });
+
+        // Question Title Sync & Char Limit logic
+        document.getElementById('questions-container').addEventListener('input', (e) => {
+          if (e.target.classList.contains('q-text')) {
+             const card = e.target.closest('.q-card');
+             let val = e.target.value.trim();
+             card.querySelector('.card-title').textContent = val ? (val.substring(0, 40) + (val.length > 40 ? '...' : '')) : 'New Question';
+             const charCounter = card.querySelector('.char-count');
+             if(charCounter) charCounter.textContent = `${val.length}/500`;
+          }
+        });
 
         document.getElementById('create-test-form').addEventListener('submit', async (e) => {
           e.preventDefault();
@@ -211,6 +396,12 @@
               description: document.getElementById('test-desc').value.trim(),
               questions, totalMarks,
               showResultToStudents: document.getElementById('test-show-results').checked,
+              shuffleQuestions: document.getElementById('test-shuffle-questions').checked,
+              randomizeOptions: document.getElementById('test-randomize-options').checked,
+              questionsToAttempt: parseInt(document.getElementById('test-max-attempt').value) || null,
+              disableCopy: document.getElementById('test-disable-copy').checked,
+              detectTabSwitch: document.getElementById('test-detect-tab').checked,
+              autoSubmitTimeout: document.getElementById('test-auto-submit-timeout').checked,
               createdBy: userData.uid
             });
             showToast('Test published!', 'success');
@@ -323,42 +514,123 @@
 
       // Start Test
       let timerInterval;
+      // Security state variables
+      let tabSwitchCount = 0;
+      let onVisibilityChange = null, onCopyPaste = null, onContextMenu = null;
+
       function startTest(test) {
         document.getElementById('taking-title').textContent = test.title;
-        const questions = test.questions || [];
+        // Deep copy questions so we don't modify the original array if we shuffle/slice
+        let questions = JSON.parse(JSON.stringify(test.questions || []));
+
+        // 1. Shuffle Questions
+        if (test.shuffleQuestions) {
+          questions = questions.sort(() => Math.random() - 0.5);
+        }
+
+        // 2. Max Questions to Attempt
+        if (test.questionsToAttempt && test.questionsToAttempt > 0 && test.questionsToAttempt < questions.length) {
+          questions = questions.slice(0, test.questionsToAttempt);
+        }
+
         let timeLeft = (test.duration || 30) * 60;
 
-        document.getElementById('test-body').innerHTML = questions.map((q, i) => `
-          <div class="card mb-3">
+        document.getElementById('test-body').innerHTML = questions.map((q, i) => {
+          let opts = q.options || [];
+          let correct = q.correctAnswer;
+          
+          // 3. Randomize Options
+          if (test.randomizeOptions && q.type === 'mcq' && opts.length > 0) {
+            const optObjs = opts.map((optTxt, idx) => ({ text: optTxt, isCorrect: String(idx) === String(correct) }));
+            optObjs.sort(() => Math.random() - 0.5);
+            opts = optObjs.map(o => o.text);
+            correct = optObjs.findIndex(o => o.isCorrect).toString();
+            // Assign modified back so grading matches
+            q.options = opts;
+            q.correctAnswer = correct;
+          }
+
+          return `
+          <div class="card mb-3 q-card" data-idx="${i}">
             <div class="card-body">
               <h6>Q${i+1}. ${escapeHtml(q.question)} <small class="text-muted">(${q.marks} marks)</small></h6>
-              ${q.type === 'mcq' ? q.options.map((o, j) => `
-                <div class="form-check"><input class="form-check-input" type="radio" name="q${i}" value="${j}"><label class="form-check-label">${escapeHtml(o)}</label></div>
+              ${q.type === 'mcq' ? opts.map((o, j) => `
+                <div class="form-check"><input class="form-check-input q-ans-input" type="radio" name="q${i}" value="${j}"><label class="form-check-label">${escapeHtml(o)}</label></div>
               `).join('') : q.type === 'trueFalse' ? `
-                <div class="form-check"><input class="form-check-input" type="radio" name="q${i}" value="true"><label class="form-check-label">True</label></div>
-                <div class="form-check"><input class="form-check-input" type="radio" name="q${i}" value="false"><label class="form-check-label">False</label></div>
-              ` : `<input type="text" class="form-control" name="q${i}" placeholder="Your answer...">`}
+                <div class="form-check"><input class="form-check-input q-ans-input" type="radio" name="q${i}" value="true"><label class="form-check-label">True</label></div>
+                <div class="form-check"><input class="form-check-input q-ans-input" type="radio" name="q${i}" value="false"><label class="form-check-label">False</label></div>
+              ` : `<input type="text" class="form-control q-ans-input" name="q${i}" placeholder="Your answer...">`}
             </div>
-          </div>`).join('');
+          </div>`
+        }).join('');
+
+        // Store the active modified questions array back to test for grading reference
+        test._activeQuestions = questions;
+
+        // Security Features setup
+        if (test.disableCopy) {
+          document.getElementById('test-body').style.userSelect = 'none';
+          onCopyPaste = (e) => { e.preventDefault(); showToast('Copy/Paste/Selection is disabled for this test.', 'warning'); };
+          onContextMenu = (e) => { e.preventDefault(); };
+          document.addEventListener('copy', onCopyPaste);
+          document.addEventListener('cut', onCopyPaste);
+          document.addEventListener('paste', onCopyPaste);
+          document.addEventListener('contextmenu', onContextMenu);
+        }
+
+        if (test.detectTabSwitch) {
+          tabSwitchCount = 0;
+          onVisibilityChange = () => {
+             if (document.hidden) {
+                tabSwitchCount++;
+                if (tabSwitchCount >= 3) {
+                   showToast('Test auto-submitted due to multiple tab switches!', 'error');
+                   submitTest(test); // auto-submit
+                } else {
+                   alert(`Warning! Tab switching is not allowed. Strike ${tabSwitchCount} of 3. Your test will be submitted automatically next time.`);
+                }
+             }
+          };
+          document.addEventListener('visibilitychange', onVisibilityChange);
+        }
 
         new bootstrap.Modal(document.getElementById('testModal')).show();
 
         timerInterval = setInterval(() => {
           timeLeft--;
           document.getElementById('timer-display').textContent = formatTime(timeLeft);
-          if (timeLeft <= 0) { clearInterval(timerInterval); submitTest(test); }
+          if (timeLeft <= 0) { 
+            clearInterval(timerInterval);
+            if (test.autoSubmitTimeout !== false) {
+               showToast('Time is up! Auto-submitting...', 'info');
+               submitTest(test);
+            } else {
+               document.getElementById('timer-display').textContent = 'Time Up!';
+            }
+          }
         }, 1000);
 
         document.getElementById('submit-test-btn').onclick = () => { clearInterval(timerInterval); submitTest(test); };
       }
 
       async function submitTest(test) {
-        const questions = test.questions || [];
+        // Cleanup event listeners
+        if (onVisibilityChange) document.removeEventListener('visibilitychange', onVisibilityChange);
+        if (onCopyPaste) {
+          document.removeEventListener('copy', onCopyPaste);
+          document.removeEventListener('cut', onCopyPaste);
+          document.removeEventListener('paste', onCopyPaste);
+          document.removeEventListener('contextmenu', onContextMenu);
+          document.getElementById('test-body').style.userSelect = 'auto'; // restore
+        }
+
+        const questions = test._activeQuestions || test.questions || [];
         let score = 0, correct = 0, wrong = 0;
+        
         const answers = questions.map((q, i) => {
           let ans;
           if (q.type === 'short') {
-            ans = document.querySelector(`input[name="q${i}"]`)?.value || '';
+            ans = document.querySelector(`input[name="q${i}"]`)?.value?.trim() || '';
           } else {
             ans = document.querySelector(`input[name="q${i}"]:checked`)?.value || '';
           }
@@ -367,10 +639,13 @@
           return { question: q.question, answer: ans, correct: isCorrect };
         });
 
-        const percentage = Math.round((score / (test.totalMarks || 1)) * 100);
+        // Use the new subset's totalMarks if we sliced it, else test.totalMarks
+        const newTotalMarks = questions.reduce((acc, q) => acc + q.marks, 0) || 1;
+        const percentage = Math.round((score / newTotalMarks) * 100);
+        
         await ResultService.submit({
           testId: test.id, courseId: test.courseId, studentId: userData.uid, studentName: userData.name,
-          answers, score, totalMarks: test.totalMarks, percentage, correctCount: correct, wrongCount: wrong
+          answers, score, totalMarks: newTotalMarks, percentage, correctCount: correct, wrongCount: wrong
         });
 
         bootstrap.Modal.getInstance(document.getElementById('testModal'))?.hide();
@@ -380,48 +655,196 @@
 
       loadTests();
 
-      function addQuestion() {
-        qCount++;
-        const div = document.createElement('div');
-        div.className = 'card mb-2';
-        div.id = `q-${qCount}`;
-        div.innerHTML = `<div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <strong class="small">Question ${qCount}</strong>
-            <button type="button" class="btn btn-outline-danger btn-sm py-0" onclick="document.getElementById('q-${qCount}').remove()"><i class="bi bi-trash"></i></button>
-          </div>
-          <div class="row g-2 mb-2">
-            <div class="col-md-6"><input type="text" class="form-control q-text" placeholder="Question text" required></div>
-            <div class="col-md-3"><select class="form-select q-type"><option value="mcq">MCQ</option><option value="trueFalse">True/False</option><option value="short">Short Answer</option></select></div>
-            <div class="col-md-3"><input type="number" class="form-control q-marks" value="1" min="1" placeholder="Marks"></div>
-          </div>
-          <div class="q-options">
-            <div class="row g-2"><div class="col-6"><input type="text" class="form-control form-control-sm opt" placeholder="Option A"></div><div class="col-6"><input type="text" class="form-control form-control-sm opt" placeholder="Option B"></div></div>
-            <div class="row g-2 mt-1"><div class="col-6"><input type="text" class="form-control form-control-sm opt" placeholder="Option C"></div><div class="col-6"><input type="text" class="form-control form-control-sm opt" placeholder="Option D"></div></div>
-          </div>
-          <div class="mt-2"><input type="text" class="form-control form-control-sm q-answer" placeholder="Correct answer (e.g. 0 for Option A, or text)"></div>
-        </div>`;
-        document.getElementById('questions-container').appendChild(div);
+      function addQuestion(existingData = null) {
+        if (document.querySelectorAll('.q-card').length >= 100) {
+          showToast('Maximum 100 questions allowed.', 'warning');
+          return;
+        }
 
-        div.querySelector('.q-type').addEventListener('change', function() {
-          const optDiv = div.querySelector('.q-options');
-          optDiv.style.display = this.value === 'mcq' ? '' : 'none';
-        });
+        qCount++;
+        const id = `q-${qCount}`;
+        const div = document.createElement('div');
+        div.className = 'card mb-3 q-card border-secondary';
+        div.id = id;
+
+        const data = existingData || { type: 'mcq', question: '', marks: 1, options: ['', '', '', ''], correctAnswer: '0' };
+        
+        // Determine type display
+        let isMcq = data.type === 'mcq';
+        let isTf = data.type === 'trueFalse' || data.type === 'true/false';
+        let isShort = data.type === 'short' || data.type === 'short answer';
+        
+        let typeVal = 'mcq';
+        if(isTf) typeVal = 'trueFalse';
+        if(isShort) typeVal = 'short';
+
+        const optLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
+        let optionsHtml = '';
+        
+        if(data.options && data.options.length > 0) {
+           optionsHtml = data.options.map((opt, i) => `
+             <div class="option-row d-flex align-items-center mb-2 input-group input-group-sm">
+               <div class="input-group-text bg-white">
+                 <input class="form-check-input mt-0 correct-radio" type="radio" name="${id}_ans" value="${i}" ${String(data.correctAnswer) === String(i) ? 'checked' : ''}>
+                 <span class="ms-2 fw-bold">${optLetters[i]}</span>
+               </div>
+               <input type="text" class="form-control opt-val" placeholder="Option text" value="${escapeHtml(opt)}">
+               <button type="button" class="btn btn-outline-danger btn-remove-opt" ${data.options.length <= 2 ? 'disabled' : ''}><i class="bi bi-x"></i></button>
+             </div>
+           `).join('');
+        } else {
+           optionsHtml = [0,1,2,3].map((i) => `
+             <div class="option-row d-flex align-items-center mb-2 input-group input-group-sm">
+               <div class="input-group-text bg-white">
+                 <input class="form-check-input mt-0 correct-radio" type="radio" name="${id}_ans" value="${i}" ${i === 0 ? 'checked' : ''}>
+                 <span class="ms-2 fw-bold">${optLetters[i]}</span>
+               </div>
+               <input type="text" class="form-control opt-val" placeholder="Option text">
+               <button type="button" class="btn btn-outline-danger btn-remove-opt"><i class="bi bi-x"></i></button>
+             </div>
+           `).join('');
+        }
+
+        div.innerHTML = `
+          <div class="card-header bg-light d-flex justify-content-between align-items-center py-2 cursor-pointer drag-handle">
+            <div class="d-flex align-items-center">
+               <i class="bi bi-grip-vertical text-muted me-2 fs-5"></i>
+               <strong class="card-title mb-0">${data.question ? escapeHtml(data.question).substring(0, 40) + (data.question.length > 40 ? '...' : '') : 'New Question'}</strong>
+            </div>
+            <div>
+               <button type="button" class="btn btn-sm btn-light btn-duplicate-q" title="Duplicate"><i class="bi bi-files"></i></button>
+               <button type="button" class="btn btn-sm btn-light text-danger btn-delete-q" title="Delete"><i class="bi bi-trash"></i></button>
+               <button type="button" class="btn btn-sm btn-light btn-collapse-q"><i class="bi bi-chevron-up"></i></button>
+            </div>
+          </div>
+          <div class="card-body q-body">
+            <div class="row g-3 mb-3 border-bottom pb-3">
+              <div class="col-md-7">
+                 <label class="form-label small fw-bold text-muted">Question Text</label>
+                 <textarea class="form-control q-text" rows="2" placeholder="Enter question..." maxlength="500">${escapeHtml(data.question || '')}</textarea>
+                 <small class="text-muted float-end char-count">${(data.question || '').length}/500</small>
+              </div>
+              <div class="col-md-3">
+                 <label class="form-label small fw-bold text-muted">Question Type</label>
+                 <select class="form-select q-type">
+                    <option value="mcq" ${typeVal === 'mcq' ? 'selected' : ''}>Multiple Choice</option>
+                    <option value="trueFalse" ${typeVal === 'trueFalse' ? 'selected' : ''}>True / False</option>
+                    <option value="short" ${typeVal === 'short' ? 'selected' : ''}>Short Answer</option>
+                 </select>
+              </div>
+              <div class="col-md-2">
+                 <label class="form-label small fw-bold text-muted">Marks</label>
+                 <input type="number" class="form-control q-marks" value="${data.marks || 1}" min="1">
+              </div>
+            </div>
+
+            <!-- MCQ Section -->
+            <div class="options-section p-3 bg-light rounded ${typeVal === 'mcq' ? '' : 'd-none'}" style="border: 1px dashed #ccc;">
+               <div class="d-flex justify-content-between mb-2">
+                  <label class="small fw-bold text-muted">Options & Correct Answer</label>
+                  <span class="small text-muted">Select the radio button for the correct answer.</span>
+               </div>
+               <div class="options-container">
+                 ${optionsHtml}
+               </div>
+               <button type="button" class="btn btn-sm btn-outline-primary mt-2 btn-add-opt ${data.options && data.options.length >= 6 ? 'd-none' : ''}">
+                  <i class="bi bi-plus me-1"></i>Add Option
+               </button>
+            </div>
+
+            <!-- True/False Section -->
+            <div class="tf-section p-3 bg-light rounded ${typeVal === 'trueFalse' ? '' : 'd-none'}" style="border: 1px dashed #ccc;">
+               <label class="small fw-bold text-muted mb-2">Select Correct Answer</label>
+               <div class="d-flex gap-4">
+                 <div class="form-check">
+                   <input class="form-check-input tf-radio" type="radio" name="${id}_tf" value="true" ${String(data.correctAnswer).toLowerCase() === 'true' ? 'checked' : ''}>
+                   <label class="form-check-label fw-bold">True</label>
+                 </div>
+                 <div class="form-check">
+                   <input class="form-check-input tf-radio" type="radio" name="${id}_tf" value="false" ${String(data.correctAnswer).toLowerCase() === 'false' || !data.correctAnswer ? 'checked' : ''}>
+                   <label class="form-check-label fw-bold">False</label>
+                 </div>
+               </div>
+            </div>
+
+            <!-- Short Answer Section -->
+            <div class="short-section p-3 bg-light rounded ${typeVal === 'short' ? '' : 'd-none'}" style="border: 1px dashed #ccc;">
+               <label class="small fw-bold text-muted mb-2">Exact Correct Answer</label>
+               <input type="text" class="form-control short-ans" placeholder="e.g. New Delhi" value="${typeVal === 'short' ? escapeHtml(data.correctAnswer) : ''}">
+               <small class="text-muted">Students must type this exactly (case-insensitive).</small>
+            </div>
+            
+          </div>`;
+        document.getElementById('questions-container').appendChild(div);
       }
 
       function collectQuestions() {
-        const cards = document.querySelectorAll('#questions-container .card');
-        return Array.from(cards).map(card => {
+        const cards = document.querySelectorAll('#questions-container .q-card');
+        const results = [];
+        
+        // Remove error highlights
+        cards.forEach(c => c.classList.remove('border-danger', 'shadow-sm'));
+
+        for (let idx = 0; idx < cards.length; idx++) {
+          const card = cards[idx];
           const type = card.querySelector('.q-type').value;
-          const options = type === 'mcq' ? Array.from(card.querySelectorAll('.opt')).map(o => o.value) : [];
-          return {
-            question: card.querySelector('.q-text').value,
-            type,
-            options,
-            correctAnswer: card.querySelector('.q-answer').value,
-            marks: parseInt(card.querySelector('.q-marks').value) || 1
-          };
-        }).filter(q => q.question);
+          const questionText = card.querySelector('.q-text').value.trim();
+          const marks = parseInt(card.querySelector('.q-marks').value);
+          
+          if (!questionText) {
+             throwError(card, `Question ${idx + 1}: Question text cannot be empty.`);
+          }
+          if (isNaN(marks) || marks < 1) {
+             throwError(card, `Question ${idx + 1}: Marks must be at least 1.`);
+          }
+
+          let options = [];
+          let correctAnswer = null;
+
+          if (type === 'mcq') {
+             const optRows = card.querySelectorAll('.option-row');
+             const optVals = new Set();
+             
+             optRows.forEach((row, i) => {
+                const val = row.querySelector('.opt-val').value.trim();
+                const isChecked = row.querySelector('.correct-radio').checked;
+                if (!val) throwError(card, `Question ${idx + 1}: Option ${String.fromCharCode(65 + i)} is empty.`);
+                if (optVals.has(val.toLowerCase())) throwError(card, `Question ${idx + 1}: Duplicate option found ("${val}").`);
+                
+                optVals.add(val.toLowerCase());
+                options.push(val);
+                if (isChecked) correctAnswer = i.toString();
+             });
+             
+             if (correctAnswer === null) {
+                throwError(card, `Question ${idx + 1}: Please select a correct answer by clicking a radio button.`);
+             }
+          } 
+          else if (type === 'trueFalse') {
+             const checked = card.querySelector('.tf-radio:checked');
+             if (!checked) throwError(card, `Question ${idx + 1}: Select True or False as the correct answer.`);
+             correctAnswer = checked.value;
+          } 
+          else if (type === 'short') {
+             correctAnswer = card.querySelector('.short-ans').value.trim();
+             if (!correctAnswer) throwError(card, `Question ${idx + 1}: Short answer exact match cannot be empty.`);
+          }
+
+          results.push({ question: questionText, type, options, correctAnswer, marks });
+        }
+        
+        return results;
+
+        function throwError(card, msg) {
+           // Scroll to card, expand it, highlight it, and throw
+           card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+           card.classList.add('border-danger', 'shadow-sm');
+           const body = card.querySelector('.q-body');
+           const icon = card.querySelector('.btn-collapse-q i');
+           body.style.display = 'block';
+           icon.className = 'bi bi-chevron-up';
+           throw new Error(msg);
+        }
       }
 
       // ── Bulk Question Upload Logic ──
@@ -431,11 +854,10 @@
 
         // Download Template
         document.getElementById('download-question-template-btn').addEventListener('click', () => {
-          const headers = ['Question', 'Type', 'Option A', 'Option B', 'Option C', 'Option D', 'Correct Answer', 'Marks'];
-          const ex1 = ['What is 2+2?', 'MCQ', '3', '4', '5', '6', '1', '2'];
-          const ex2 = ['The sun is a star', 'True/False', '', '', '', '', 'true', '1'];
-          const ex3 = ['Capital of India?', 'Short Answer', '', '', '', '', 'New Delhi', '1'];
-          const ws = XLSX.utils.aoa_to_sheet([headers, ex1, ex2, ex3]);
+          const headers = ['Question', 'Option A', 'Option B', 'Option C', 'Option D', 'Correct Answer', 'Marks'];
+          const ex1 = ['What is AI?', 'Artificial Intelligence', 'Artificial Input', 'Auto Index', 'None', 'A', '1'];
+          const ex2 = ['What is 2+2?', '3', '4', '5', '6', 'B', '2'];
+          const ws = XLSX.utils.aoa_to_sheet([headers, ex1, ex2]);
           const wb = XLSX.utils.book_new();
           XLSX.utils.book_append_sheet(wb, ws, 'Questions_Template');
           XLSX.writeFile(wb, 'Question_Upload_Template.xlsx');
@@ -471,10 +893,14 @@
 
             // Check required columns
             const firstRow = rows[0];
-            const requiredCols = ['Question', 'Type', 'Correct Answer'];
+            const requiredCols = ['Question', 'Correct Answer'];
             const missingCols = requiredCols.filter(c => !(c in firstRow));
             if (missingCols.length > 0) {
               throw new Error('Missing columns: ' + missingCols.join(', ') + '. Check the template.');
+            }
+
+            if (rows.length > 100) {
+              throw new Error('Maximum 100 questions allowed per upload. You uploaded ' + rows.length);
             }
 
             let validCount = 0, errorCount = 0;
@@ -485,7 +911,6 @@
 
             rows.forEach((row, idx) => {
               const q = (row['Question'] || '').toString().trim();
-              let rawType = (row['Type'] || 'mcq').toString().trim().toLowerCase();
               const optA = (row['Option A'] || '').toString().trim();
               const optB = (row['Option B'] || '').toString().trim();
               const optC = (row['Option C'] || '').toString().trim();
@@ -493,42 +918,57 @@
               const correct = (row['Correct Answer'] || '').toString().trim();
               const marks = parseInt(row['Marks']) || 1;
 
-              // Normalize type
               let type = 'mcq';
-              if (rawType === 'truefalse' || rawType === 'true/false' || rawType === 'tf') type = 'trueFalse';
-              else if (rawType === 'short' || rawType === 'short answer') type = 'short';
-              else type = 'mcq';
-
+              let options = [];
               let errors = [];
+              let finalCorrect = correct;
+
               if (!q) errors.push('No question text');
               if (!correct) errors.push('No correct answer');
-              if (type === 'mcq' && (!optA || !optB)) errors.push('MCQ needs at least Option A & B');
-              if (type === 'mcq') {
-                const idx = parseInt(correct);
-                if (isNaN(idx) || idx < 0 || idx > 3) errors.push('MCQ correct answer should be 0-3 (A=0, B=1, C=2, D=3)');
+
+              if (optA || optB || optC || optD) {
+                type = 'mcq';
+                if (!optA || !optB) errors.push('MCQ needs at least Option A & B');
+                
+                // Map 'A', 'B', 'C', 'D' to 0, 1, 2, 3
+                const mapKey = correct.toUpperCase();
+                const mapDict = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
+                if (mapKey in mapDict) {
+                  finalCorrect = mapDict[mapKey].toString();
+                } else if (!isNaN(parseInt(correct)) && parseInt(correct) >= 0 && parseInt(correct) <= 3) {
+                  // already index
+                  finalCorrect = correct;
+                } else {
+                  errors.push('MCQ correct answer should be A, B, C, or D');
+                }
+                options = [optA, optB, optC, optD].filter(o => o);
+              } else {
+                // If no options, it's a short answer or True/False
+                if (correct.toLowerCase() === 'true' || correct.toLowerCase() === 'false') {
+                  type = 'trueFalse';
+                } else {
+                  type = 'short';
+                }
               }
-              if (type === 'trueFalse' && !['true', 'false'].includes(correct.toLowerCase())) errors.push('True/False answer must be true or false');
 
               const isValid = errors.length === 0;
               if (isValid) validCount++; else errorCount++;
 
-              const options = type === 'mcq' ? [optA, optB, optC, optD].filter(o => o) : [];
-              const parsed = { question: q, type, options, correctAnswer: correct, marks, _valid: isValid, _errors: errors.join(', ') };
+              const parsed = { question: q, type, options, correctAnswer: finalCorrect, marks, _valid: isValid, _errors: errors.join(', ') };
               parsedQuestions.push(parsed);
 
               const statusHtml = isValid
                 ? '<span class="badge bg-success"><i class="bi bi-check"></i> OK</span>'
-                : `<span class="badge bg-danger"><i class="bi bi-x"></i></span><br><small class="text-danger">${escapeHtml(parsed._errors)}</small>`;
+                : `<span class="badge bg-danger"><i class="bi bi-exclamation-triangle"></i> Error</span><br><small class="text-danger fw-bold">Row ${idx + 2}: ${escapeHtml(parsed._errors)}</small>`;
 
-              const optDisplay = type === 'mcq' ? options.join(' | ') : (type === 'trueFalse' ? 'True / False' : '—');
+              const optDisplay = type === 'mcq' ? options.join(' | ') : (type === 'trueFalse' ? 'True / False' : 'Short Answer');
 
               html += `<tr class="${isValid ? '' : 'table-danger'}">
                 <td>${idx + 2}</td>
                 <td>${statusHtml}</td>
-                <td>${escapeHtml(q).substring(0, 50)}${q.length > 50 ? '...' : ''}</td>
-                <td><span class="badge bg-secondary">${type}</span></td>
-                <td>${escapeHtml(optDisplay).substring(0, 40)}</td>
-                <td>${escapeHtml(correct)}</td>
+                <td style="white-space:normal; min-width:200px;">${escapeHtml(q).substring(0, 50)}${q.length > 50 ? '...' : ''}</td>
+                <td style="white-space:normal; min-width:150px;">${escapeHtml(optDisplay).substring(0, 40)}</td>
+                <td><span class="badge bg-info text-dark">${escapeHtml(finalCorrect)}</span></td>
                 <td>${marks}</td>
               </tr>`;
             });
@@ -560,31 +1000,7 @@
           if (validQs.length === 0) return;
 
           validQs.forEach(q => {
-            qCount++;
-            const div = document.createElement('div');
-            div.className = 'card mb-2';
-            div.id = `q-${qCount}`;
-            div.innerHTML = `<div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <strong class="small">Question ${qCount}</strong>
-                <button type="button" class="btn btn-outline-danger btn-sm py-0" onclick="document.getElementById('q-${qCount}').remove()"><i class="bi bi-trash"></i></button>
-              </div>
-              <div class="row g-2 mb-2">
-                <div class="col-md-6"><input type="text" class="form-control q-text" value="${escapeHtml(q.question)}" required></div>
-                <div class="col-md-3"><select class="form-select q-type"><option value="mcq" ${q.type==='mcq'?'selected':''}>MCQ</option><option value="trueFalse" ${q.type==='trueFalse'?'selected':''}>True/False</option><option value="short" ${q.type==='short'?'selected':''}>Short Answer</option></select></div>
-                <div class="col-md-3"><input type="number" class="form-control q-marks" value="${q.marks}" min="1"></div>
-              </div>
-              <div class="q-options" style="${q.type === 'mcq' ? '' : 'display:none'}">
-                <div class="row g-2"><div class="col-6"><input type="text" class="form-control form-control-sm opt" placeholder="Option A" value="${escapeHtml(q.options[0] || '')}"></div><div class="col-6"><input type="text" class="form-control form-control-sm opt" placeholder="Option B" value="${escapeHtml(q.options[1] || '')}"></div></div>
-                <div class="row g-2 mt-1"><div class="col-6"><input type="text" class="form-control form-control-sm opt" placeholder="Option C" value="${escapeHtml(q.options[2] || '')}"></div><div class="col-6"><input type="text" class="form-control form-control-sm opt" placeholder="Option D" value="${escapeHtml(q.options[3] || '')}"></div></div>
-              </div>
-              <div class="mt-2"><input type="text" class="form-control form-control-sm q-answer" placeholder="Correct answer" value="${escapeHtml(q.correctAnswer)}"></div>
-            </div>`;
-            document.getElementById('questions-container').appendChild(div);
-
-            div.querySelector('.q-type').addEventListener('change', function() {
-              div.querySelector('.q-options').style.display = this.value === 'mcq' ? '' : 'none';
-            });
+             addQuestion(q);
           });
 
           closeModal('bulkQuestionModal');

@@ -35,46 +35,71 @@
 
         <!-- ═══ TAB 1: MARK ATTENDANCE ═══ -->
         <div id="tab-mark">
-          <!-- Select Course & Date -->
-          <div class="card shadow-sm mb-4">
+          <!-- Quick Mark Attendance Form -->
+          <div class="card shadow-sm mb-4" id="quick-mark-card">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
-              <h6 class="mb-0"><i class="bi bi-funnel me-2"></i>Mark Attendance</h6>
-              <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal"
-                data-bs-target="#bulkAttendanceModal">
+              <h6 class="mb-0"><i class="bi bi-person-dash me-2"></i>Quick Mark Attendance</h6>
+              <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#bulkAttendanceModal">
                 <i class="bi bi-file-earmark-spreadsheet me-1"></i>Bulk Upload
               </button>
             </div>
             <div class="card-body">
               <div class="row g-3">
+                <div class="col-md-4">
+                  <label class="form-label fw-semibold">Course <span class="text-danger">*</span></label>
+                  <select id="quick-att-course" class="form-select">
+                    <option value="">— Select Course —</option>
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label fw-semibold">Date <span class="text-danger">*</span></label>
+                  <input type="date" id="quick-att-date" class="form-control">
+                </div>
+                <div class="col-md-5">
+                  <label class="form-label fw-semibold">Absent Roll Numbers <span class="text-muted fw-normal">(comma-separated)</span></label>
+                  <textarea id="quick-att-absent" class="form-control" rows="2" placeholder="e.g. 1, 5, 12, 14"></textarea>
+                  <div class="form-text">All other enrolled students will be marked <strong>Present</strong>.</div>
+                </div>
+              </div>
+              <div class="mt-3 text-end">
+                <button class="btn btn-primary px-4" id="quick-mark-btn" disabled>
+                  <i class="bi bi-cloud-arrow-up me-1"></i>Submit Attendance
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Edit/View Attendance Matrix -->
+          <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center cursor-pointer" id="toggle-matrix-header">
+              <h6 class="mb-0 text-primary"><i class="bi bi-table me-2"></i>Edit Attendance Matrix</h6>
+              <i class="bi bi-chevron-down" id="matrix-collapse-icon"></i>
+            </div>
+            <div class="card-body" id="matrix-collapse-body" style="display: none;">
+              <div class="row g-3 mb-3">
                 <div class="col-md-5">
                   <label class="form-label fw-semibold">Course</label>
                   <select id="att-course" class="form-select">
                     <option value="">— Select Course —</option>
                   </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                   <label class="form-label fw-semibold">Month</label>
-                  <select id="att-month" class="form-select">
-                    <!-- Populated via JS -->
-                  </select>
+                  <select id="att-month" class="form-select"></select>
                 </div>
-                <div class="col-md-4 d-flex align-items-end">
-                  <button class="btn btn-primary w-100" id="load-matrix-btn" disabled>
-                    <i class="bi bi-table me-1"></i>Load Matrix
+                <div class="col-md-3 d-flex align-items-end">
+                  <button class="btn btn-outline-secondary w-100" id="load-matrix-btn" disabled>
+                    <i class="bi bi-arrow-clockwise me-1"></i>Load Matrix
                   </button>
                 </div>
               </div>
-            </div>
-          </div>
 
           <!-- Student Attendance Table -->
-          <div class="card shadow-sm mb-4 d-none" id="attendance-card">
-            <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
-              <h6 class="mb-0"><i class="bi bi-grid-3x3 me-2"></i>Attendance Matrix (<span
-                  id="matrix-month-label"></span>)</h6>
+          <div class="card shadow-none border mb-0 d-none" id="attendance-card">
+            <div class="card-header bg-light d-flex flex-wrap justify-content-between align-items-center gap-2 border-bottom-0">
+              <h6 class="mb-0"><i class="bi bi-grid-3x3 me-2"></i>Attendance Matrix (<span id="matrix-month-label"></span>)</h6>
               <div class="d-flex flex-wrap gap-2 align-items-center">
-                <input type="text" id="matrix-search" class="form-control form-control-sm"
-                  placeholder="Search name/URN/roll..." style="width:180px;">
+                <input type="text" id="matrix-search" class="form-control form-control-sm" placeholder="Search name/URN/roll..." style="width:180px;">
                 <select id="matrix-department" class="form-select form-select-sm" style="width:120px;">
                   <option value="">All Depts</option>
                   <option value="AERO">AERO</option>
@@ -88,8 +113,7 @@
                 </select>
                 <div class="vr mx-1"></div>
                 <input type="date" id="new-col-date" class="form-control form-control-sm" style="width:130px;">
-                <button class="btn btn-outline-success btn-sm text-nowrap" id="add-col-btn"><i
-                    class="bi bi-calendar-plus me-1"></i>Add Date</button>
+                <button class="btn btn-outline-success btn-sm text-nowrap" id="add-col-btn"><i class="bi bi-calendar-plus me-1"></i>Add Date</button>
               </div>
             </div>
             <div class="card-body p-0 table-responsive" style="max-height: 60vh;">
@@ -106,12 +130,13 @@
                 <tbody id="matrix-body"></tbody>
               </table>
             </div>
-            <div class="card-footer bg-white d-flex justify-content-between align-items-center">
-              <span class="text-muted small" id="att-summary">Click cells to toggle. 1 = Present, 0 = Absent
-                (Deleted).</span>
-              <button class="btn btn-primary" id="save-matrix-btn" disabled>
-                <i class="bi bi-cloud-arrow-up me-1"></i>Save Changes (<span id="pending-changes-count">0</span>)
+            <div class="card-footer bg-light border-top-0 d-flex justify-content-between align-items-center">
+              <span class="text-muted small" id="att-summary">Click cells to toggle. Green = Present, Gray = Absent.</span>
+              <button class="btn btn-success" id="save-matrix-btn" disabled>
+                <i class="bi bi-cloud-arrow-up me-1"></i>Save Edits (<span id="pending-changes-count">0</span>)
               </button>
+            </div>
+          </div>
             </div>
           </div>
         </div>
@@ -220,7 +245,7 @@
                   <option value="">— Select Course —</option>
                 </select>
                 <select id="history-month" class="form-select form-select-sm" style="width:160px;"></select>
-                <button class="btn btn-outline-success btn-sm" id="export-history-btn" disabled>
+                <button class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#customExportModal">
                   <i class="bi bi-file-earmark-excel me-1"></i>Export
                 </button>
               </div>
@@ -374,13 +399,19 @@
           </div>
 
           <div class="row g-3 mb-3">
-            <div class="col-md-6">
+            <div class="col-md-4">
               <label class="form-label">Course <span class="text-danger">*</span></label>
               <select id="bulk-att-course" class="form-select" required>
                 <option value="">— Select Course —</option>
               </select>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
+              <label class="form-label">Department <span class="text-danger">*</span></label>
+              <select id="bulk-att-department" class="form-select" required>
+                <option value="">— Loading... —</option>
+              </select>
+            </div>
+            <div class="col-md-4">
               <label class="form-label">Upload File (.xlsx, .csv) <span class="text-danger">*</span></label>
               <input type="file" id="bulk-att-file" class="form-control" accept=".xlsx, .xls, .csv">
             </div>
@@ -435,12 +466,108 @@
     </div>
   </div>
 
+  <!-- Custom Export Modal -->
+  <div class="modal fade" id="customExportModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header bg-light">
+          <h5 class="modal-title"><i class="bi bi-download me-2"></i>Download Attendance Data</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Course <span class="text-danger">*</span></label>
+            <select id="export-course" class="form-select">
+              <option value="">— Select Course —</option>
+            </select>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Export Type</label>
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="radio" name="exportType" id="exportSummary" value="summary" checked>
+              <label class="form-check-label" for="exportSummary">
+                Overall Summary <small class="text-muted d-block">Aggregated attendance percentages and totals.</small>
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="exportType" id="exportMatrix" value="matrix">
+              <label class="form-check-label" for="exportMatrix">
+                Lecture History (Matrix) <small class="text-muted d-block">Day-by-day 'Present'/'Absent' records.</small>
+              </label>
+            </div>
+          </div>
+
+          <div class="mb-3" id="export-columns-section">
+            <label class="form-label fw-semibold">Fields to Include</label>
+            <div class="row g-2">
+              <div class="col-6">
+                <div class="form-check">
+                  <input class="form-check-input export-col" type="checkbox" value="Roll No" checked disabled>
+                  <label class="form-check-label">Roll No</label>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="form-check">
+                  <input class="form-check-input export-col" type="checkbox" value="Name" checked disabled>
+                  <label class="form-check-label">Student Name</label>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="form-check">
+                  <input class="form-check-input export-col" type="checkbox" value="URN" checked>
+                  <label class="form-check-label">URN</label>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="form-check">
+                  <input class="form-check-input export-col" type="checkbox" value="Department" checked>
+                  <label class="form-check-label">Department</label>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="form-check">
+                  <input class="form-check-input export-col summary-only" type="checkbox" value="Total Lectures" checked>
+                  <label class="form-check-label">Total Lectures</label>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="form-check">
+                  <input class="form-check-input export-col summary-only" type="checkbox" value="Present" checked>
+                  <label class="form-check-label">Present Count</label>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="form-check">
+                  <input class="form-check-input export-col summary-only" type="checkbox" value="Absent" checked>
+                  <label class="form-check-label">Absent Count</label>
+                </div>
+              </div>
+               <div class="col-6">
+                <div class="form-check">
+                  <input class="form-check-input export-col summary-only" type="checkbox" value="%" checked>
+                  <label class="form-check-label">Attendance %</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-success" id="confirm-export-btn">
+            <i class="bi bi-download me-1"></i>Download Excel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <!-- SheetJS for Excel/CSV Parsing -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
   <script type="module">
     import { initApp } from '../assets/js/core/router.js';
-    import { AttendanceService, CourseService, EnrollmentService, UserService } from '../services/database.js';
+    import { AttendanceService, CourseService, EnrollmentService, UserService, DepartmentService } from '../services/database.js';
     import { showToast, formatDate, escapeHtml, LMSLogger, friendlyError, validateExcelHeaders } from '../assets/js/core/utils.js';
 
     try {
@@ -457,16 +584,36 @@
 
         // Populate all course selects
         const courseHTML = courses.map(c => `<option value="${c.id}">${escapeHtml(c.title)}</option>`).join('');
+        const quickAttCourse = document.getElementById('quick-att-course');
+        if (quickAttCourse) quickAttCourse.innerHTML += courseHTML;
         document.getElementById('att-course').innerHTML += courseHTML;
         document.getElementById('filter-course').innerHTML += courseHTML;
         document.getElementById('history-course').innerHTML += courseHTML;
         document.getElementById('report-course').innerHTML += courseHTML;
+        document.getElementById('export-course').innerHTML += courseHTML;
+
+        // Populate department select for bulk upload
+        const deptSelect = document.getElementById('bulk-att-department');
+        try {
+          const depts = await DepartmentService.getAll();
+          if (depts.length === 0) {
+            deptSelect.innerHTML = '<option value="">— No departments found —</option>';
+          } else {
+            deptSelect.innerHTML = '<option value="">— Select Department —</option>' + 
+              depts.map(d => `<option value="${d.code}">${escapeHtml(d.name)} (${escapeHtml(d.code)})</option>`).join('');
+          }
+        } catch (e) {
+          console.error("Failed to load departments", e);
+          deptSelect.innerHTML = '<option value="">— Error loading options —</option>';
+        }
 
         // Populate month filters
         const monthSelect = document.getElementById('history-month');
         const reportMonth = document.getElementById('report-month');
         const attMonth = document.getElementById('att-month');
+        const quickAttDate = document.getElementById('quick-att-date');
         const now = new Date();
+        if (quickAttDate) quickAttDate.valueAsDate = now;
         monthSelect.innerHTML = '<option value="">All Months</option>';
         reportMonth.innerHTML = '<option value="">All Time</option>';
         for (let i = 0; i < 12; i++) {
@@ -489,7 +636,113 @@
           });
         });
 
-        // ═══ TAB 1: MARK ATTENDANCE MATRIX ═══
+        // ═══ QUICK MARK ATTENDANCE LOGIC ═══
+        const quickCourse = document.getElementById('quick-att-course');
+        const quickDate = document.getElementById('quick-att-date');
+        const quickAbsent = document.getElementById('quick-att-absent');
+        const quickBtn = document.getElementById('quick-mark-btn');
+
+        function validateQuickMark() {
+          quickBtn.disabled = !(quickCourse.value && quickDate.value);
+        }
+        quickCourse.addEventListener('change', validateQuickMark);
+        quickDate.addEventListener('change', validateQuickMark);
+
+        quickBtn.addEventListener('click', async () => {
+          const courseId = quickCourse.value;
+          const date = quickDate.value;
+          const userDateObj = new Date(date);
+          const limitDate = new Date();
+          limitDate.setMonth(limitDate.getMonth() - 2);
+
+          if (userDateObj < limitDate) {
+            showToast('Cannot mark attendance older than 2 months via Quick Mark. Use Edit Matrix.', 'warning');
+            return;
+          }
+
+          quickBtn.disabled = true;
+          quickBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Submitting...';
+
+          try {
+            // 1. Fetch Enrolled Students for the selected course
+            const enrollments = await EnrollmentService.getByCourse(courseId);
+            if (enrollments.length === 0) {
+              showToast('No students enrolled in this course.', 'warning');
+              quickBtn.disabled = false;
+              quickBtn.innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i>Submit Attendance';
+              return;
+            }
+
+            const enrolledStudents = (await Promise.all(enrollments.map(async e => await UserService.get(e.studentId)))).filter(Boolean);
+
+            // 2. Parse Absent Roll Numbers
+            const absentInput = quickAbsent.value.trim();
+            // Split by comma, space, newline, remove empty, and convert to uppercase for case-insensitive matching
+            const absentRolls = absentInput ? absentInput.split(/[\s,]+/).filter(v => v).map(v => v.toUpperCase()) : [];
+
+            let successCount = 0;
+            let failureCount = 0;
+            const unknownRolls = new Set(absentRolls);
+
+            const promises = enrolledStudents.map(student => {
+              const studentRoll = (student.rollNo || '').toString().trim().toUpperCase();
+              let isAbsent = false;
+
+              if (studentRoll && absentRolls.includes(studentRoll)) {
+                isAbsent = true;
+                unknownRolls.delete(studentRoll);
+              }
+
+              const status = isAbsent ? 'absent' : 'present';
+
+              return AttendanceService.mark({
+                courseId,
+                studentId: student.uid,
+                studentName: student.name,
+                date: date,
+                status: status,
+                markedBy: userData.uid,
+                urn: student.urn
+              }).then(() => { successCount++; })
+                .catch(e => { console.error('Failed to mark', student.name, e); failureCount++; });
+            });
+
+            await Promise.all(promises);
+
+            if (unknownRolls.size > 0) {
+              showToast(`Warning: Roll Nos [${Array.from(unknownRolls).join(', ')}] were not found in this course.`, 'warning', 6000);
+            }
+
+            if (failureCount > 0) {
+              showToast(`Saved ${successCount} records. ${failureCount} failed.`, 'warning');
+            } else {
+              showToast(`Successfully marked attendance for ${successCount} students on ${date}!`, 'success');
+              quickAbsent.value = ''; // clear input
+            }
+          } catch (e) {
+            console.error('Quick mark error:', e);
+            showToast('Failed to mark attendance. Please try again.', 'error');
+          }
+
+          quickBtn.disabled = false;
+          quickBtn.innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i>Submit Attendance';
+        });
+
+        // ═══ TAB 1: EDIT ATTENDANCE MATRIX ═══
+        const toggleMatrixHeader = document.getElementById('toggle-matrix-header');
+        const matrixCollapseBody = document.getElementById('matrix-collapse-body');
+        const matrixCollapseIcon = document.getElementById('matrix-collapse-icon');
+
+        toggleMatrixHeader.addEventListener('click', () => {
+          if (matrixCollapseBody.style.display === 'none') {
+            matrixCollapseBody.style.display = 'block';
+            matrixCollapseIcon.className = 'bi bi-chevron-up';
+          } else {
+            matrixCollapseBody.style.display = 'none';
+            matrixCollapseIcon.className = 'bi bi-chevron-down';
+          }
+        });
+
         const courseSelect = document.getElementById('att-course');
         const loadMatrixBtn = document.getElementById('load-matrix-btn');
 
@@ -664,17 +917,19 @@
 
             matrixDates.forEach(date => {
               const val = matrixState[s.uid][date];
-              // visual cue
+              // visual cue based on 1 (Present) or 0 (Absent)
               const bgClass = val === 1 ? 'bg-success text-white' : 'bg-light text-muted';
+              const textVal = val === 1 ? 'Present' : 'Absent';
+
               // Check if pending change
               const isChanged = originalState[s.uid][date] !== val;
               const borderClass = isChanged ? 'border border-2 border-warning' : '';
 
               rowHTML += `<td class="p-0 align-middle">
                   <div class="att-cell ${bgClass} ${borderClass}" 
-                       style="cursor:pointer; width:100%; height:100%; min-height:35px; display:flex; align-items:center; justify-content:center; user-select:none; font-weight:bold; transition: 0.1s ease;"
+                       style="cursor:pointer; width:100%; height:100%; min-height:45px; display:flex; align-items:center; justify-content:center; user-select:none; font-weight:bold; transition: 0.1s ease; font-size: 0.9em;"
                        data-student="${s.uid}" data-date="${date}">
-                     ${val}
+                     ${textVal}
                   </div>
                 </td>`;
             });
@@ -791,8 +1046,14 @@
 
         validateAttBtn.addEventListener('click', async () => {
           const courseId = document.getElementById('bulk-att-course').value;
+          const selectedDept = document.getElementById('bulk-att-department').value;
+          
           if (!courseId) {
             showToast('Please select a Course first.', 'warning');
+            return;
+          }
+          if (!selectedDept) {
+            showToast('Please select a Department first.', 'warning');
             return;
           }
 
@@ -880,7 +1141,11 @@
               let matchedStudent = null;
               if (urn) {
                 matchedStudent = enrolledStudents.find(s => s.urn === urn);
-                if (!matchedStudent) errors.push(`URN not found in this course`);
+                if (!matchedStudent) {
+                  errors.push(`URN not found in this course`);
+                } else if (matchedStudent.department !== selectedDept) {
+                  errors.push(`Dept mismatch (Expected ${selectedDept}, found ${matchedStudent.department || 'None'})`);
+                }
               }
 
               // Evaluate Duplicates
@@ -1265,20 +1530,53 @@
         }
 
         historyCourse.addEventListener('change', () => {
-          document.getElementById('export-history-btn').disabled = !historyCourse.value;
+          // No longer disabled since button just opens modal
           loadHistory();
         });
         historyMonth.addEventListener('change', loadHistory);
 
-        // ── Export History Data Logic (Excel) ──
-        document.getElementById('export-history-btn').addEventListener('click', async (e) => {
-          const courseId = historyCourse.value;
-          const month = historyMonth.value;
+        // ── Custom Export Logic (Excel) ──
+        const exportCourseSel = document.getElementById('export-course');
+        const confirmExportBtn = document.getElementById('confirm-export-btn');
+        const exportRadios = document.querySelectorAll('input[name="exportType"]');
+        const summaryCheckboxes = document.querySelectorAll('.summary-only');
+
+        // Toggle checkboxes based on radio selection
+        exportRadios.forEach(radio => {
+          radio.addEventListener('change', (e) => {
+            const isMatrix = e.target.value === 'matrix';
+            summaryCheckboxes.forEach(cb => {
+              cb.disabled = isMatrix;
+              if (isMatrix) cb.checked = false; // Optional visual clear
+            });
+          });
+        });
+
+        exportCourseSel.addEventListener('change', () => {
+           confirmExportBtn.disabled = !exportCourseSel.value;
+        });
+
+        // Sync historyCourse map to Export dropdown
+        document.querySelector('[data-bs-target="#customExportModal"]').addEventListener('click', () => {
+          exportCourseSel.value = historyCourse.value;
+          confirmExportBtn.disabled = !exportCourseSel.value;
+        });
+
+        confirmExportBtn.addEventListener('click', async (e) => {
+          const courseId = exportCourseSel.value;
 
           if (!courseId) {
             showToast('Please select a course to export', 'warning');
             return;
           }
+
+          const type = document.querySelector('input[name="exportType"]:checked').value;
+          
+          // Gather selected fields
+          const selectedFields = Array.from(document.querySelectorAll('.export-col'))
+            .filter(cb => cb.checked || cb.disabled === false || cb.value === 'Roll No' || cb.value === 'Name') // Ensure RollNo/Name even if disabled
+            .filter(cb => cb.checked || cb.disabled && ['Roll No', 'Name'].includes(cb.value)) // Better check
+            .map(cb => cb.value);
 
           const btn = e.target.closest('button');
           const originalHtml = btn.innerHTML;
@@ -1288,11 +1586,6 @@
           try {
             // Get attendance records
             let records = await AttendanceService.getByCourse(courseId);
-
-            // Filter by month if selected
-            if (month) {
-              records = records.filter(r => r.date && r.date.startsWith(month));
-            }
 
             if (records.length === 0) {
               showToast('No attendance records found to export.', 'warning');
@@ -1312,32 +1605,86 @@
               profileMap[s.uid] = s;
             });
 
-            // Map to Excel format
-            const exportData = records.sort((a, b) => b.date.localeCompare(a.date)).map(r => {
-              const student = profileMap[r.studentId] || {};
-              return {
-                "Lecture Date": r.date || '—',
-                "URN": student.urn || r.urn || '—',
-                "Student Name": r.studentName || student.name || '—',
-                "Roll No": student.rollNo || '—',
-                "Department": student.department || '—',
-                "Status": r.status ? r.status.toUpperCase() : '—'
-              };
+            // Sort students by Roll No
+            studentProfiles.sort((a, b) => {
+              const rA = a.rollNo || '';
+              const rB = b.rollNo || '';
+              const cmp = rA.localeCompare(rB, undefined, { numeric: true, sensitivity: 'base' });
+              return cmp !== 0 ? cmp : a.name.localeCompare(b.name);
             });
 
+            let exportData = [];
+
+            if (type === 'summary') {
+               // Calculate overall summary
+               const uniqueDates = [...new Set(records.map(r => r.date))];
+               const totalLecturesCount = uniqueDates.length;
+
+               exportData = studentProfiles.map(student => {
+                 const stRecords = records.filter(r => r.studentId === student.uid);
+                 const presentCount = stRecords.filter(r => r.status === 'present').length;
+                 const absentCount = stRecords.filter(r => r.status === 'absent').length; 
+                 const perc = totalLecturesCount > 0 ? Math.round((presentCount / totalLecturesCount) * 100) : 0;
+
+                 let row = {};
+                 if (selectedFields.includes('Roll No')) row['Roll No'] = student.rollNo || '—';
+                 if (selectedFields.includes('Name')) row['Student Name'] = student.name || '—';
+                 if (selectedFields.includes('URN')) row['URN'] = student.urn || '—';
+                 if (selectedFields.includes('Department')) row['Department'] = student.department || '—';
+                 if (selectedFields.includes('Total Lectures')) row['Total Lectures'] = totalLecturesCount;
+                 if (selectedFields.includes('Present')) row['Present'] = presentCount;
+                 if (selectedFields.includes('Absent')) row['Absent'] = absentCount; // Missed vs Marked Absent diff? Usually Missed = Total - Present.
+                 if (selectedFields.includes('%')) row['Attendance %'] = perc + '%';
+
+                 return row;
+               });
+            } else {
+               // Matrix export
+               const uniqueDates = [...new Set(records.map(r => r.date))].sort();
+               const dtMap = {}; // mapping for quick lookup:  dtMap[uid][date]
+               studentProfiles.forEach(s => dtMap[s.uid] = {});
+               
+               records.forEach(r => {
+                 if (dtMap[r.studentId]) {
+                   dtMap[r.studentId][r.date] = r.status === 'present' ? 'Present' : 'Absent';
+                 }
+               });
+
+               exportData = studentProfiles.map(student => {
+                 let row = {};
+                 if (selectedFields.includes('Roll No')) row['Roll No'] = student.rollNo || '—';
+                 if (selectedFields.includes('Name')) row['Student Name'] = student.name || '—';
+                 if (selectedFields.includes('URN')) row['URN'] = student.urn || '—';
+                 if (selectedFields.includes('Department')) row['Department'] = student.department || '—';
+                 
+                 uniqueDates.forEach(date => {
+                   row[date] = dtMap[student.uid][date] || '—';
+                 });
+
+                 return row;
+               });
+            }
+
             // Make sure the course title is known for the filename
-            const courseTitleText = historyCourse.options[historyCourse.selectedIndex].text;
+            const courseTitleText = exportCourseSel.options[exportCourseSel.selectedIndex].text;
             const safeCourseTitle = courseTitleText.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-            const dateStr = month ? month : new Date().toISOString().split('T')[0];
+            const dateStr = new Date().toISOString().split('T')[0];
+            const suffix = type === 'matrix' ? 'Matrix' : 'Summary';
 
             // Trigger File Download
             const worksheet = XLSX.utils.json_to_sheet(exportData);
             const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance_Backup");
+            XLSX.utils.book_append_sheet(workbook, worksheet, `Attendance_${suffix}`);
 
-            XLSX.writeFile(workbook, `Attendance_${safeCourseTitle}_${dateStr}.xlsx`);
+            XLSX.writeFile(workbook, `Attendance_${safeCourseTitle}_${suffix}_${dateStr}.xlsx`);
 
             showToast('Attendance Data Exported Successfully', 'success');
+            
+            // Close modal
+            const modalEl = document.getElementById('customExportModal');
+            const modalInstance = bootstrap.Modal.getInstance(modalEl);
+            if(modalInstance) modalInstance.hide();
+            
           } catch (error) {
             console.error('Export Failed:', error);
             showToast('Failed to export data. ' + (error.message || ''), 'error');
