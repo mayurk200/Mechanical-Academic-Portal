@@ -6,11 +6,11 @@
 // ============================================================
 
 export const firebaseConfig = {
-  apiKey: "AIzaSyDnG85fj3Ln_7Y1rF84Jhg4_huvPpjRdu4",
-  authDomain: "minner-dashbord.firebaseapp.com",
-  projectId: "minner-dashbord",
-  storageBucket: "minner-dashbord.firebasestorage.app",
-  messagingSenderId: "465981542786",
-  appId: "1:465981542786:web:08f57ea9cee02da536ff9b",
-  measurementId: "G-8L6X8HGTXW"
+  apiKey: "AIzaSyDSjxWfKqKfRaX30RRK29f5FDI_k7fXUAc",
+  authDomain: "mechanical-academic-portal.firebaseapp.com",
+  projectId: "mechanical-academic-portal",
+  storageBucket: "mechanical-academic-portal.firebasestorage.app",
+  messagingSenderId: "849867485490",
+  appId: "1:849867485490:web:6ca272558d1a298e89a72b",
+  measurementId: "G-TKQW4J2YTG"
 };
