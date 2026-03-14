@@ -24,7 +24,13 @@ export const ResultRepository = {
       percentage: data.percentage || 0,
       correctCount: data.correctCount || 0,
       wrongCount: data.wrongCount || 0,
-      tabSwitchCount: data.tabSwitchCount || 0,
+      // Violation tracking
+      copyAttempts: data.copyAttempts || 0,
+      tabSwitches: data.tabSwitches || 0,
+      fullscreenExits: data.fullscreenExits || 0,
+      devtoolsAttempts: data.devtoolsAttempts || 0,
+      autoSubmitted: data.autoSubmitted || false,
+      submissionType: data.submissionType || 'manual',  // 'manual' | 'auto_copy' | 'auto_tab' | 'auto_fullscreen' | 'auto_devtools' | 'auto_timeout'
       submittedAt: serverTimestamp()
     });
   },

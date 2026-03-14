@@ -105,11 +105,12 @@
 
   <!-- Take Test Modal (fullscreen) -->
   <div class="modal fade" id="testModal" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-dialog modal-fullscreen">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="taking-title">Test</h5>
           <span class="badge bg-danger ms-2" id="timer-display">00:00</span>
+          <span class="badge bg-warning text-dark ms-2 d-none" id="violation-badge">⚠️ Strikes: 0/3</span>
         </div>
         <div class="modal-body" id="test-body"></div>
         <div class="modal-footer">
@@ -118,6 +119,51 @@
       </div>
     </div>
   </div>
+
+  <!-- Violation Warning Overlay -->
+  <div id="violationOverlay" class="d-none">
+    <div class="violation-overlay-bg"></div>
+    <div class="violation-card">
+      <div class="violation-icon">⚠️</div>
+      <h4 class="violation-title" id="violation-title">Warning!</h4>
+      <p class="violation-msg" id="violation-msg">Suspicious activity detected.</p>
+      <div class="violation-strikes" id="violation-strikes">Strike 1 of 2</div>
+      <p class="violation-sub" id="violation-sub">Next violation will auto-submit your test!</p>
+      <button class="btn btn-warning w-100 mt-3" id="violation-dismiss-btn">I Understand</button>
+    </div>
+  </div>
+
+  <style>
+    #violationOverlay {
+      position: fixed; inset: 0; z-index: 99999;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #violationOverlay.d-none { display: none !important; }
+    .violation-overlay-bg {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+    }
+    .violation-card {
+      position: relative; background: #fff; border-radius: 16px;
+      padding: 36px 32px; max-width: 420px; width: 90%;
+      text-align: center; box-shadow: 0 8px 40px rgba(220,53,69,0.35);
+      border: 3px solid #dc3545; animation: violationPulse 0.5s ease;
+    }
+    @keyframes violationPulse {
+      0%,100% { transform: scale(1); } 50% { transform: scale(1.04); }
+    }
+    .violation-icon { font-size: 3rem; margin-bottom: 8px; }
+    .violation-title { color: #dc3545; font-weight: 700; margin-bottom: 8px; }
+    .violation-msg { color: #555; font-size: 0.95rem; margin-bottom: 12px; }
+    .violation-strikes {
+      display: inline-block; background: #dc3545; color: #fff;
+      padding: 6px 20px; border-radius: 20px; font-weight: 700; font-size: 1.1rem;
+    }
+    .violation-sub { color: #b02a37; font-weight: 600; font-size: 0.85rem; margin-top: 10px; }
+    body.exam-locked { overflow: hidden !important; }
+    body.exam-locked .sidebar, body.exam-locked .top-bar { display: none !important; }
+    body.exam-locked .main-content { margin-left: 0 !important; padding: 0 !important; }
+  </style>
 
   <!-- Secure Delete Modal -->
   <div class="modal fade" id="secureDeleteModal" tabindex="-1" data-bs-backdrop="static">
@@ -198,7 +244,7 @@
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
   <script type="module">
     import { initApp } from '../assets/js/core/router.js';
-    import { TestService, CourseService, ResultService, EnrollmentService } from '../services/database.js';
+    import { TestService, CourseService, ResultService, EnrollmentService, ExamActivityLogService } from '../services/database.js';
     import { verifyCurrentPassword } from '../assets/js/core/auth.js';
     import { showToast, escapeHtml, formatTime, formatDateTime, closeModal } from '../assets/js/core/utils.js';
 
@@ -512,15 +558,186 @@
         }
       }
 
-      // Start Test
-      let timerInterval;
-      // Security state variables
-      let tabSwitchCount = 0;
-      let onVisibilityChange = null, onCopyPaste = null, onContextMenu = null;
+      // ═══════════════════════════════════════════════════════════════════
+      // COMPREHENSIVE ANTI-CHEAT SECURITY SYSTEM
+      // Separate violation counters, exam lock, devtools detection,
+      // auto-save, activity logging, and result control
+      // ═══════════════════════════════════════════════════════════════════
 
+      let timerInterval, autoSaveInterval, devtoolsInterval, timerCheckInterval;
+      let isTestActive = false;
+      let submissionInProgress = false;
+
+      // Separate violation counters
+      const LIMITS = { copy: 3, tab: 2, fullscreen: 2, devtools: 2 };
+      let violations = { copy: 0, tab: 0, fullscreen: 0, devtools: 0 };
+
+      // Event handler references for cleanup
+      let onVisibilityChange = null, onCopyPaste = null, onContextMenu = null;
+      let onSelectStart = null, onKeyDown = null, onFullscreenChange = null;
+      let onBeforeUnload = null, onPopState = null, onDragStart = null;
+      let domObserver = null;
+
+      // Active test reference for auto-submit from event handlers
+      let _activeTest = null;
+
+      // ── Activity Logger ──
+      function logExamActivity(type, message) {
+        if (!_activeTest) return;
+        ExamActivityLogService.log({
+          testId: _activeTest.id,
+          studentId: userData.uid,
+          studentName: userData.name,
+          type, message
+        }).catch(err => console.warn('Activity log failed:', err));
+      }
+
+      // ── Violation Warning System ──
+      function showViolationWarning(category, reason) {
+        if (!isTestActive || submissionInProgress) return;
+        violations[category]++;
+        const limit = LIMITS[category];
+        const count = violations[category];
+        const total = violations.copy + violations.tab + violations.fullscreen + violations.devtools;
+
+        // Log to Firestore
+        logExamActivity(category + '_attempt', `${reason} (Strike ${count}/${limit})`);
+
+        // Update badge
+        const badge = document.getElementById('violation-badge');
+        badge.classList.remove('d-none');
+        badge.textContent = `⚠️ Violations: ${total}`;
+
+        if (count >= limit) {
+          // Limit reached → auto-submit
+          showToast(`Test auto-submitted! Too many ${category} violations.`, 'error');
+          logExamActivity('auto_submit', `Auto-submitted due to ${category} violations (${count}/${limit})`);
+          clearInterval(timerInterval);
+          submitTest(_activeTest, 'auto_' + category);
+          return;
+        }
+
+        // Show warning overlay
+        const overlay = document.getElementById('violationOverlay');
+        document.getElementById('violation-title').textContent = '⛔ Warning!';
+        document.getElementById('violation-msg').textContent = reason;
+        const remaining = limit - count;
+        document.getElementById('violation-strikes').textContent = `Strike ${count} of ${limit - 1}`;
+        document.getElementById('violation-sub').textContent = remaining <= 1
+          ? '🚨 Next violation of this type will AUTO-SUBMIT your test!'
+          : `You have ${remaining - 1} warning(s) remaining before auto-submission.`;
+        overlay.classList.remove('d-none');
+
+        // Dismiss
+        document.getElementById('violation-dismiss-btn').onclick = () => {
+          overlay.classList.add('d-none');
+          try { document.documentElement.requestFullscreen?.(); } catch(e) {}
+        };
+      }
+
+      // ── Collect Current Answers ──
+      function collectCurrentAnswers(questions) {
+        return questions.map((q, i) => {
+          let ans;
+          if (q.type === 'short') {
+            ans = document.querySelector(`input[name="q${i}"]`)?.value?.trim() || '';
+          } else {
+            ans = document.querySelector(`input[name="q${i}"]:checked`)?.value || '';
+          }
+          return ans;
+        });
+      }
+
+      // ── Auto-Save Answers ──
+      async function autoSaveAnswers(test) {
+        if (!isTestActive) return;
+        const questions = test._activeQuestions || [];
+        const answers = collectCurrentAnswers(questions);
+        try {
+          // Using a simple key to avoid Firestore doc ID issues
+          const key = `exam_draft_${test.id}_${userData.uid}`;
+          sessionStorage.setItem(key, JSON.stringify({ answers, savedAt: Date.now() }));
+        } catch(e) { /* silent */ }
+      }
+
+      // ── Exam Lock Mode ──
+      function enterExamLock() {
+        // Hide sidebar and top bar
+        try { document.getElementById('sidebar').style.display = 'none'; } catch(e) {}
+        try { document.querySelector('.top-bar').style.display = 'none'; } catch(e) {}
+        document.body.classList.add('exam-locked');
+
+        // Disable back button
+        history.pushState(null, '', location.href);
+        onPopState = () => { history.pushState(null, '', location.href); };
+        window.addEventListener('popstate', onPopState);
+
+        // Before unload warn + auto-submit
+        onBeforeUnload = (e) => {
+          if (!isTestActive) return;
+          e.preventDefault();
+          e.returnValue = 'You have an active test. Leaving will submit your test automatically.';
+          // Queue auto-submit
+          submitTest(_activeTest, 'auto_browser_close');
+          return e.returnValue;
+        };
+        window.addEventListener('beforeunload', onBeforeUnload);
+      }
+
+      function exitExamLock() {
+        try { document.getElementById('sidebar').style.display = ''; } catch(e) {}
+        try { document.querySelector('.top-bar').style.display = ''; } catch(e) {}
+        document.body.classList.remove('exam-locked');
+        if (onPopState) { window.removeEventListener('popstate', onPopState); onPopState = null; }
+        if (onBeforeUnload) { window.removeEventListener('beforeunload', onBeforeUnload); onBeforeUnload = null; }
+      }
+
+      // ── DevTools Detection ──
+      function startDevtoolsDetection(test) {
+        let devtoolsWasOpen = false;
+        devtoolsInterval = setInterval(() => {
+          if (!isTestActive) return;
+          const threshold = 160;
+          const isOpen = (window.outerWidth - window.innerWidth > threshold) ||
+                         (window.outerHeight - window.innerHeight > threshold);
+          if (isOpen && !devtoolsWasOpen) {
+            devtoolsWasOpen = true;
+            showViolationWarning('devtools', 'Developer tools detected! This is not allowed during tests.');
+          } else if (!isOpen) {
+            devtoolsWasOpen = false;
+          }
+        }, 2000);
+      }
+
+      // ── Timer Tamper Detection ──
+      function startTimerCheck(expectedDuration) {
+        const startWall = Date.now();
+        timerCheckInterval = setInterval(() => {
+          if (!isTestActive) return;
+          const elapsedWall = (Date.now() - startWall) / 1000;
+          const elapsedTimer = expectedDuration - parseInt(document.getElementById('timer-display').textContent.split(':').reduce((a,b) => a * 60 + parseInt(b), 0) || 0);
+          if (Math.abs(elapsedWall - elapsedTimer) > 10) {
+            logExamActivity('timer_tamper', `Wall clock drift detected: ${Math.round(elapsedWall)}s vs timer ${Math.round(elapsedTimer)}s`);
+          }
+        }, 10000);
+      }
+
+      // ═══════════════════════════════════════════════
+      // START TEST
+      // ═══════════════════════════════════════════════
       function startTest(test) {
         document.getElementById('taking-title').textContent = test.title;
-        // Deep copy questions so we don't modify the original array if we shuffle/slice
+        violations = { copy: 0, tab: 0, fullscreen: 0, devtools: 0 };
+        isTestActive = true;
+        submissionInProgress = false;
+        _activeTest = test;
+        document.getElementById('violation-badge').classList.add('d-none');
+        document.getElementById('violationOverlay').classList.add('d-none');
+
+        // Log test start
+        logExamActivity('test_start', `Started test: ${test.title}`);
+
+        // Deep copy questions
         let questions = JSON.parse(JSON.stringify(test.questions || []));
 
         // 1. Shuffle Questions
@@ -535,98 +752,219 @@
 
         let timeLeft = (test.duration || 30) * 60;
 
-        document.getElementById('test-body').innerHTML = questions.map((q, i) => {
-          let opts = q.options || [];
+        // Obfuscate questions — render via JS, not plain HTML
+        const encodedQuestions = questions.map(q => ({
+          ...q,
+          _q: btoa(unescape(encodeURIComponent(q.question))),
+          _opts: (q.options || []).map(o => btoa(unescape(encodeURIComponent(o))))
+        }));
+
+        document.getElementById('test-body').innerHTML = encodedQuestions.map((q, i) => {
+          const decoded = decodeURIComponent(escape(atob(q._q)));
+          const opts = q._opts.map(o => decodeURIComponent(escape(atob(o))));
           let correct = q.correctAnswer;
-          
+
           // 3. Randomize Options
           if (test.randomizeOptions && q.type === 'mcq' && opts.length > 0) {
             const optObjs = opts.map((optTxt, idx) => ({ text: optTxt, isCorrect: String(idx) === String(correct) }));
             optObjs.sort(() => Math.random() - 0.5);
-            opts = optObjs.map(o => o.text);
+            const shuffledOpts = optObjs.map(o => o.text);
             correct = optObjs.findIndex(o => o.isCorrect).toString();
-            // Assign modified back so grading matches
-            q.options = opts;
-            q.correctAnswer = correct;
+            questions[i].options = shuffledOpts;
+            questions[i].correctAnswer = correct;
+            return renderQuestionHTML(i, decoded, q.type, shuffledOpts, q.marks);
           }
-
-          return `
-          <div class="card mb-3 q-card" data-idx="${i}">
-            <div class="card-body">
-              <h6>Q${i+1}. ${escapeHtml(q.question)} <small class="text-muted">(${q.marks} marks)</small></h6>
-              ${q.type === 'mcq' ? opts.map((o, j) => `
-                <div class="form-check"><input class="form-check-input q-ans-input" type="radio" name="q${i}" value="${j}"><label class="form-check-label">${escapeHtml(o)}</label></div>
-              `).join('') : q.type === 'trueFalse' ? `
-                <div class="form-check"><input class="form-check-input q-ans-input" type="radio" name="q${i}" value="true"><label class="form-check-label">True</label></div>
-                <div class="form-check"><input class="form-check-input q-ans-input" type="radio" name="q${i}" value="false"><label class="form-check-label">False</label></div>
-              ` : `<input type="text" class="form-control q-ans-input" name="q${i}" placeholder="Your answer...">`}
-            </div>
-          </div>`
+          return renderQuestionHTML(i, decoded, q.type, opts, q.marks);
         }).join('');
 
-        // Store the active modified questions array back to test for grading reference
         test._activeQuestions = questions;
 
-        // Security Features setup
+        // ── SECURITY SETUP ──
+
+        // A) Copy/Paste/Selection Protection
         if (test.disableCopy) {
-          document.getElementById('test-body').style.userSelect = 'none';
-          onCopyPaste = (e) => { e.preventDefault(); showToast('Copy/Paste/Selection is disabled for this test.', 'warning'); };
-          onContextMenu = (e) => { e.preventDefault(); };
+          const tb = document.getElementById('test-body');
+          tb.style.userSelect = 'none';
+          tb.style.webkitUserSelect = 'none';
+          tb.style.MozUserSelect = 'none';
+          tb.style.msUserSelect = 'none';
+
+          // Override clipboard API
+          if (navigator.clipboard) {
+            navigator.clipboard.writeText = async () => {
+              if (isTestActive) showViolationWarning('copy', 'Clipboard injection is not allowed during the test.');
+              throw new Error('Clipboard access disabled');
+            };
+          }
+
+          onCopyPaste = (e) => { e.preventDefault(); if (!isTestActive) return; showViolationWarning('copy', 'Copy, Cut, or Paste is not allowed during this test.'); };
+          onContextMenu = (e) => { e.preventDefault(); if (!isTestActive) return; showViolationWarning('copy', 'Right-click is disabled during this test.'); };
+          onSelectStart = (e) => { e.preventDefault(); };
+          onDragStart = (e) => { e.preventDefault(); if (!isTestActive) return; showViolationWarning('copy', 'Dragging content is not allowed during this test.'); };
+          onKeyDown = (e) => {
+            if (!isTestActive) return;
+            // Copy shortcuts → copy counter
+            if ((e.ctrlKey || e.metaKey) && ['c','x','v','a','u','s','p'].includes(e.key.toLowerCase())) {
+              e.preventDefault();
+              showViolationWarning('copy', `Keyboard shortcut (Ctrl+${e.key.toUpperCase()}) is blocked during this test.`);
+            }
+            // DevTools shortcuts → devtools counter
+            if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['i','j','c'].includes(e.key.toLowerCase()))) {
+              e.preventDefault();
+              showViolationWarning('devtools', 'Developer tools are not allowed during this test.');
+            }
+            if (e.key === 'PrintScreen') {
+              e.preventDefault();
+              showViolationWarning('copy', 'Screenshots are not allowed during this test.');
+            }
+            // Block Ctrl+R, Ctrl+W, F5 (refresh/close)
+            if ((e.ctrlKey && ['r','w'].includes(e.key.toLowerCase())) || e.key === 'F5') {
+              e.preventDefault();
+            }
+          };
+
           document.addEventListener('copy', onCopyPaste);
           document.addEventListener('cut', onCopyPaste);
           document.addEventListener('paste', onCopyPaste);
           document.addEventListener('contextmenu', onContextMenu);
+          document.addEventListener('selectstart', onSelectStart);
+          document.addEventListener('dragstart', onDragStart);
+          document.addEventListener('keydown', onKeyDown);
+
+          // DOM Tamper Protection
+          domObserver = new MutationObserver((mutations) => {
+            if (!isTestActive) return;
+            let tampering = false;
+            for (const m of mutations) {
+              if (m.type === 'childList' && (m.addedNodes.length > 0 || m.removedNodes.length > 0)) {
+                tampering = true;
+                break;
+              }
+            }
+            if (tampering) {
+               showViolationWarning('devtools', 'DOM manipulation detected! Tampering with the exam is prohibited.');
+            }
+          });
+          domObserver.observe(tb, { childList: true, subtree: true });
         }
 
+        // B) Tab Switch Detection
         if (test.detectTabSwitch) {
-          tabSwitchCount = 0;
           onVisibilityChange = () => {
-             if (document.hidden) {
-                tabSwitchCount++;
-                if (tabSwitchCount >= 3) {
-                   showToast('Test auto-submitted due to multiple tab switches!', 'error');
-                   submitTest(test); // auto-submit
-                } else {
-                   alert(`Warning! Tab switching is not allowed. Strike ${tabSwitchCount} of 3. Your test will be submitted automatically next time.`);
-                }
-             }
+            if (!isTestActive) return;
+            if (document.hidden) showViolationWarning('tab', 'Tab switching or minimizing is not allowed during this test.');
           };
           document.addEventListener('visibilitychange', onVisibilityChange);
         }
 
+        // C) Fullscreen + Exit Detection
+        try { document.documentElement.requestFullscreen?.(); } catch(e) {}
+        onFullscreenChange = () => {
+          if (!isTestActive) return;
+          if (!document.fullscreenElement) {
+            showViolationWarning('fullscreen', 'Exiting fullscreen is not allowed during this test.');
+          }
+        };
+        document.addEventListener('fullscreenchange', onFullscreenChange);
+
+        // D) Exam Lock Mode
+        enterExamLock();
+
+        // E) DevTools Detection
+        startDevtoolsDetection(test);
+
+        // F) Auto-Save Answers every 30 seconds
+        autoSaveInterval = setInterval(() => autoSaveAnswers(test), 30000);
+
+        // G) Timer Tamper Detection
+        startTimerCheck(timeLeft);
+
+        // Show modal
         new bootstrap.Modal(document.getElementById('testModal')).show();
 
+        // Timer
         timerInterval = setInterval(() => {
           timeLeft--;
-          document.getElementById('timer-display').textContent = formatTime(timeLeft);
-          if (timeLeft <= 0) { 
+          const mins = Math.floor(Math.max(0, timeLeft) / 60).toString().padStart(2,'0');
+          const secs = (Math.max(0, timeLeft) % 60).toString().padStart(2,'0');
+          document.getElementById('timer-display').textContent = `${mins}:${secs}`;
+          if (timeLeft <= 0) {
             clearInterval(timerInterval);
             if (test.autoSubmitTimeout !== false) {
-               showToast('Time is up! Auto-submitting...', 'info');
-               submitTest(test);
+              showToast('Time is up! Auto-submitting...', 'info');
+              logExamActivity('auto_submit', 'Auto-submitted due to timeout');
+              submitTest(test, 'auto_timeout');
             } else {
-               document.getElementById('timer-display').textContent = 'Time Up!';
+              document.getElementById('timer-display').textContent = 'Time Up!';
             }
           }
         }, 1000);
 
-        document.getElementById('submit-test-btn').onclick = () => { clearInterval(timerInterval); submitTest(test); };
+        document.getElementById('submit-test-btn').onclick = () => { clearInterval(timerInterval); submitTest(test, 'manual'); };
       }
 
-      async function submitTest(test) {
-        // Cleanup event listeners
-        if (onVisibilityChange) document.removeEventListener('visibilitychange', onVisibilityChange);
+      // ── Render Question HTML ──
+      function renderQuestionHTML(i, questionText, type, opts, marks) {
+        return `
+          <div class="card mb-3 q-card" data-idx="${i}">
+            <div class="card-body">
+              <h6>Q${i+1}. ${escapeHtml(questionText)} <small class="text-muted">(${marks} marks)</small></h6>
+              ${type === 'mcq' ? opts.map((o, j) => `
+                <div class="form-check"><input class="form-check-input q-ans-input" type="radio" name="q${i}" value="${j}"><label class="form-check-label">${escapeHtml(o)}</label></div>
+              `).join('') : type === 'trueFalse' ? `
+                <div class="form-check"><input class="form-check-input q-ans-input" type="radio" name="q${i}" value="true"><label class="form-check-label">True</label></div>
+                <div class="form-check"><input class="form-check-input q-ans-input" type="radio" name="q${i}" value="false"><label class="form-check-label">False</label></div>
+              ` : `<input type="text" class="form-control q-ans-input" name="q${i}" placeholder="Your answer...">`}
+            </div>
+          </div>`;
+      }
+
+      // ═══════════════════════════════════════════════
+      // SUBMIT TEST
+      // ═══════════════════════════════════════════════
+      async function submitTest(test, submissionType = 'manual') {
+        if (submissionInProgress) return; // prevent double-submit
+        submissionInProgress = true;
+        isTestActive = false;
+
+        // Cleanup all intervals
+        clearInterval(timerInterval);
+        clearInterval(autoSaveInterval);
+        clearInterval(devtoolsInterval);
+        clearInterval(timerCheckInterval);
+
+        // Cleanup all event listeners
+        if (onVisibilityChange) { document.removeEventListener('visibilitychange', onVisibilityChange); onVisibilityChange = null; }
+        if (onFullscreenChange) { document.removeEventListener('fullscreenchange', onFullscreenChange); onFullscreenChange = null; }
         if (onCopyPaste) {
           document.removeEventListener('copy', onCopyPaste);
           document.removeEventListener('cut', onCopyPaste);
           document.removeEventListener('paste', onCopyPaste);
-          document.removeEventListener('contextmenu', onContextMenu);
-          document.getElementById('test-body').style.userSelect = 'auto'; // restore
+          onCopyPaste = null;
         }
+        if (onContextMenu) { document.removeEventListener('contextmenu', onContextMenu); onContextMenu = null; }
+        if (onSelectStart) { document.removeEventListener('selectstart', onSelectStart); onSelectStart = null; }
+        if (onDragStart) { document.removeEventListener('dragstart', onDragStart); onDragStart = null; }
+        if (onKeyDown) { document.removeEventListener('keydown', onKeyDown); onKeyDown = null; }
+        if (domObserver) { domObserver.disconnect(); domObserver = null; }
+        
+        try {
+          const tb = document.getElementById('test-body');
+          tb.style.userSelect = 'auto';
+          tb.style.webkitUserSelect = 'auto';
+          tb.style.MozUserSelect = 'auto';
+          tb.style.msUserSelect = 'auto';
+        } catch(e) {}
 
+        // Exit exam lock + fullscreen
+        exitExamLock();
+        try { if (document.fullscreenElement) document.exitFullscreen?.(); } catch(e) {}
+        document.getElementById('violationOverlay').classList.add('d-none');
+
+        // Grade answers
         const questions = test._activeQuestions || test.questions || [];
         let score = 0, correct = 0, wrong = 0;
-        
+
         const answers = questions.map((q, i) => {
           let ans;
           if (q.type === 'short') {
@@ -639,17 +977,34 @@
           return { question: q.question, answer: ans, correct: isCorrect };
         });
 
-        // Use the new subset's totalMarks if we sliced it, else test.totalMarks
         const newTotalMarks = questions.reduce((acc, q) => acc + q.marks, 0) || 1;
         const percentage = Math.round((score / newTotalMarks) * 100);
-        
+
+        // Submit with full violation data
         await ResultService.submit({
-          testId: test.id, courseId: test.courseId, studentId: userData.uid, studentName: userData.name,
-          answers, score, totalMarks: newTotalMarks, percentage, correctCount: correct, wrongCount: wrong
+          testId: test.id, courseId: test.courseId,
+          studentId: userData.uid, studentName: userData.name,
+          answers, score, totalMarks: newTotalMarks, percentage,
+          correctCount: correct, wrongCount: wrong,
+          copyAttempts: violations.copy,
+          tabSwitches: violations.tab,
+          fullscreenExits: violations.fullscreen,
+          devtoolsAttempts: violations.devtools,
+          autoSubmitted: submissionType !== 'manual',
+          submissionType
         });
 
+        // Log submission
+        logExamActivity('test_submit', `Submitted (${submissionType}) — Score: ${score}/${newTotalMarks} (${percentage}%)`);
+
+        // Clean up draft
+        try { sessionStorage.removeItem(`exam_draft_${test.id}_${userData.uid}`); } catch(e) {}
+
         bootstrap.Modal.getInstance(document.getElementById('testModal'))?.hide();
-        showToast(`Test submitted! Score: ${percentage}%`, percentage >= 40 ? 'success' : 'warning');
+        _activeTest = null;
+
+        // NEVER show score to student — result controlled by admin
+        showToast('Test submitted successfully!', 'success');
         loadTests();
       }
 

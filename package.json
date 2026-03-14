@@ -1,6 +1,6 @@
 {
   "name": "mechanical-academic-portal",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Learning Management System — A modular, production-grade LMS for academic institutions. Supports admin, teacher, and student roles with attendance tracking, test management, and course enrollment.",
   "author": "ADCET",
   "license": "MIT",

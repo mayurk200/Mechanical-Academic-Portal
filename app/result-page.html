@@ -7,6 +7,25 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css">
+  <style>
+    .flag-clean { background: #d1e7dd !important; }
+    .flag-warn { background: #fff3cd !important; }
+    .flag-danger { background: #f8d7da !important; }
+    .violation-badge { font-size: 0.72rem; padding: 2px 7px; border-radius: 10px; margin-right: 3px; white-space: nowrap; }
+    .vb-copy { background: #dc3545; color: #fff; }
+    .vb-tab { background: #fd7e14; color: #fff; }
+    .vb-fs { background: #6f42c1; color: #fff; }
+    .vb-dev { background: #0d6efd; color: #fff; }
+    .vb-auto { background: #212529; color: #fff; }
+    .activity-log-row td { padding: 6px 10px !important; font-size: 0.82rem; }
+    .log-type { font-weight: 700; text-transform: uppercase; font-size: 0.7rem; }
+    .log-type.copy_attempt { color: #dc3545; }
+    .log-type.tab_attempt { color: #fd7e14; }
+    .log-type.fullscreen_attempt { color: #6f42c1; }
+    .log-type.devtools_attempt { color: #0d6efd; }
+    .log-type.auto_submit { color: #212529; }
+    .log-type.test_start, .log-type.test_submit { color: #198754; }
+  </style>
 </head>
 <body>
   <aside class="sidebar" id="sidebar"></aside>
@@ -50,9 +69,26 @@
         <div class="card-header bg-white"><h6 class="mb-0"><i class="bi bi-table me-2"></i>Results</h6></div>
         <div class="card-body p-0">
           <table class="table table-striped table-hover mb-0">
-            <thead class="table-light"><tr><th>#</th><th>Student</th><th>Roll No</th><th>URN</th><th>Score</th><th>Percentage</th><th>Date</th></tr></thead>
+            <thead class="table-light" id="results-thead">
+              <tr><th>#</th><th>Student</th><th>Roll No</th><th>URN</th><th>Score</th><th>Percentage</th><th>Date</th></tr>
+            </thead>
             <tbody id="results-table"><tr><td colspan="7" class="text-center text-muted py-4">Select a test or view your results</td></tr></tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- Activity Log Detail Modal -->
+      <div class="modal fade" id="activityLogModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+          <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+              <h5 class="modal-title"><i class="bi bi-shield-exclamation me-2"></i>Exam Activity Log</h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0" id="activity-log-body">
+              <div class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm"></span> Loading...</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -61,7 +97,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script type="module">
     import { initApp } from '../assets/js/core/router.js';
-    import { TestService, ResultService, EnrollmentService, CourseService, UserService } from '../services/database.js';
+    import { TestService, ResultService, EnrollmentService, CourseService, UserService, ExamActivityLogService } from '../services/database.js';
     import { showToast, formatDate, escapeHtml } from '../assets/js/core/utils.js';
 
     try {
@@ -147,14 +183,16 @@
         sel.addEventListener('change', async () => {
           if (!sel.value) return;
           const results = await ResultService.getByTest(sel.value);
-          renderResults(results, false);
+          renderResults(results, false, sel.value);
         });
       }
 
-      async function renderResults(results, isStudent) {
+      async function renderResults(results, isStudent, testId = null) {
         const tbody = document.getElementById('results-table');
+        const thead = document.getElementById('results-thead');
+
         if (results.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No results found</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-4">No results found</td></tr>';
           document.getElementById('stats-row').classList.add('d-none');
           return;
         }
@@ -167,24 +205,114 @@
         document.getElementById('low-score').textContent = Math.min(...percs) + '%';
         document.getElementById('total-submissions').textContent = results.length;
 
+        // Update table header for teacher/admin view (add activity columns)
+        if (!isStudent) {
+          thead.innerHTML = `<tr>
+            <th>#</th><th>Student</th><th>Roll No</th><th>URN</th>
+            <th>Score</th><th>Percentage</th><th>Submission</th>
+            <th>⚠️ Activity</th><th>Actions</th>
+          </tr>`;
+        } else {
+          thead.innerHTML = `<tr><th>#</th><th>Test</th><th>Roll No</th><th>URN</th><th>Score</th><th>Percentage</th><th>Date</th></tr>`;
+        }
+
         // Enrich with user details
         const enriched = await Promise.all(results.map(async (r, i) => {
           const user = isStudent ? null : await UserService.get(r.studentId);
           return { ...r, _user: user };
         }));
 
-        tbody.innerHTML = enriched.map((r, i) => {
-          const color = r.percentage >= 70 ? 'text-success' : r.percentage >= 40 ? 'text-warning' : 'text-danger';
-          return `<tr>
-            <td>${i + 1}</td>
-            <td>${isStudent ? (r.testTitle || 'You') : (r.studentName || r._user?.name || '—')}</td>
-            <td>${r._user?.rollNo || '—'}</td>
-            <td>${r._user?.urn || '—'}</td>
-            <td>${r.score}/${r.totalMarks}</td>
-            <td class="${color} fw-bold">${r.percentage}%</td>
-            <td class="text-muted small">${formatDate(r.submittedAt)}</td>
-          </tr>`;
-        }).join('');
+        if (isStudent) {
+          tbody.innerHTML = enriched.map((r, i) => {
+            const color = r.percentage >= 70 ? 'text-success' : r.percentage >= 40 ? 'text-warning' : 'text-danger';
+            return `<tr>
+              <td>${i + 1}</td>
+              <td>${r.testTitle || '—'}</td>
+              <td>${r._user?.rollNo || '—'}</td>
+              <td>${r._user?.urn || '—'}</td>
+              <td>${r.score}/${r.totalMarks}</td>
+              <td class="${color} fw-bold">${r.percentage}%</td>
+              <td class="text-muted small">${formatDate(r.submittedAt)}</td>
+            </tr>`;
+          }).join('');
+        } else {
+          // Teacher/Admin view with violation badges
+          tbody.innerHTML = enriched.map((r, i) => {
+            const color = r.percentage >= 70 ? 'text-success' : r.percentage >= 40 ? 'text-warning' : 'text-danger';
+            const totalViolations = (r.copyAttempts || 0) + (r.tabSwitches || 0) + (r.fullscreenExits || 0) + (r.devtoolsAttempts || 0);
+
+            // Row color based on violations
+            let rowClass = '';
+            if (r.autoSubmitted) rowClass = 'flag-danger';
+            else if (totalViolations >= 3) rowClass = 'flag-warn';
+            else if (totalViolations > 0) rowClass = '';
+
+            // Violation badges
+            let badges = '';
+            if (r.copyAttempts > 0) badges += `<span class="violation-badge vb-copy">📋 ${r.copyAttempts}</span>`;
+            if (r.tabSwitches > 0) badges += `<span class="violation-badge vb-tab">🔄 ${r.tabSwitches}</span>`;
+            if (r.fullscreenExits > 0) badges += `<span class="violation-badge vb-fs">🖥️ ${r.fullscreenExits}</span>`;
+            if (r.devtoolsAttempts > 0) badges += `<span class="violation-badge vb-dev">🔧 ${r.devtoolsAttempts}</span>`;
+            if (r.autoSubmitted) badges += `<span class="violation-badge vb-auto">⚡ Auto</span>`;
+            if (totalViolations === 0 && !r.autoSubmitted) badges = '<span class="text-success small">✅ Clean</span>';
+
+            // Submission type
+            const subType = r.submissionType || 'manual';
+            const subLabel = subType === 'manual' ? '<span class="text-success small">Manual</span>'
+              : `<span class="text-danger small fw-bold">${subType.replace('auto_', 'Auto: ')}</span>`;
+
+            return `<tr class="${rowClass}">
+              <td>${i + 1}</td>
+              <td>${r.studentName || r._user?.name || '—'}</td>
+              <td>${r._user?.rollNo || '—'}</td>
+              <td>${r._user?.urn || '—'}</td>
+              <td>${r.score}/${r.totalMarks}</td>
+              <td class="${color} fw-bold">${r.percentage}%</td>
+              <td>${subLabel}</td>
+              <td>${badges}</td>
+              <td><button class="btn btn-outline-dark btn-sm view-log-btn" data-test-id="${r.testId}" data-student-id="${r.studentId}" data-student-name="${escapeHtml(r.studentName || r._user?.name || '—')}"><i class="bi bi-journal-text"></i></button></td>
+            </tr>`;
+          }).join('');
+
+          // View activity log buttons
+          tbody.querySelectorAll('.view-log-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const tId = btn.dataset.testId;
+              const sId = btn.dataset.studentId;
+              const sName = btn.dataset.studentName;
+
+              const modal = new bootstrap.Modal(document.getElementById('activityLogModal'));
+              document.querySelector('#activityLogModal .modal-title').innerHTML = `<i class="bi bi-shield-exclamation me-2"></i>${sName} — Exam Activity`;
+              document.getElementById('activity-log-body').innerHTML = '<div class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm"></span> Loading...</div>';
+              modal.show();
+
+              try {
+                const logs = await ExamActivityLogService.getByTestAndStudent(tId, sId);
+                if (logs.length === 0) {
+                  document.getElementById('activity-log-body').innerHTML = '<div class="text-center py-4 text-muted">No activity logs found for this student.</div>';
+                } else {
+                  document.getElementById('activity-log-body').innerHTML = `
+                    <table class="table table-sm mb-0">
+                      <thead class="table-dark"><tr><th>Time</th><th>Type</th><th>Details</th></tr></thead>
+                      <tbody>
+                        ${logs.map(log => {
+                          const time = log.timestamp?.toDate ? log.timestamp.toDate().toLocaleTimeString() : '—';
+                          const typeClass = log.type || '';
+                          return `<tr class="activity-log-row">
+                            <td class="text-muted">${time}</td>
+                            <td><span class="log-type ${typeClass}">${log.type || '—'}</span></td>
+                            <td>${escapeHtml(log.message || '')}</td>
+                          </tr>`;
+                        }).join('')}
+                      </tbody>
+                    </table>`;
+                }
+              } catch(err) {
+                document.getElementById('activity-log-body').innerHTML = `<div class="text-center py-4 text-danger">Error loading logs: ${err.message}</div>`;
+              }
+            });
+          });
+        }
       }
     } catch (e) { console.error(e); }
   </script>

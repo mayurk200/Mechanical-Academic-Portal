@@ -7,5 +7,6 @@
 export {
   UserService, CourseService, SectionService, EnrollmentService,
   AttendanceService, TestService, QuestionBankService, ResultService,
-  AssignmentService, SubmissionService, NotificationService, ActivityLogService
+  AssignmentService, SubmissionService, NotificationService, ActivityLogService,
+  ExamActivityLogService
 } from '../src/services/index.js';

@@ -13,4 +13,5 @@ export { TestRepository as TestService, QuestionBankRepository as QuestionBankSe
 export { ResultRepository as ResultService } from '../database/repositories/resultRepository.js';
 export { NotificationRepository as NotificationService } from '../database/repositories/notificationRepository.js';
 export { ActivityLogRepository as ActivityLogService } from '../database/repositories/activityLogRepository.js';
+export { ExamActivityLogRepository as ExamActivityLogService } from '../database/repositories/examActivityLogRepository.js';
 export { AssignmentRepository as AssignmentService, SubmissionRepository as SubmissionService } from '../database/repositories/assignmentRepository.js';
