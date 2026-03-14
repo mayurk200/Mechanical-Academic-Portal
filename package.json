@@ -1,0 +1,36 @@
+{
+  "name": "mechanical-academic-portal",
+  "version": "2.0.0",
+  "description": "Learning Management System — A modular, production-grade LMS for academic institutions. Supports admin, teacher, and student roles with attendance tracking, test management, and course enrollment.",
+  "author": "ADCET",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npx serve . -p 3000 --cors",
+    "lint": "npx eslint src/ --ext .js",
+    "version:patch": "node scripts/versionUpdate.js patch",
+    "version:minor": "node scripts/versionUpdate.js minor",
+    "version:major": "node scripts/versionUpdate.js major",
+    "validate": "node scripts/validateStructure.js",
+    "deploy": "firebase deploy"
+  },
+  "devDependencies": {
+    "eslint": "^9.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "lms",
+    "education",
+    "firebase",
+    "attendance",
+    "academic",
+    "learning-management-system"
+  ],
+  "repository": {
+    "type": "git",
+    "url": ""
+  }
+}

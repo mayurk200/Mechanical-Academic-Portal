@@ -1,0 +1,88 @@
+// ============================================================
+// LMS Platform — Constants
+// Collection names, error codes, roles, and UI constants
+// ============================================================
+
+// ── Firestore Collection Names ──────────
+export const COLLECTIONS = {
+  USERS: 'users',
+  COURSES: 'courses',
+  SECTIONS: 'sections',
+  ENROLLMENTS: 'enrollments',
+  ATTENDANCE: 'attendance',
+  TESTS: 'tests',
+  TEST_RESULTS: 'test_results',
+  QUESTION_BANK: 'question_bank',
+  ASSIGNMENTS: 'assignments',
+  SUBMISSIONS: 'submissions',
+  NOTIFICATIONS: 'notifications',
+  ACTIVITY_LOGS: 'activity_logs',
+  DEPARTMENTS: 'departments'
+};
+
+// ── User Roles ──────────────────────────
+export const ROLES = {
+  ADMIN: 'admin',
+  TEACHER: 'teacher',
+  STUDENT: 'student'
+};
+
+// ── Attendance Statuses ─────────────────
+export const ATTENDANCE_STATUS = {
+  PRESENT: 'present',
+  ABSENT: 'absent'
+};
+
+// ── Error Codes ─────────────────────────
+export const ERROR_CODES = {
+  // Auth
+  AUTH_FAILED: 'AUTH_FAILED',
+  USER_NOT_FOUND: 'USER_NOT_FOUND',
+  INVALID_CREDENTIALS: 'INVALID_CREDENTIALS',
+  SESSION_EXPIRED: 'SESSION_EXPIRED',
+  PERMISSION_DENIED: 'PERMISSION_DENIED',
+
+  // Upload
+  UPLOAD_ERROR: 'UPLOAD_ERROR',
+  INVALID_FILE_TYPE: 'INVALID_FILE_TYPE',
+  FILE_TOO_LARGE: 'FILE_TOO_LARGE',
+  INVALID_CSV_STRUCTURE: 'INVALID_CSV_STRUCTURE',
+  MISSING_REQUIRED_COLUMNS: 'MISSING_REQUIRED_COLUMNS',
+
+  // Data
+  DUPLICATE_ENTRY: 'DUPLICATE_ENTRY',
+  NOT_FOUND: 'NOT_FOUND',
+  VALIDATION_FAILED: 'VALIDATION_FAILED',
+  CASCADE_DELETE_FAILED: 'CASCADE_DELETE_FAILED',
+
+  // Test
+  TEST_ALREADY_SUBMITTED: 'TEST_ALREADY_SUBMITTED',
+  TEST_TIME_EXPIRED: 'TEST_TIME_EXPIRED',
+  MAX_ATTEMPTS_REACHED: 'MAX_ATTEMPTS_REACHED',
+  CHEAT_DETECTED: 'CHEAT_DETECTED',
+
+  // Network
+  NETWORK_ERROR: 'NETWORK_ERROR',
+  SERVICE_UNAVAILABLE: 'SERVICE_UNAVAILABLE'
+};
+
+// ── Activity Log Actions ────────────────
+export const LOG_ACTIONS = {
+  CREATE_USER: 'CREATE_USER',
+  DELETE_USER: 'DELETE_USER',
+  UPDATE_USER: 'UPDATE_USER',
+  CREATE_COURSE: 'CREATE_COURSE',
+  DELETE_COURSE: 'DELETE_COURSE',
+  CASCADE_DELETE_COURSE: 'CASCADE_DELETE_COURSE',
+  CREATE_TEST: 'CREATE_TEST',
+  SUBMIT_TEST: 'SUBMIT_TEST',
+  MARK_ATTENDANCE: 'MARK_ATTENDANCE',
+  EXPORT_DATA: 'EXPORT_DATA',
+  EXPORT_ALL_DATA: 'EXPORT_ALL_DATA',
+  SYSTEM_WIPE_RESULTS: 'SYSTEM_WIPE_RESULTS',
+  SYSTEM_WIPE_ATTENDANCE: 'SYSTEM_WIPE_ATTENDANCE',
+  SYSTEM_WIPE_COURSES: 'SYSTEM_WIPE_COURSES',
+  SYSTEM_PURGE_STUDENTS: 'SYSTEM_PURGE_STUDENTS',
+  SYSTEM_FACTORY_RESET: 'SYSTEM_FACTORY_RESET',
+  PASSWORD_RESET: 'PASSWORD_RESET'
+};
