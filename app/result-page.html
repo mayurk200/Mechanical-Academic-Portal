@@ -255,7 +255,7 @@
 
         const visibleResults = results.filter((r, idx) => {
           const test = resolvedTests[idx];
-          if (test && test.showResultToStudents === true) {
+          if (test && String(test.showResultToStudents) === 'true') {
             r.testTitle = test.title;
             return true;
           }
@@ -294,7 +294,7 @@
             const chunkRows = await Promise.all(chunk.map(async t => {
               const results = await ResultService.getByTest(t.id);
               const avg = results.length > 0 ? Math.round(results.reduce((s, r) => s + (r.percentage || 0), 0) / results.length) : 0;
-              const vis = t.showResultToStudents ? true : false;
+              const vis = String(t.showResultToStudents) === 'true';
               return `<tr>
                 <td class="fw-medium">${escapeHtml(t.title)}</td>
                 <td class="text-muted small">${courseMap[t.courseId] || '—'}</td>
