@@ -787,7 +787,12 @@
         if (!isTestActive) return;
         try {
           const key = `exam_draft_${test.id}_${userData.uid}`;
-          sessionStorage.setItem(key, JSON.stringify({ answers: test._savedAnswers || {}, savedAt: Date.now() }));
+          let startedAt = Date.now();
+          try {
+            const stored = JSON.parse(sessionStorage.getItem(key) || '{}');
+            if (stored.startedAt) startedAt = stored.startedAt;
+          } catch(e){}
+          sessionStorage.setItem(key, JSON.stringify({ answers: test._savedAnswers || {}, savedAt: Date.now(), startedAt }));
         } catch (e) { /* silent */ }
       }
 
@@ -868,6 +873,23 @@
         // Log test start
         logExamActivity('test_start', `Started test: ${test.title}`);
 
+        // Restore draft if exists
+        const draftKey = `exam_draft_${test.id}_${userData.uid}`;
+        let savedDraft = {};
+        try {
+          const stored = sessionStorage.getItem(draftKey);
+          if (stored) savedDraft = JSON.parse(stored);
+        } catch(e) {}
+        
+        let elapsedSecs = 0;
+        const now = Date.now();
+        if (savedDraft.startedAt) {
+          elapsedSecs = Math.max(0, Math.floor((now - savedDraft.startedAt) / 1000));
+        } else {
+          try { sessionStorage.setItem(draftKey, JSON.stringify({ startedAt: now, answers: {} })); } catch(e) {}
+        }
+        test._savedAnswers = savedDraft.answers || {};
+
         // Deep copy questions
         let questions = JSON.parse(JSON.stringify(test.questions || []));
 
@@ -893,7 +915,15 @@
         }
 
         test._activeQuestions = questions;
-        let timeLeft = (test.duration || 30) * 60;
+        let timeLeft = (test.duration || 30) * 60 - (typeof elapsedSecs !== 'undefined' ? elapsedSecs : 0);
+
+        // Enforce hard end time bounds
+        const testEnd = test.endTime ? (test.endTime.toDate ? test.endTime.toDate().getTime() : new Date(test.endTime).getTime()) : Infinity;
+        if (testEnd !== Infinity) {
+          const secsUntilEnd = Math.max(0, Math.floor((testEnd - Date.now()) / 1000));
+          timeLeft = Math.min(timeLeft, secsUntilEnd);
+        }
+
         let currentQ = 0;
 
         // ── One-Question-At-A-Time Rendering ──
@@ -1194,18 +1224,24 @@
         const answers = questions.map((q, i) => {
           const ans = savedAnswers[i] !== undefined ? String(savedAnswers[i]) : '';
           const isCorrect = ans !== '' && String(ans).toLowerCase() === String(q.correctAnswer).toLowerCase();
+          
+          let displayAns = ans;
+          if (q.type === 'mcq' && ans !== '' && q.options && q.options[parseInt(ans, 10)]) {
+            displayAns = q.options[parseInt(ans, 10)];
+          }
+          
           if (isCorrect) { score += q.marks; correct++; } else if (ans) { wrong++; }
-          return { question: q.question, answer: ans, correct: isCorrect };
+          return { question: q.question, answer: displayAns, correct: isCorrect };
         });
 
         const totalMarks = questions.reduce((s, q) => s + q.marks, 0);
         const percentage = totalMarks > 0 ? Math.round((score / totalMarks) * 100) : 0;
 
-        // Random delay to prevent submission burst (0 to 2000ms)
-        const delayMs = Math.floor(Math.random() * 2000);
+        // Random delay to prevent submission burst (0 to 2000ms), but instant for unload
+        const delayMs = submissionType === 'auto_browser_close' ? 0 : Math.floor(Math.random() * 2000);
 
         // Show submitting state
-        showToast('Submitting your answers... please wait.', 'info');
+        if (submissionType !== 'auto_browser_close') showToast('Submitting your answers... please wait.', 'info');
 
         setTimeout(async () => {
           try {
@@ -1321,10 +1357,10 @@
             <div>
                <button type="button" class="btn btn-sm btn-light btn-duplicate-q" title="Duplicate"><i class="bi bi-files"></i></button>
                <button type="button" class="btn btn-sm btn-light text-danger btn-delete-q" title="Delete"><i class="bi bi-trash"></i></button>
-               <button type="button" class="btn btn-sm btn-light btn-collapse-q"><i class="bi bi-chevron-up"></i></button>
+               <button type="button" class="btn btn-sm btn-light btn-collapse-q"><i class="bi bi-chevron-down"></i></button>
             </div>
           </div>
-          <div class="card-body q-body">
+          <div class="card-body q-body" style="display: none;">
             <div class="row g-3 mb-3 border-bottom pb-3">
               <div class="col-md-7">
                  <label class="form-label small fw-bold text-muted">Question Text</label>
