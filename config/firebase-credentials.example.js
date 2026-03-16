@@ -6,11 +6,11 @@
 // ============================================================
 
 export const firebaseConfig = {
-  apiKey: "YOUR_API_KEY_HERE",
-  authDomain: "your-project-id.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project-id.firebasestorage.app",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID",
-  measurementId: "YOUR_MEASUREMENT_ID"
+  apiKey: "AIzaSyDSjxWfKqKfRaX30RRK29f5FDI_k7fXUAc",
+  authDomain: "mechanical-academic-portal.firebaseapp.com",
+  projectId: "mechanical-academic-portal",
+  storageBucket: "mechanical-academic-portal.firebasestorage.app",
+  messagingSenderId: "849867485490",
+  appId: "1:849867485490:web:6ca272558d1a298e89a72b",
+  measurementId: "G-TKQW4J2YTG"
 };

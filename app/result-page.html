@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,25 +9,89 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css">
   <style>
-    .flag-clean { background: #d1e7dd !important; }
-    .flag-warn { background: #fff3cd !important; }
-    .flag-danger { background: #f8d7da !important; }
-    .violation-badge { font-size: 0.72rem; padding: 2px 7px; border-radius: 10px; margin-right: 3px; white-space: nowrap; }
-    .vb-copy { background: #dc3545; color: #fff; }
-    .vb-tab { background: #fd7e14; color: #fff; }
-    .vb-fs { background: #6f42c1; color: #fff; }
-    .vb-dev { background: #0d6efd; color: #fff; }
-    .vb-auto { background: #212529; color: #fff; }
-    .activity-log-row td { padding: 6px 10px !important; font-size: 0.82rem; }
-    .log-type { font-weight: 700; text-transform: uppercase; font-size: 0.7rem; }
-    .log-type.copy_attempt { color: #dc3545; }
-    .log-type.tab_attempt { color: #fd7e14; }
-    .log-type.fullscreen_attempt { color: #6f42c1; }
-    .log-type.devtools_attempt { color: #0d6efd; }
-    .log-type.auto_submit { color: #212529; }
-    .log-type.test_start, .log-type.test_submit { color: #198754; }
+    .flag-clean {
+      background: #d1e7dd !important;
+    }
+
+    .flag-warn {
+      background: #fff3cd !important;
+    }
+
+    .flag-danger {
+      background: #f8d7da !important;
+    }
+
+    .violation-badge {
+      font-size: 0.72rem;
+      padding: 2px 7px;
+      border-radius: 10px;
+      margin-right: 3px;
+      white-space: nowrap;
+    }
+
+    .vb-copy {
+      background: #dc3545;
+      color: #fff;
+    }
+
+    .vb-tab {
+      background: #fd7e14;
+      color: #fff;
+    }
+
+    .vb-fs {
+      background: #6f42c1;
+      color: #fff;
+    }
+
+    .vb-dev {
+      background: #0d6efd;
+      color: #fff;
+    }
+
+    .vb-auto {
+      background: #212529;
+      color: #fff;
+    }
+
+    .activity-log-row td {
+      padding: 6px 10px !important;
+      font-size: 0.82rem;
+    }
+
+    .log-type {
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.7rem;
+    }
+
+    .log-type.copy_attempt {
+      color: #dc3545;
+    }
+
+    .log-type.tab_attempt {
+      color: #fd7e14;
+    }
+
+    .log-type.fullscreen_attempt {
+      color: #6f42c1;
+    }
+
+    .log-type.devtools_attempt {
+      color: #0d6efd;
+    }
+
+    .log-type.auto_submit {
+      color: #212529;
+    }
+
+    .log-type.test_start,
+    .log-type.test_submit {
+      color: #198754;
+    }
   </style>
 </head>
+
 <body>
   <aside class="sidebar" id="sidebar"></aside>
   <div class="main-content">
@@ -39,11 +104,27 @@
       <!-- Teacher: Test Management Panel -->
       <div class="d-none" id="teacher-panel">
         <div class="card shadow-sm mb-4">
-          <div class="card-header bg-white"><h6 class="mb-0"><i class="bi bi-sliders me-2"></i>Test Management</h6></div>
+          <div class="card-header bg-white">
+            <h6 class="mb-0"><i class="bi bi-sliders me-2"></i>Test Management</h6>
+          </div>
           <div class="card-body p-0">
             <table class="table table-striped table-hover mb-0">
-              <thead class="table-light"><tr><th>Test Name</th><th>Course</th><th>Total Students</th><th>Avg Score</th><th>Result Visibility</th><th>Actions</th></tr></thead>
-              <tbody id="test-management-tbody"><tr><td colspan="6" class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm"></span></td></tr></tbody>
+              <thead class="table-light">
+                <tr>
+                  <th>Test Name</th>
+                  <th>Course</th>
+                  <th>Total Students</th>
+                  <th>Avg Score</th>
+                  <th>Result Visibility</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="test-management-tbody">
+                <tr>
+                  <td colspan="6" class="text-center text-muted py-4"><span
+                      class="spinner-border spinner-border-sm"></span></td>
+                </tr>
+              </tbody>
             </table>
           </div>
         </div>
@@ -51,28 +132,76 @@
         <!-- Teacher: Select test for detailed results -->
         <div class="row mb-3">
           <div class="col-md-4">
-            <select id="test-select" class="form-select"><option value="">— Select Test for Details —</option></select>
+            <select id="test-select" class="form-select">
+              <option value="">— Select Test for Details —</option>
+            </select>
           </div>
         </div>
       </div>
 
       <!-- Stats cards -->
       <div class="row g-3 mb-4 d-none" id="stats-row">
-        <div class="col-md-3 col-6"><div class="card stat-card shadow-sm"><div class="card-body"><div class="stat-icon blue"><i class="bi bi-bar-chart"></i></div><div class="stat-value" id="avg-score">—</div><div class="stat-label">Average Score</div></div></div></div>
-        <div class="col-md-3 col-6"><div class="card stat-card shadow-sm"><div class="card-body"><div class="stat-icon green"><i class="bi bi-arrow-up-circle"></i></div><div class="stat-value" id="high-score">—</div><div class="stat-label">Highest</div></div></div></div>
-        <div class="col-md-3 col-6"><div class="card stat-card shadow-sm"><div class="card-body"><div class="stat-icon red"><i class="bi bi-arrow-down-circle"></i></div><div class="stat-value" id="low-score">—</div><div class="stat-label">Lowest</div></div></div></div>
-        <div class="col-md-3 col-6"><div class="card stat-card shadow-sm"><div class="card-body"><div class="stat-icon purple"><i class="bi bi-people"></i></div><div class="stat-value" id="total-submissions">—</div><div class="stat-label">Submissions</div></div></div></div>
+        <div class="col-md-3 col-6">
+          <div class="card stat-card shadow-sm">
+            <div class="card-body">
+              <div class="stat-icon blue"><i class="bi bi-bar-chart"></i></div>
+              <div class="stat-value" id="avg-score">—</div>
+              <div class="stat-label">Average Score</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="card stat-card shadow-sm">
+            <div class="card-body">
+              <div class="stat-icon green"><i class="bi bi-arrow-up-circle"></i></div>
+              <div class="stat-value" id="high-score">—</div>
+              <div class="stat-label">Highest</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="card stat-card shadow-sm">
+            <div class="card-body">
+              <div class="stat-icon red"><i class="bi bi-arrow-down-circle"></i></div>
+              <div class="stat-value" id="low-score">—</div>
+              <div class="stat-label">Lowest</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="card stat-card shadow-sm">
+            <div class="card-body">
+              <div class="stat-icon purple"><i class="bi bi-people"></i></div>
+              <div class="stat-value" id="total-submissions">—</div>
+              <div class="stat-label">Submissions</div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Results Table -->
       <div class="card shadow-sm">
-        <div class="card-header bg-white"><h6 class="mb-0"><i class="bi bi-table me-2"></i>Results</h6></div>
+        <div class="card-header bg-white">
+          <h6 class="mb-0"><i class="bi bi-table me-2"></i>Results</h6>
+        </div>
         <div class="card-body p-0">
           <table class="table table-striped table-hover mb-0">
             <thead class="table-light" id="results-thead">
-              <tr><th>#</th><th>Student</th><th>Roll No</th><th>URN</th><th>Score</th><th>Percentage</th><th>Date</th></tr>
+              <tr>
+                <th>#</th>
+                <th>Student</th>
+                <th>Roll No</th>
+                <th>URN</th>
+                <th>Score</th>
+                <th>Percentage</th>
+                <th>Date</th>
+              </tr>
             </thead>
-            <tbody id="results-table"><tr><td colspan="7" class="text-center text-muted py-4">Select a test or view your results</td></tr></tbody>
+            <tbody id="results-table">
+              <tr>
+                <td colspan="7" class="text-center text-muted py-4">Select a test or view your results</td>
+              </tr>
+            </tbody>
           </table>
         </div>
       </div>
@@ -86,7 +215,8 @@
               <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-0" id="activity-log-body">
-              <div class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm"></span> Loading...</div>
+              <div class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm"></span> Loading...
+              </div>
             </div>
           </div>
         </div>
@@ -106,18 +236,18 @@
       if (userData.role === 'student') {
         // ── STUDENT VIEW: check visibility before showing results ──
         const results = await ResultService.getByStudent(userData.uid);
-        
+
         // Optimize: Cache test fetching to avoid duplicate queries for multiple attempts of same test,
         // and resolve all promises concurrently.
         const testCache = new Map();
-        
+
         const resolveTest = async (testId) => {
           if (!testCache.has(testId)) testCache.set(testId, TestService.get(testId));
           return testCache.get(testId);
         };
 
         const resolvedTests = await Promise.all(results.map(r => resolveTest(r.testId)));
-        
+
         const visibleResults = results.filter((r, idx) => {
           const test = resolvedTests[idx];
           if (test && test.showResultToStudents === true) {
@@ -315,18 +445,18 @@
                       <thead class="table-dark"><tr><th>Time</th><th>Type</th><th>Details</th></tr></thead>
                       <tbody>
                         ${logs.map(log => {
-                          const time = log.timestamp?.toDate ? log.timestamp.toDate().toLocaleTimeString() : '—';
-                          const typeClass = log.type || '';
-                          return `<tr class="activity-log-row">
+                    const time = log.timestamp?.toDate ? log.timestamp.toDate().toLocaleTimeString() : '—';
+                    const typeClass = log.type || '';
+                    return `<tr class="activity-log-row">
                             <td class="text-muted">${time}</td>
                             <td><span class="log-type ${typeClass}">${log.type || '—'}</span></td>
                             <td>${escapeHtml(log.message || '')}</td>
                           </tr>`;
-                        }).join('')}
+                  }).join('')}
                       </tbody>
                     </table>`;
                 }
-              } catch(err) {
+              } catch (err) {
                 document.getElementById('activity-log-body').innerHTML = `<div class="text-center py-4 text-danger">Error loading logs: ${err.message}</div>`;
               }
             });
@@ -336,4 +466,5 @@
     } catch (e) { console.error(e); }
   </script>
 </body>
+
 </html>

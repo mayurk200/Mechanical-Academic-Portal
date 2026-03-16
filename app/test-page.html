@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +9,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css">
 </head>
+
 <body>
   <aside class="sidebar" id="sidebar"></aside>
   <div class="main-content">
@@ -19,27 +21,41 @@
     <div class="page-body">
       <!-- Teacher: Create Test -->
       <div class="card shadow-sm mb-4 d-none" id="create-test-card">
-        <div class="card-header bg-white"><h6 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Create Test</h6></div>
+        <div class="card-header bg-white">
+          <h6 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Create Test</h6>
+        </div>
         <div class="card-body">
           <form id="create-test-form">
             <div class="row g-3 mb-3">
-              <div class="col-md-4"><label class="form-label">Title</label><input type="text" id="test-title" class="form-control" required></div>
-              <div class="col-md-4"><label class="form-label">Course</label><select id="test-course" class="form-select" required><option value="">Select</option></select></div>
-              <div class="col-md-2"><label class="form-label">Duration (min)</label><input type="number" id="test-duration" class="form-control" value="30" min="5"></div>
-              <div class="col-md-2"><label class="form-label">Attempts</label><input type="number" id="test-attempts" class="form-control" value="1" min="1"></div>
+              <div class="col-md-4"><label class="form-label">Title</label><input type="text" id="test-title"
+                  class="form-control" required></div>
+              <div class="col-md-4"><label class="form-label">Course</label><select id="test-course" class="form-select"
+                  required>
+                  <option value="">Select</option>
+                </select></div>
+              <div class="col-md-2"><label class="form-label">Duration (min)</label><input type="number"
+                  id="test-duration" class="form-control" value="30" min="5"></div>
+              <div class="col-md-2"><label class="form-label">Attempts</label><input type="number" id="test-attempts"
+                  class="form-control" value="1" min="1"></div>
             </div>
             <div class="row g-3 mb-3">
-              <div class="col-md-6"><label class="form-label"><i class="bi bi-clock me-1"></i>Start Time</label><input type="datetime-local" id="test-start" class="form-control" required></div>
-              <div class="col-md-6"><label class="form-label"><i class="bi bi-clock-history me-1"></i>End Time</label><input type="datetime-local" id="test-end" class="form-control" required></div>
+              <div class="col-md-6"><label class="form-label"><i class="bi bi-clock me-1"></i>Start Time</label><input
+                  type="datetime-local" id="test-start" class="form-control" required></div>
+              <div class="col-md-6"><label class="form-label"><i class="bi bi-clock-history me-1"></i>End
+                  Time</label><input type="datetime-local" id="test-end" class="form-control" required></div>
             </div>
-            <div class="mb-3"><label class="form-label">Description</label><textarea id="test-desc" class="form-control" rows="2"></textarea></div>
+            <div class="mb-3"><label class="form-label">Description</label><textarea id="test-desc" class="form-control"
+                rows="2"></textarea></div>
 
             <!-- Questions Builder -->
             <h6>Questions</h6>
             <div id="questions-container"></div>
             <div class="d-flex gap-2 mb-3">
-              <button type="button" class="btn btn-outline-primary btn-sm" id="add-question-btn"><i class="bi bi-plus me-1"></i>Add Question</button>
-              <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#bulkQuestionModal"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Bulk Upload Questions</button>
+              <button type="button" class="btn btn-outline-primary btn-sm" id="add-question-btn"><i
+                  class="bi bi-plus me-1"></i>Add Question</button>
+              <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="modal"
+                data-bs-target="#bulkQuestionModal"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Bulk Upload
+                Questions</button>
             </div>
 
             <!-- Test Settings Panel -->
@@ -50,11 +66,13 @@
                   <div class="col-md-6 pe-md-3">
                     <div class="form-check form-switch border-bottom pb-1 mb-1">
                       <input type="checkbox" class="form-check-input" id="test-show-results" checked>
-                      <label class="form-check-label small" for="test-show-results">Show results after submission</label>
+                      <label class="form-check-label small" for="test-show-results">Show results after
+                        submission</label>
                     </div>
                     <div class="form-check form-switch border-bottom pb-1 mb-1">
                       <input type="checkbox" class="form-check-input" id="test-shuffle-questions" checked>
-                      <label class="form-check-label small" for="test-shuffle-questions" title="Randomize the order of questions">Shuffle Questions</label>
+                      <label class="form-check-label small" for="test-shuffle-questions"
+                        title="Randomize the order of questions">Shuffle Questions</label>
                     </div>
                     <div class="form-check form-switch border-bottom pb-1 mb-1">
                       <input type="checkbox" class="form-check-input" id="test-randomize-options" checked>
@@ -62,21 +80,25 @@
                     </div>
                     <div class="mt-2 d-flex align-items-center justify-content-between">
                       <label class="small me-2" for="test-max-attempt">Questions to Attempt:</label>
-                      <input type="number" id="test-max-attempt" class="form-control form-control-sm w-50" placeholder="All" min="1">
+                      <input type="number" id="test-max-attempt" class="form-control form-control-sm w-50"
+                        placeholder="All" min="1">
                     </div>
                   </div>
                   <div class="col-md-6 ps-md-3 border-start">
                     <div class="form-check form-switch border-bottom pb-1 mb-1">
                       <input type="checkbox" class="form-check-input" id="test-disable-copy" checked>
-                      <label class="form-check-label small text-danger fw-bold" for="test-disable-copy">Disable Copy/Paste & Selection</label>
+                      <label class="form-check-label small text-danger fw-bold" for="test-disable-copy">Disable
+                        Copy/Paste & Selection</label>
                     </div>
                     <div class="form-check form-switch border-bottom pb-1 mb-1">
                       <input type="checkbox" class="form-check-input" id="test-detect-tab" checked>
-                      <label class="form-check-label small text-danger fw-bold" for="test-detect-tab" title="Auto-submit on 3rd tab switch">Tab Change Detection (3 strikes)</label>
+                      <label class="form-check-label small text-danger fw-bold" for="test-detect-tab"
+                        title="Auto-submit on 3rd tab switch">Tab Change Detection (3 strikes)</label>
                     </div>
                     <div class="form-check form-switch pb-1 mb-1">
                       <input type="checkbox" class="form-check-input" id="test-auto-submit-timeout" checked>
-                      <label class="form-check-label small" for="test-auto-submit-timeout">Auto Submit on Timeout</label>
+                      <label class="form-check-label small" for="test-auto-submit-timeout">Auto Submit on
+                        Timeout</label>
                     </div>
                   </div>
                 </div>
@@ -92,11 +114,27 @@
 
       <!-- Test List -->
       <div class="card shadow-sm">
-        <div class="card-header bg-white"><h6 class="mb-0"><i class="bi bi-list-ul me-2"></i>Available Tests</h6></div>
+        <div class="card-header bg-white">
+          <h6 class="mb-0"><i class="bi bi-list-ul me-2"></i>Available Tests</h6>
+        </div>
         <div class="card-body p-0">
           <table class="table table-striped table-hover mb-0">
-            <thead class="table-light"><tr><th>Title</th><th>Duration</th><th>Questions</th><th>Status</th><th>Action</th></tr></thead>
-            <tbody id="tests-table"><tr><td colspan="5" class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm"></span></td></tr></tbody>
+            <thead class="table-light">
+              <tr>
+                <th>Title</th>
+                <th>Course</th>
+                <th>Duration</th>
+                <th>Questions</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="tests-table">
+              <tr>
+                <td colspan="6" class="text-center text-muted py-4"><span
+                    class="spinner-border spinner-border-sm"></span></td>
+              </tr>
+            </tbody>
           </table>
         </div>
       </div>
@@ -114,7 +152,8 @@
         </div>
         <div class="modal-body" id="test-body"></div>
         <div class="modal-footer">
-          <button class="btn btn-primary" id="submit-test-btn"><i class="bi bi-check-circle me-1"></i>Submit Test</button>
+          <button class="btn btn-primary" id="submit-test-btn"><i class="bi bi-check-circle me-1"></i>Submit
+            Test</button>
         </div>
       </div>
     </div>
@@ -135,34 +174,97 @@
 
   <style>
     #violationOverlay {
-      position: fixed; inset: 0; z-index: 99999;
-      display: flex; align-items: center; justify-content: center;
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    #violationOverlay.d-none { display: none !important; }
+
+    #violationOverlay.d-none {
+      display: none !important;
+    }
+
     .violation-overlay-bg {
-      position: absolute; inset: 0;
-      background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
     }
+
     .violation-card {
-      position: relative; background: #fff; border-radius: 16px;
-      padding: 36px 32px; max-width: 420px; width: 90%;
-      text-align: center; box-shadow: 0 8px 40px rgba(220,53,69,0.35);
-      border: 3px solid #dc3545; animation: violationPulse 0.5s ease;
+      position: relative;
+      background: #fff;
+      border-radius: 16px;
+      padding: 36px 32px;
+      max-width: 420px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 8px 40px rgba(220, 53, 69, 0.35);
+      border: 3px solid #dc3545;
+      animation: violationPulse 0.5s ease;
     }
+
     @keyframes violationPulse {
-      0%,100% { transform: scale(1); } 50% { transform: scale(1.04); }
+
+      0%,
+      100% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.04);
+      }
     }
-    .violation-icon { font-size: 3rem; margin-bottom: 8px; }
-    .violation-title { color: #dc3545; font-weight: 700; margin-bottom: 8px; }
-    .violation-msg { color: #555; font-size: 0.95rem; margin-bottom: 12px; }
+
+    .violation-icon {
+      font-size: 3rem;
+      margin-bottom: 8px;
+    }
+
+    .violation-title {
+      color: #dc3545;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .violation-msg {
+      color: #555;
+      font-size: 0.95rem;
+      margin-bottom: 12px;
+    }
+
     .violation-strikes {
-      display: inline-block; background: #dc3545; color: #fff;
-      padding: 6px 20px; border-radius: 20px; font-weight: 700; font-size: 1.1rem;
+      display: inline-block;
+      background: #dc3545;
+      color: #fff;
+      padding: 6px 20px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 1.1rem;
     }
-    .violation-sub { color: #b02a37; font-weight: 600; font-size: 0.85rem; margin-top: 10px; }
-    body.exam-locked { overflow: hidden !important; }
-    body.exam-locked .sidebar, body.exam-locked .top-bar { display: none !important; }
-    body.exam-locked .main-content { margin-left: 0 !important; padding: 0 !important; }
+
+    .violation-sub {
+      color: #b02a37;
+      font-weight: 600;
+      font-size: 0.85rem;
+      margin-top: 10px;
+    }
+
+    body.exam-locked {
+      overflow: hidden !important;
+    }
+
+    body.exam-locked .sidebar,
+    body.exam-locked .top-bar {
+      display: none !important;
+    }
+
+    body.exam-locked .main-content {
+      margin-left: 0 !important;
+      padding: 0 !important;
+    }
   </style>
 
   <!-- Secure Delete Modal -->
@@ -177,13 +279,14 @@
           <p class="text-danger fw-bold my-2" id="secure-delete-msg">Are you sure you want to delete this test?</p>
           <div class="mt-4 text-start">
             <label class="form-label fw-bold">Confirm Account Password:</label>
-            <input type="password" id="secure-delete-password" class="form-control" placeholder="Enter password to authorize">
+            <input type="password" id="secure-delete-password" class="form-control"
+              placeholder="Enter password to authorize">
           </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
           <button type="button" class="btn btn-danger" id="confirm-secure-delete-btn" disabled>
-             <i class="bi bi-trash"></i> Permanently Delete
+            <i class="bi bi-trash"></i> Permanently Delete
           </button>
         </div>
       </div>
@@ -200,7 +303,8 @@
         </div>
         <div class="modal-body">
           <div class="alert alert-info py-2 d-flex justify-content-between align-items-center mb-3">
-            <span class="small"><i class="bi bi-info-circle me-1"></i>Upload an Excel or CSV with columns: <strong>Question, Option A, Option B, Option C, Option D, Correct Answer, Marks</strong></span>
+            <span class="small"><i class="bi bi-info-circle me-1"></i>Upload an Excel or CSV with columns:
+              <strong>Question, Option A, Option B, Option C, Option D, Correct Answer, Marks</strong></span>
             <button class="btn btn-sm btn-outline-info bg-white" id="download-question-template-btn">
               <i class="bi bi-download me-1"></i>Download Template
             </button>
@@ -221,7 +325,14 @@
             <div class="table-responsive" style="max-height: 300px;">
               <table class="table table-sm table-bordered text-nowrap mb-0">
                 <thead class="table-light sticky-top">
-                  <tr><th>Row</th><th>Status</th><th>Question</th><th>Options</th><th>Correct (Mapped)</th><th>Marks</th></tr>
+                  <tr>
+                    <th>Row</th>
+                    <th>Status</th>
+                    <th>Question</th>
+                    <th>Options</th>
+                    <th>Correct (Mapped)</th>
+                    <th>Marks</th>
+                  </tr>
                 </thead>
                 <tbody id="bq-preview-tbody" class="small"></tbody>
               </table>
@@ -231,7 +342,8 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
           <button type="button" class="btn btn-secondary" id="bq-validate-btn" disabled>Validate File</button>
-          <button type="button" class="btn btn-primary d-none" id="bq-import-btn"><i class="bi bi-plus-circle me-1"></i>Import Questions</button>
+          <button type="button" class="btn btn-primary d-none" id="bq-import-btn"><i
+              class="bi bi-plus-circle me-1"></i>Import Questions</button>
         </div>
       </div>
     </div>
@@ -272,7 +384,7 @@
 
         document.getElementById('add-question-btn').addEventListener('click', () => addQuestion());
         addQuestion(); // Start with 1
-        
+
         // Initialize Sortable
         new Sortable(document.getElementById('questions-container'), {
           handle: '.drag-handle',
@@ -294,36 +406,36 @@
 
           // Duplicate Question
           if (e.target.closest('.btn-duplicate-q')) {
-             try {
-                const type = card.querySelector('.q-type').value;
-                const questionText = card.querySelector('.q-text').value;
-                const marks = parseInt(card.querySelector('.q-marks').value) || 1;
-                let options = [];
-                let correctAnswer = '0';
-                
-                if (type === 'mcq') {
-                   const optRows = card.querySelectorAll('.option-row');
-                   optRows.forEach((row, i) => {
-                      options.push(row.querySelector('.opt-val').value);
-                      if (row.querySelector('.correct-radio').checked) correctAnswer = i.toString();
-                   });
-                } else if (type === 'trueFalse') {
-                   const checked = card.querySelector('.tf-radio:checked');
-                   if (checked) correctAnswer = checked.value;
-                } else {
-                   correctAnswer = card.querySelector('.short-ans').value;
-                }
-                
-                // Use the builder to generate a flawless UI copy
-                addQuestion({ type, question: questionText, marks, options: options.length ? options : null, correctAnswer });
-                
-                // Move the newly generated question right below the duplicated one
-                const container = document.getElementById('questions-container');
-                const newlyAdded = container.lastElementChild;
-                container.insertBefore(newlyAdded, card.nextSibling);
-                
-                showToast('Question duplicated', 'success');
-             } catch(err) { console.error(err); }
+            try {
+              const type = card.querySelector('.q-type').value;
+              const questionText = card.querySelector('.q-text').value;
+              const marks = parseInt(card.querySelector('.q-marks').value) || 1;
+              let options = [];
+              let correctAnswer = '0';
+
+              if (type === 'mcq') {
+                const optRows = card.querySelectorAll('.option-row');
+                optRows.forEach((row, i) => {
+                  options.push(row.querySelector('.opt-val').value);
+                  if (row.querySelector('.correct-radio').checked) correctAnswer = i.toString();
+                });
+              } else if (type === 'trueFalse') {
+                const checked = card.querySelector('.tf-radio:checked');
+                if (checked) correctAnswer = checked.value;
+              } else {
+                correctAnswer = card.querySelector('.short-ans').value;
+              }
+
+              // Use the builder to generate a flawless UI copy
+              addQuestion({ type, question: questionText, marks, options: options.length ? options : null, correctAnswer });
+
+              // Move the newly generated question right below the duplicated one
+              const container = document.getElementById('questions-container');
+              const newlyAdded = container.lastElementChild;
+              container.insertBefore(newlyAdded, card.nextSibling);
+
+              showToast('Question duplicated', 'success');
+            } catch (err) { console.error(err); }
           }
 
           // Collapse/Expand Toggle
@@ -348,7 +460,7 @@
             const optLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
             const newLabel = optLetters[currentOpts];
             const nameGrp = card.id + '_ans';
-            
+
             const div = document.createElement('div');
             div.className = 'option-row d-flex align-items-center mb-2 input-group input-group-sm';
             div.innerHTML = `
@@ -374,7 +486,7 @@
             if (currentOpts.length <= 2) return; // Min 2
 
             e.target.closest('.option-row').remove();
-            
+
             // Re-label remaining options
             const optLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
             const remaining = optsContainer.querySelectorAll('.option-row');
@@ -412,11 +524,11 @@
         // Question Title Sync & Char Limit logic
         document.getElementById('questions-container').addEventListener('input', (e) => {
           if (e.target.classList.contains('q-text')) {
-             const card = e.target.closest('.q-card');
-             let val = e.target.value.trim();
-             card.querySelector('.card-title').textContent = val ? (val.substring(0, 40) + (val.length > 40 ? '...' : '')) : 'New Question';
-             const charCounter = card.querySelector('.char-count');
-             if(charCounter) charCounter.textContent = `${val.length}/500`;
+            const card = e.target.closest('.q-card');
+            let val = e.target.value.trim();
+            card.querySelector('.card-title').textContent = val ? (val.substring(0, 40) + (val.length > 40 ? '...' : '')) : 'New Question';
+            const charCounter = card.querySelector('.char-count');
+            if (charCounter) charCounter.textContent = `${val.length}/500`;
           }
         });
 
@@ -462,6 +574,10 @@
       // Load tests
       async function loadTests() {
         let tests;
+        let allCourses = await CourseService.getAll();
+        let courseMap = {};
+        allCourses.forEach(c => courseMap[c.id] = c.title);
+
         if (userData.role === 'student') {
           const enrolled = await EnrollmentService.getByStudent(userData.uid);
           const courseIds = enrolled.map(e => e.courseId);
@@ -475,7 +591,7 @@
 
         const tbody = document.getElementById('tests-table');
         if (tests.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No tests available</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No tests available</td></tr>';
           return;
         }
         tbody.innerHTML = tests.map(t => {
@@ -494,6 +610,7 @@
           }
           return `<tr>
             <td class="fw-medium">${escapeHtml(t.title)}</td>
+            <td><span class="badge bg-secondary">${escapeHtml(courseMap[t.courseId] || 'Unknown')}</span></td>
             <td>${t.duration} min</td>
             <td>${t.questions?.length || 0}</td>
             <td>${label}</td>
@@ -517,44 +634,44 @@
         let activeTestDeleteId = null;
         tbody.querySelectorAll('.del-test-btn').forEach(btn => {
           btn.addEventListener('click', () => {
-             activeTestDeleteId = btn.dataset.id;
-             document.getElementById('secure-delete-msg').textContent = 'Delete this test? All student results related to this test will also be lost.';
-             document.getElementById('secure-delete-password').value = '';
-             document.getElementById('confirm-secure-delete-btn').disabled = true;
-             new bootstrap.Modal(document.getElementById('secureDeleteModal')).show();
+            activeTestDeleteId = btn.dataset.id;
+            document.getElementById('secure-delete-msg').textContent = 'Delete this test? All student results related to this test will also be lost.';
+            document.getElementById('secure-delete-password').value = '';
+            document.getElementById('confirm-secure-delete-btn').disabled = true;
+            new bootstrap.Modal(document.getElementById('secureDeleteModal')).show();
           });
         });
 
         const passInput = document.getElementById('secure-delete-password');
         const confirmBtn = document.getElementById('confirm-secure-delete-btn');
-        if(passInput && confirmBtn) {
-           const newPassInput = passInput.cloneNode(true);
-           const newConfirmBtn = confirmBtn.cloneNode(true);
-           passInput.parentNode.replaceChild(newPassInput, passInput);
-           confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-           
-           newPassInput.addEventListener('input', (e) => {
-              newConfirmBtn.disabled = (e.target.value.length < 6);
-           });
-           
-           newConfirmBtn.addEventListener('click', async (e) => {
-              const pass = newPassInput.value;
-              const btn = e.target;
-              btn.disabled = true;
-              btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Verifying...';
-              
-              try {
-                 await verifyCurrentPassword(pass);
-                 await TestService.delete(activeTestDeleteId);
-                 closeModal('secureDeleteModal');
-                 showToast('Test and results deleted successfully', 'success');
-                 loadTests();
-              } catch(err) {
-                 showToast(err.message || 'Incorrect Password', 'error');
-                 btn.disabled = false;
-                 btn.innerHTML = '<i class="bi bi-trash"></i> Permanently Delete';
-              }
-           });
+        if (passInput && confirmBtn) {
+          const newPassInput = passInput.cloneNode(true);
+          const newConfirmBtn = confirmBtn.cloneNode(true);
+          passInput.parentNode.replaceChild(newPassInput, passInput);
+          confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+
+          newPassInput.addEventListener('input', (e) => {
+            newConfirmBtn.disabled = (e.target.value.length < 6);
+          });
+
+          newConfirmBtn.addEventListener('click', async (e) => {
+            const pass = newPassInput.value;
+            const btn = e.target;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Verifying...';
+
+            try {
+              await verifyCurrentPassword(pass);
+              await TestService.delete(activeTestDeleteId);
+              closeModal('secureDeleteModal');
+              showToast('Test and results deleted successfully', 'success');
+              loadTests();
+            } catch (err) {
+              showToast(err.message || 'Incorrect Password', 'error');
+              btn.disabled = false;
+              btn.innerHTML = '<i class="bi bi-trash"></i> Permanently Delete';
+            }
+          });
         }
       }
 
@@ -631,7 +748,7 @@
         // Dismiss
         document.getElementById('violation-dismiss-btn').onclick = () => {
           overlay.classList.add('d-none');
-          try { document.documentElement.requestFullscreen?.(); } catch(e) {}
+          try { document.documentElement.requestFullscreen?.(); } catch (e) { }
         };
       }
 
@@ -657,14 +774,14 @@
           // Using a simple key to avoid Firestore doc ID issues
           const key = `exam_draft_${test.id}_${userData.uid}`;
           sessionStorage.setItem(key, JSON.stringify({ answers, savedAt: Date.now() }));
-        } catch(e) { /* silent */ }
+        } catch (e) { /* silent */ }
       }
 
       // ── Exam Lock Mode ──
       function enterExamLock() {
         // Hide sidebar and top bar
-        try { document.getElementById('sidebar').style.display = 'none'; } catch(e) {}
-        try { document.querySelector('.top-bar').style.display = 'none'; } catch(e) {}
+        try { document.getElementById('sidebar').style.display = 'none'; } catch (e) { }
+        try { document.querySelector('.top-bar').style.display = 'none'; } catch (e) { }
         document.body.classList.add('exam-locked');
 
         // Disable back button
@@ -685,8 +802,8 @@
       }
 
       function exitExamLock() {
-        try { document.getElementById('sidebar').style.display = ''; } catch(e) {}
-        try { document.querySelector('.top-bar').style.display = ''; } catch(e) {}
+        try { document.getElementById('sidebar').style.display = ''; } catch (e) { }
+        try { document.querySelector('.top-bar').style.display = ''; } catch (e) { }
         document.body.classList.remove('exam-locked');
         if (onPopState) { window.removeEventListener('popstate', onPopState); onPopState = null; }
         if (onBeforeUnload) { window.removeEventListener('beforeunload', onBeforeUnload); onBeforeUnload = null; }
@@ -699,7 +816,7 @@
           if (!isTestActive) return;
           const threshold = 160;
           const isOpen = (window.outerWidth - window.innerWidth > threshold) ||
-                         (window.outerHeight - window.innerHeight > threshold);
+            (window.outerHeight - window.innerHeight > threshold);
           if (isOpen && !devtoolsWasOpen) {
             devtoolsWasOpen = true;
             showViolationWarning('devtools', 'Developer tools detected! This is not allowed during tests.');
@@ -715,7 +832,7 @@
         timerCheckInterval = setInterval(() => {
           if (!isTestActive) return;
           const elapsedWall = (Date.now() - startWall) / 1000;
-          const elapsedTimer = expectedDuration - parseInt(document.getElementById('timer-display').textContent.split(':').reduce((a,b) => a * 60 + parseInt(b), 0) || 0);
+          const elapsedTimer = expectedDuration - parseInt(document.getElementById('timer-display').textContent.split(':').reduce((a, b) => a * 60 + parseInt(b), 0) || 0);
           if (Math.abs(elapsedWall - elapsedTimer) > 10) {
             logExamActivity('timer_tamper', `Wall clock drift detected: ${Math.round(elapsedWall)}s vs timer ${Math.round(elapsedTimer)}s`);
           }
@@ -804,12 +921,12 @@
           onKeyDown = (e) => {
             if (!isTestActive) return;
             // Copy shortcuts → copy counter
-            if ((e.ctrlKey || e.metaKey) && ['c','x','v','a','u','s','p'].includes(e.key.toLowerCase())) {
+            if ((e.ctrlKey || e.metaKey) && ['c', 'x', 'v', 'a', 'u', 's', 'p'].includes(e.key.toLowerCase())) {
               e.preventDefault();
               showViolationWarning('copy', `Keyboard shortcut (Ctrl+${e.key.toUpperCase()}) is blocked during this test.`);
             }
             // DevTools shortcuts → devtools counter
-            if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['i','j','c'].includes(e.key.toLowerCase()))) {
+            if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['i', 'j', 'c'].includes(e.key.toLowerCase()))) {
               e.preventDefault();
               showViolationWarning('devtools', 'Developer tools are not allowed during this test.');
             }
@@ -818,7 +935,7 @@
               showViolationWarning('copy', 'Screenshots are not allowed during this test.');
             }
             // Block Ctrl+R, Ctrl+W, F5 (refresh/close)
-            if ((e.ctrlKey && ['r','w'].includes(e.key.toLowerCase())) || e.key === 'F5') {
+            if ((e.ctrlKey && ['r', 'w'].includes(e.key.toLowerCase())) || e.key === 'F5') {
               e.preventDefault();
             }
           };
@@ -835,19 +952,19 @@
           let domTamperTimeout = null;
           domObserver = new MutationObserver((mutations) => {
             if (!isTestActive) return;
-            
+
             // Debounce to prevent CPU spikes from rapid safe changes
             if (domTamperTimeout) clearTimeout(domTamperTimeout);
-            
+
             domTamperTimeout = setTimeout(() => {
               let tampering = false;
               for (const m of mutations) {
                 // Ignore attribute changes (like class updates for selected options)
                 if (m.type === 'attributes') continue;
-                
+
                 // Only alert on unexpected node injections/removals
                 if (m.type === 'childList') {
-                  const hasSuspiciousAdditions = Array.from(m.addedNodes).some(n => 
+                  const hasSuspiciousAdditions = Array.from(m.addedNodes).some(n =>
                     n.nodeType === 1 && !n.classList.contains('text-success') // Ignore standard test UI updates
                   );
                   if (hasSuspiciousAdditions || m.removedNodes.length > 0) {
@@ -857,7 +974,7 @@
                 }
               }
               if (tampering) {
-                 showViolationWarning('devtools', 'DOM manipulation detected! Tampering with the exam is prohibited.');
+                showViolationWarning('devtools', 'DOM manipulation detected! Tampering with the exam is prohibited.');
               }
             }, 1000);
           });
@@ -874,7 +991,7 @@
         }
 
         // C) Fullscreen + Exit Detection
-        try { document.documentElement.requestFullscreen?.(); } catch(e) {}
+        try { document.documentElement.requestFullscreen?.(); } catch (e) { }
         onFullscreenChange = () => {
           if (!isTestActive) return;
           if (!document.fullscreenElement) {
@@ -901,8 +1018,8 @@
         // Timer
         timerInterval = setInterval(() => {
           timeLeft--;
-          const mins = Math.floor(Math.max(0, timeLeft) / 60).toString().padStart(2,'0');
-          const secs = (Math.max(0, timeLeft) % 60).toString().padStart(2,'0');
+          const mins = Math.floor(Math.max(0, timeLeft) / 60).toString().padStart(2, '0');
+          const secs = (Math.max(0, timeLeft) % 60).toString().padStart(2, '0');
           document.getElementById('timer-display').textContent = `${mins}:${secs}`;
           if (timeLeft <= 0) {
             clearInterval(timerInterval);
@@ -924,7 +1041,7 @@
         return `
           <div class="card mb-3 q-card" data-idx="${i}">
             <div class="card-body">
-              <h6>Q${i+1}. ${escapeHtml(questionText)} <small class="text-muted">(${marks} marks)</small></h6>
+              <h6>Q${i + 1}. ${escapeHtml(questionText)} <small class="text-muted">(${marks} marks)</small></h6>
               ${type === 'mcq' ? opts.map((o, j) => `
                 <div class="form-check"><input class="form-check-input q-ans-input" type="radio" name="q${i}" value="${j}"><label class="form-check-label">${escapeHtml(o)}</label></div>
               `).join('') : type === 'trueFalse' ? `
@@ -963,18 +1080,18 @@
         if (onDragStart) { document.removeEventListener('dragstart', onDragStart); onDragStart = null; }
         if (onKeyDown) { document.removeEventListener('keydown', onKeyDown); onKeyDown = null; }
         if (domObserver) { domObserver.disconnect(); domObserver = null; }
-        
+
         try {
           const tb = document.getElementById('test-body');
           tb.style.userSelect = 'auto';
           tb.style.webkitUserSelect = 'auto';
           tb.style.MozUserSelect = 'auto';
           tb.style.msUserSelect = 'auto';
-        } catch(e) {}
+        } catch (e) { }
 
         // Exit exam lock + fullscreen
         exitExamLock();
-        try { if (document.fullscreenElement) document.exitFullscreen?.(); } catch(e) {}
+        try { if (document.fullscreenElement) document.exitFullscreen?.(); } catch (e) { }
         document.getElementById('violationOverlay').classList.add('d-none');
 
         // Grade answers
@@ -1014,7 +1131,7 @@
         logExamActivity('test_submit', `Submitted (${submissionType}) — Score: ${score}/${newTotalMarks} (${percentage}%)`);
 
         // Clean up draft
-        try { sessionStorage.removeItem(`exam_draft_${test.id}_${userData.uid}`); } catch(e) {}
+        try { sessionStorage.removeItem(`exam_draft_${test.id}_${userData.uid}`); } catch (e) { }
 
         bootstrap.Modal.getInstance(document.getElementById('testModal'))?.hide();
         _activeTest = null;
@@ -1039,21 +1156,21 @@
         div.id = id;
 
         const data = existingData || { type: 'mcq', question: '', marks: 1, options: ['', '', '', ''], correctAnswer: '0' };
-        
+
         // Determine type display
         let isMcq = data.type === 'mcq';
         let isTf = data.type === 'trueFalse' || data.type === 'true/false';
         let isShort = data.type === 'short' || data.type === 'short answer';
-        
+
         let typeVal = 'mcq';
-        if(isTf) typeVal = 'trueFalse';
-        if(isShort) typeVal = 'short';
+        if (isTf) typeVal = 'trueFalse';
+        if (isShort) typeVal = 'short';
 
         const optLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
         let optionsHtml = '';
-        
-        if(data.options && data.options.length > 0) {
-           optionsHtml = data.options.map((opt, i) => `
+
+        if (data.options && data.options.length > 0) {
+          optionsHtml = data.options.map((opt, i) => `
              <div class="option-row d-flex align-items-center mb-2 input-group input-group-sm">
                <div class="input-group-text bg-white">
                  <input class="form-check-input mt-0 correct-radio" type="radio" name="${id}_ans" value="${i}" ${String(data.correctAnswer) === String(i) ? 'checked' : ''}>
@@ -1064,7 +1181,7 @@
              </div>
            `).join('');
         } else {
-           optionsHtml = [0,1,2,3].map((i) => `
+          optionsHtml = [0, 1, 2, 3].map((i) => `
              <div class="option-row d-flex align-items-center mb-2 input-group input-group-sm">
                <div class="input-group-text bg-white">
                  <input class="form-check-input mt-0 correct-radio" type="radio" name="${id}_ans" value="${i}" ${i === 0 ? 'checked' : ''}>
@@ -1152,7 +1269,7 @@
       function collectQuestions() {
         const cards = document.querySelectorAll('#questions-container .q-card');
         const results = [];
-        
+
         // Remove error highlights
         cards.forEach(c => c.classList.remove('border-danger', 'shadow-sm'));
 
@@ -1161,60 +1278,60 @@
           const type = card.querySelector('.q-type').value;
           const questionText = card.querySelector('.q-text').value.trim();
           const marks = parseInt(card.querySelector('.q-marks').value);
-          
+
           if (!questionText) {
-             throwError(card, `Question ${idx + 1}: Question text cannot be empty.`);
+            throwError(card, `Question ${idx + 1}: Question text cannot be empty.`);
           }
           if (isNaN(marks) || marks < 1) {
-             throwError(card, `Question ${idx + 1}: Marks must be at least 1.`);
+            throwError(card, `Question ${idx + 1}: Marks must be at least 1.`);
           }
 
           let options = [];
           let correctAnswer = null;
 
           if (type === 'mcq') {
-             const optRows = card.querySelectorAll('.option-row');
-             const optVals = new Set();
-             
-             optRows.forEach((row, i) => {
-                const val = row.querySelector('.opt-val').value.trim();
-                const isChecked = row.querySelector('.correct-radio').checked;
-                if (!val) throwError(card, `Question ${idx + 1}: Option ${String.fromCharCode(65 + i)} is empty.`);
-                if (optVals.has(val.toLowerCase())) throwError(card, `Question ${idx + 1}: Duplicate option found ("${val}").`);
-                
-                optVals.add(val.toLowerCase());
-                options.push(val);
-                if (isChecked) correctAnswer = i.toString();
-             });
-             
-             if (correctAnswer === null) {
-                throwError(card, `Question ${idx + 1}: Please select a correct answer by clicking a radio button.`);
-             }
-          } 
+            const optRows = card.querySelectorAll('.option-row');
+            const optVals = new Set();
+
+            optRows.forEach((row, i) => {
+              const val = row.querySelector('.opt-val').value.trim();
+              const isChecked = row.querySelector('.correct-radio').checked;
+              if (!val) throwError(card, `Question ${idx + 1}: Option ${String.fromCharCode(65 + i)} is empty.`);
+              if (optVals.has(val.toLowerCase())) throwError(card, `Question ${idx + 1}: Duplicate option found ("${val}").`);
+
+              optVals.add(val.toLowerCase());
+              options.push(val);
+              if (isChecked) correctAnswer = i.toString();
+            });
+
+            if (correctAnswer === null) {
+              throwError(card, `Question ${idx + 1}: Please select a correct answer by clicking a radio button.`);
+            }
+          }
           else if (type === 'trueFalse') {
-             const checked = card.querySelector('.tf-radio:checked');
-             if (!checked) throwError(card, `Question ${idx + 1}: Select True or False as the correct answer.`);
-             correctAnswer = checked.value;
-          } 
+            const checked = card.querySelector('.tf-radio:checked');
+            if (!checked) throwError(card, `Question ${idx + 1}: Select True or False as the correct answer.`);
+            correctAnswer = checked.value;
+          }
           else if (type === 'short') {
-             correctAnswer = card.querySelector('.short-ans').value.trim();
-             if (!correctAnswer) throwError(card, `Question ${idx + 1}: Short answer exact match cannot be empty.`);
+            correctAnswer = card.querySelector('.short-ans').value.trim();
+            if (!correctAnswer) throwError(card, `Question ${idx + 1}: Short answer exact match cannot be empty.`);
           }
 
           results.push({ question: questionText, type, options, correctAnswer, marks });
         }
-        
+
         return results;
 
         function throwError(card, msg) {
-           // Scroll to card, expand it, highlight it, and throw
-           card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-           card.classList.add('border-danger', 'shadow-sm');
-           const body = card.querySelector('.q-body');
-           const icon = card.querySelector('.btn-collapse-q i');
-           body.style.display = 'block';
-           icon.className = 'bi bi-chevron-up';
-           throw new Error(msg);
+          // Scroll to card, expand it, highlight it, and throw
+          card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          card.classList.add('border-danger', 'shadow-sm');
+          const body = card.querySelector('.q-body');
+          const icon = card.querySelector('.btn-collapse-q i');
+          body.style.display = 'block';
+          icon.className = 'bi bi-chevron-up';
+          throw new Error(msg);
         }
       }
 
@@ -1300,7 +1417,7 @@
               if (optA || optB || optC || optD) {
                 type = 'mcq';
                 if (!optA || !optB) errors.push('MCQ needs at least Option A & B');
-                
+
                 // Map 'A', 'B', 'C', 'D' to 0, 1, 2, 3
                 const mapKey = correct.toUpperCase();
                 const mapDict = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
@@ -1371,7 +1488,7 @@
           if (validQs.length === 0) return;
 
           validQs.forEach(q => {
-             addQuestion(q);
+            addQuestion(q);
           });
 
           closeModal('bulkQuestionModal');
@@ -1390,4 +1507,51 @@
     } catch (e) { console.error(e); }
   </script>
 </body>
+
+</html>
+document.getElementById('bq-errors').textContent = errorCount;
+tbody.innerHTML = html;
+
+bqPreview.classList.remove('d-none');
+
+if (validCount > 0) {
+bqValidateBtn.classList.add('d-none');
+bqImportBtn.classList.remove('d-none');
+} else {
+showToast('No valid questions found. Fix errors and try again.', 'error');
+}
+} catch (err) {
+showToast(err.message || 'Error processing file', 'error');
+}
+
+bqValidateBtn.disabled = false;
+bqValidateBtn.innerHTML = 'Validate File';
+});
+
+// Import valid questions into the form
+bqImportBtn.addEventListener('click', () => {
+const validQs = parsedQuestions.filter(q => q._valid);
+if (validQs.length === 0) return;
+
+validQs.forEach(q => {
+addQuestion(q);
+});
+
+closeModal('bulkQuestionModal');
+showToast(`${validQs.length} question(s) imported successfully!`, 'success');
+
+// Reset modal state
+bqFile.value = '';
+bqPreview.classList.add('d-none');
+bqImportBtn.classList.add('d-none');
+bqValidateBtn.classList.remove('d-none');
+bqValidateBtn.disabled = true;
+parsedQuestions = [];
+});
+}
+
+} catch (e) { console.error(e); }
+</script>
+</body>
+
 </html>

@@ -39,7 +39,8 @@
           <div class="card shadow-sm mb-4" id="quick-mark-card">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
               <h6 class="mb-0"><i class="bi bi-person-dash me-2"></i>Quick Mark Attendance</h6>
-              <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#bulkAttendanceModal">
+              <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal"
+                data-bs-target="#bulkAttendanceModal">
                 <i class="bi bi-file-earmark-spreadsheet me-1"></i>Bulk Upload
               </button>
             </div>
@@ -56,8 +57,10 @@
                   <input type="date" id="quick-att-date" class="form-control">
                 </div>
                 <div class="col-md-5">
-                  <label class="form-label fw-semibold">Absent Roll Numbers <span class="text-muted fw-normal">(comma-separated)</span></label>
-                  <textarea id="quick-att-absent" class="form-control" rows="2" placeholder="e.g. 1, 5, 12, 14"></textarea>
+                  <label class="form-label fw-semibold">Absent Roll Numbers <span
+                      class="text-muted fw-normal">(comma-separated)</span></label>
+                  <textarea id="quick-att-absent" class="form-control" rows="2"
+                    placeholder="e.g. 1, 5, 12, 14"></textarea>
                   <div class="form-text">All other enrolled students will be marked <strong>Present</strong>.</div>
                 </div>
               </div>
@@ -71,7 +74,8 @@
 
           <!-- Edit/View Attendance Matrix -->
           <div class="card shadow-sm mb-4">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center cursor-pointer" id="toggle-matrix-header">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center cursor-pointer"
+              id="toggle-matrix-header">
               <h6 class="mb-0 text-primary"><i class="bi bi-table me-2"></i>Edit Attendance Matrix</h6>
               <i class="bi bi-chevron-down" id="matrix-collapse-icon"></i>
             </div>
@@ -94,49 +98,54 @@
                 </div>
               </div>
 
-          <!-- Student Attendance Table -->
-          <div class="card shadow-none border mb-0 d-none" id="attendance-card">
-            <div class="card-header bg-light d-flex flex-wrap justify-content-between align-items-center gap-2 border-bottom-0">
-              <h6 class="mb-0"><i class="bi bi-grid-3x3 me-2"></i>Attendance Matrix (<span id="matrix-month-label"></span>)</h6>
-              <div class="d-flex flex-wrap gap-2 align-items-center">
-                <input type="text" id="matrix-search" class="form-control form-control-sm" placeholder="Search name/URN/roll..." style="width:180px;">
-                <select id="matrix-department" class="form-select form-select-sm" style="width:120px;">
-                  <option value="">All Depts</option>
-                  <option value="AERO">AERO</option>
-                  <option value="CSE">CSE</option>
-                  <option value="CIVIL">CIVIL</option>
-                  <option value="MECH">MECH</option>
-                  <option value="EE">EE</option>
-                  <option value="FOOD">FOOD</option>
-                  <option value="AIDS">AIDS</option>
-                  <option value="CSE (IOT)">CSE (IOT)</option>
-                </select>
-                <div class="vr mx-1"></div>
-                <input type="date" id="new-col-date" class="form-control form-control-sm" style="width:130px;">
-                <button class="btn btn-outline-success btn-sm text-nowrap" id="add-col-btn"><i class="bi bi-calendar-plus me-1"></i>Add Date</button>
+              <!-- Student Attendance Table -->
+              <div class="card shadow-none border mb-0 d-none" id="attendance-card">
+                <div
+                  class="card-header bg-light d-flex flex-wrap justify-content-between align-items-center gap-2 border-bottom-0">
+                  <h6 class="mb-0"><i class="bi bi-grid-3x3 me-2"></i>Attendance Matrix (<span
+                      id="matrix-month-label"></span>)</h6>
+                  <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <input type="text" id="matrix-search" class="form-control form-control-sm"
+                      placeholder="Search name/URN/roll..." style="width:180px;">
+                    <select id="matrix-department" class="form-select form-select-sm" style="width:120px;">
+                      <option value="">All Depts</option>
+                      <option value="AERO">AERO</option>
+                      <option value="CSE">CSE</option>
+                      <option value="CIVIL">CIVIL</option>
+                      <option value="MECH">MECH</option>
+                      <option value="EE">EE</option>
+                      <option value="FOOD">FOOD</option>
+                      <option value="AIDS">AIDS</option>
+                      <option value="CSE (IOT)">CSE (IOT)</option>
+                    </select>
+                    <div class="vr mx-1"></div>
+                    <input type="date" id="new-col-date" class="form-control form-control-sm" style="width:130px;">
+                    <button class="btn btn-outline-success btn-sm text-nowrap" id="add-col-btn"><i
+                        class="bi bi-calendar-plus me-1"></i>Add Date</button>
+                  </div>
+                </div>
+                <div class="card-body p-0 table-responsive" style="max-height: 60vh;">
+                  <table class="table table-bordered table-hover mb-0 text-center" style="white-space:nowrap;">
+                    <thead class="table-light sticky-top" style="z-index: 2;">
+                      <tr id="matrix-head">
+                        <th style="width: 50px;">#</th>
+                        <th class="text-start" style="min-width: 100px;">Roll No</th>
+                        <th class="text-start" style="min-width: 120px;">URN</th>
+                        <th class="text-start" style="min-width: 180px;">Student Name</th>
+                        <!-- Dynamic Dates Go Here -->
+                      </tr>
+                    </thead>
+                    <tbody id="matrix-body"></tbody>
+                  </table>
+                </div>
+                <div class="card-footer bg-light border-top-0 d-flex justify-content-between align-items-center">
+                  <span class="text-muted small" id="att-summary">Click cells to toggle. Green = Present, Gray =
+                    Absent.</span>
+                  <button class="btn btn-success" id="save-matrix-btn" disabled>
+                    <i class="bi bi-cloud-arrow-up me-1"></i>Save Edits (<span id="pending-changes-count">0</span>)
+                  </button>
+                </div>
               </div>
-            </div>
-            <div class="card-body p-0 table-responsive" style="max-height: 60vh;">
-              <table class="table table-bordered table-hover mb-0 text-center" style="white-space:nowrap;">
-                <thead class="table-light sticky-top" style="z-index: 2;">
-                  <tr id="matrix-head">
-                    <th style="width: 50px;">#</th>
-                    <th class="text-start" style="min-width: 100px;">Roll No</th>
-                    <th class="text-start" style="min-width: 120px;">URN</th>
-                    <th class="text-start" style="min-width: 180px;">Student Name</th>
-                    <!-- Dynamic Dates Go Here -->
-                  </tr>
-                </thead>
-                <tbody id="matrix-body"></tbody>
-              </table>
-            </div>
-            <div class="card-footer bg-light border-top-0 d-flex justify-content-between align-items-center">
-              <span class="text-muted small" id="att-summary">Click cells to toggle. Green = Present, Gray = Absent.</span>
-              <button class="btn btn-success" id="save-matrix-btn" disabled>
-                <i class="bi bi-cloud-arrow-up me-1"></i>Save Edits (<span id="pending-changes-count">0</span>)
-              </button>
-            </div>
-          </div>
             </div>
           </div>
         </div>
@@ -245,7 +254,8 @@
                   <option value="">— Select Course —</option>
                 </select>
                 <select id="history-month" class="form-select form-select-sm" style="width:160px;"></select>
-                <button class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#customExportModal">
+                <button class="btn btn-outline-success btn-sm" data-bs-toggle="modal"
+                  data-bs-target="#customExportModal">
                   <i class="bi bi-file-earmark-excel me-1"></i>Export
                 </button>
               </div>
@@ -481,7 +491,7 @@
               <option value="">— Select Course —</option>
             </select>
           </div>
-          
+
           <div class="mb-3">
             <label class="form-label fw-semibold">Export Type</label>
             <div class="form-check mb-2">
@@ -493,7 +503,8 @@
             <div class="form-check">
               <input class="form-check-input" type="radio" name="exportType" id="exportMatrix" value="matrix">
               <label class="form-check-label" for="exportMatrix">
-                Lecture History (Matrix) <small class="text-muted d-block">Day-by-day 'Present'/'Absent' records.</small>
+                Lecture History (Matrix) <small class="text-muted d-block">Day-by-day 'Present'/'Absent'
+                  records.</small>
               </label>
             </div>
           </div>
@@ -527,7 +538,8 @@
               </div>
               <div class="col-6">
                 <div class="form-check">
-                  <input class="form-check-input export-col summary-only" type="checkbox" value="Total Lectures" checked>
+                  <input class="form-check-input export-col summary-only" type="checkbox" value="Total Lectures"
+                    checked>
                   <label class="form-check-label">Total Lectures</label>
                 </div>
               </div>
@@ -543,7 +555,7 @@
                   <label class="form-check-label">Absent Count</label>
                 </div>
               </div>
-               <div class="col-6">
+              <div class="col-6">
                 <div class="form-check">
                   <input class="form-check-input export-col summary-only" type="checkbox" value="%" checked>
                   <label class="form-check-label">Attendance %</label>
@@ -599,7 +611,7 @@
           if (depts.length === 0) {
             deptSelect.innerHTML = '<option value="">— No departments found —</option>';
           } else {
-            deptSelect.innerHTML = '<option value="">— Select Department —</option>' + 
+            deptSelect.innerHTML = '<option value="">— Select Department —</option>' +
               depts.map(d => `<option value="${d.code}">${escapeHtml(d.name)} (${escapeHtml(d.code)})</option>`).join('');
           }
         } catch (e) {
@@ -1047,7 +1059,7 @@
         validateAttBtn.addEventListener('click', async () => {
           const courseId = document.getElementById('bulk-att-course').value;
           const selectedDept = document.getElementById('bulk-att-department').value;
-          
+
           if (!courseId) {
             showToast('Please select a Course first.', 'warning');
             return;
@@ -1553,7 +1565,7 @@
         });
 
         exportCourseSel.addEventListener('change', () => {
-           confirmExportBtn.disabled = !exportCourseSel.value;
+          confirmExportBtn.disabled = !exportCourseSel.value;
         });
 
         // Sync historyCourse map to Export dropdown
@@ -1571,7 +1583,7 @@
           }
 
           const type = document.querySelector('input[name="exportType"]:checked').value;
-          
+
           // Gather selected fields
           const selectedFields = Array.from(document.querySelectorAll('.export-col'))
             .filter(cb => cb.checked || cb.disabled === false || cb.value === 'Roll No' || cb.value === 'Name') // Ensure RollNo/Name even if disabled
@@ -1616,53 +1628,53 @@
             let exportData = [];
 
             if (type === 'summary') {
-               // Calculate overall summary
-               const uniqueDates = [...new Set(records.map(r => r.date))];
-               const totalLecturesCount = uniqueDates.length;
+              // Calculate overall summary
+              const uniqueDates = [...new Set(records.map(r => r.date))];
+              const totalLecturesCount = uniqueDates.length;
 
-               exportData = studentProfiles.map(student => {
-                 const stRecords = records.filter(r => r.studentId === student.uid);
-                 const presentCount = stRecords.filter(r => r.status === 'present').length;
-                 const absentCount = stRecords.filter(r => r.status === 'absent').length; 
-                 const perc = totalLecturesCount > 0 ? Math.round((presentCount / totalLecturesCount) * 100) : 0;
+              exportData = studentProfiles.map(student => {
+                const stRecords = records.filter(r => r.studentId === student.uid);
+                const presentCount = stRecords.filter(r => r.status === 'present').length;
+                const absentCount = stRecords.filter(r => r.status === 'absent').length;
+                const perc = totalLecturesCount > 0 ? Math.round((presentCount / totalLecturesCount) * 100) : 0;
 
-                 let row = {};
-                 if (selectedFields.includes('Roll No')) row['Roll No'] = student.rollNo || '—';
-                 if (selectedFields.includes('Name')) row['Student Name'] = student.name || '—';
-                 if (selectedFields.includes('URN')) row['URN'] = student.urn || '—';
-                 if (selectedFields.includes('Department')) row['Department'] = student.department || '—';
-                 if (selectedFields.includes('Total Lectures')) row['Total Lectures'] = totalLecturesCount;
-                 if (selectedFields.includes('Present')) row['Present'] = presentCount;
-                 if (selectedFields.includes('Absent')) row['Absent'] = absentCount; // Missed vs Marked Absent diff? Usually Missed = Total - Present.
-                 if (selectedFields.includes('%')) row['Attendance %'] = perc + '%';
+                let row = {};
+                if (selectedFields.includes('Roll No')) row['Roll No'] = student.rollNo || '—';
+                if (selectedFields.includes('Name')) row['Student Name'] = student.name || '—';
+                if (selectedFields.includes('URN')) row['URN'] = student.urn || '—';
+                if (selectedFields.includes('Department')) row['Department'] = student.department || '—';
+                if (selectedFields.includes('Total Lectures')) row['Total Lectures'] = totalLecturesCount;
+                if (selectedFields.includes('Present')) row['Present'] = presentCount;
+                if (selectedFields.includes('Absent')) row['Absent'] = absentCount; // Missed vs Marked Absent diff? Usually Missed = Total - Present.
+                if (selectedFields.includes('%')) row['Attendance %'] = perc + '%';
 
-                 return row;
-               });
+                return row;
+              });
             } else {
-               // Matrix export
-               const uniqueDates = [...new Set(records.map(r => r.date))].sort();
-               const dtMap = {}; // mapping for quick lookup:  dtMap[uid][date]
-               studentProfiles.forEach(s => dtMap[s.uid] = {});
-               
-               records.forEach(r => {
-                 if (dtMap[r.studentId]) {
-                   dtMap[r.studentId][r.date] = r.status === 'present' ? 'Present' : 'Absent';
-                 }
-               });
+              // Matrix export
+              const uniqueDates = [...new Set(records.map(r => r.date))].sort();
+              const dtMap = {}; // mapping for quick lookup:  dtMap[uid][date]
+              studentProfiles.forEach(s => dtMap[s.uid] = {});
 
-               exportData = studentProfiles.map(student => {
-                 let row = {};
-                 if (selectedFields.includes('Roll No')) row['Roll No'] = student.rollNo || '—';
-                 if (selectedFields.includes('Name')) row['Student Name'] = student.name || '—';
-                 if (selectedFields.includes('URN')) row['URN'] = student.urn || '—';
-                 if (selectedFields.includes('Department')) row['Department'] = student.department || '—';
-                 
-                 uniqueDates.forEach(date => {
-                   row[date] = dtMap[student.uid][date] || '—';
-                 });
+              records.forEach(r => {
+                if (dtMap[r.studentId]) {
+                  dtMap[r.studentId][r.date] = r.status === 'present' ? 'Present' : 'Absent';
+                }
+              });
 
-                 return row;
-               });
+              exportData = studentProfiles.map(student => {
+                let row = {};
+                if (selectedFields.includes('Roll No')) row['Roll No'] = student.rollNo || '—';
+                if (selectedFields.includes('Name')) row['Student Name'] = student.name || '—';
+                if (selectedFields.includes('URN')) row['URN'] = student.urn || '—';
+                if (selectedFields.includes('Department')) row['Department'] = student.department || '—';
+
+                uniqueDates.forEach(date => {
+                  row[date] = dtMap[student.uid][date] || '—';
+                });
+
+                return row;
+              });
             }
 
             // Make sure the course title is known for the filename
@@ -1679,12 +1691,12 @@
             XLSX.writeFile(workbook, `Attendance_${safeCourseTitle}_${suffix}_${dateStr}.xlsx`);
 
             showToast('Attendance Data Exported Successfully', 'success');
-            
+
             // Close modal
             const modalEl = document.getElementById('customExportModal');
             const modalInstance = bootstrap.Modal.getInstance(modalEl);
-            if(modalInstance) modalInstance.hide();
-            
+            if (modalInstance) modalInstance.hide();
+
           } catch (error) {
             console.error('Export Failed:', error);
             showToast('Failed to export data. ' + (error.message || ''), 'error');
