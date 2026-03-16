@@ -27,6 +27,9 @@ export const TestRepository = {
       negativeMarkValue: data.negativeMarkValue || 0,
       randomOrder: data.randomOrder || false,
       shuffleOptions: data.shuffleOptions || false,
+      shuffleQuestions: data.shuffleQuestions || false,
+      randomizeOptions: data.randomizeOptions || false,
+      autoSubmitTimeout: data.autoSubmitTimeout !== false,
       disableCopy: data.disableCopy !== false,
       detectTabSwitch: data.detectTabSwitch !== false,
       tabSwitchLimit: data.tabSwitchLimit || 3,
@@ -34,7 +37,6 @@ export const TestRepository = {
       questions: data.questions || [],
       showResultToStudents: data.showResultToStudents || false,
       questionsToAttempt: data.questionsToAttempt || null,
-      unitConfig: data.unitConfig || null,
       isActive: data.isActive !== false,
       createdBy: data.createdBy,
       createdAt: serverTimestamp()

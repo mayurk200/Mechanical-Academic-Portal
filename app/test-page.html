@@ -871,8 +871,8 @@
         // Deep copy questions
         let questions = JSON.parse(JSON.stringify(test.questions || []));
 
-        // 1. Shuffle Questions
-        if (test.shuffleQuestions) {
+        // 1. Shuffle Questions (supports both new and legacy field names)
+        if (test.shuffleQuestions || test.randomOrder) {
           questions = questions.sort(() => Math.random() - 0.5);
         }
         // 2. Max Questions to Attempt
@@ -880,15 +880,17 @@
           questions = questions.slice(0, test.questionsToAttempt);
         }
 
-        // 3. Randomize Options
-        questions.forEach((q, i) => {
-          if (test.randomizeOptions && q.type === 'mcq' && q.options && q.options.length > 0) {
-            const optObjs = q.options.map((optTxt, idx) => ({ text: optTxt, isCorrect: String(idx) === String(q.correctAnswer) }));
-            optObjs.sort(() => Math.random() - 0.5);
-            questions[i].options = optObjs.map(o => o.text);
-            questions[i].correctAnswer = optObjs.findIndex(o => o.isCorrect).toString();
-          }
-        });
+        // 3. Randomize Options (supports both new and legacy field names)
+        if (test.randomizeOptions || test.shuffleOptions) {
+          questions.forEach((q, i) => {
+            if (q.type === 'mcq' && q.options && q.options.length > 0) {
+              const optObjs = q.options.map((optTxt, idx) => ({ text: optTxt, isCorrect: String(idx) === String(q.correctAnswer) }));
+              optObjs.sort(() => Math.random() - 0.5);
+              questions[i].options = optObjs.map(o => o.text);
+              questions[i].correctAnswer = optObjs.findIndex(o => o.isCorrect).toString();
+            }
+          });
+        }
 
         test._activeQuestions = questions;
         let timeLeft = (test.duration || 30) * 60;
