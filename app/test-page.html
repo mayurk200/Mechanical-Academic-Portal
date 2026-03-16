@@ -833,7 +833,7 @@
             (window.outerHeight - window.innerHeight > threshold);
           if (isOpen && !devtoolsWasOpen) {
             devtoolsWasOpen = true;
-            showViolationWarning('devtools', 'Developer tools detected! This is not allowed during tests.');
+            logExamActivity('devtools_attempt', 'Developer tools detected (silent log)');
           } else if (!isOpen) {
             devtoolsWasOpen = false;
           }
@@ -994,7 +994,7 @@
 
         // ── SECURITY SETUP ──
 
-        // A) Copy/Paste/Selection Protection
+        // A) Copy/Paste/Selection Protection (silently blocked, no violation strikes)
         if (test.disableCopy) {
           const tb = document.getElementById('test-body');
           tb.style.userSelect = 'none';
@@ -1005,30 +1005,26 @@
           // Override clipboard API
           if (navigator.clipboard) {
             navigator.clipboard.writeText = async () => {
-              if (isTestActive) showViolationWarning('copy', 'Clipboard injection is not allowed during the test.');
               throw new Error('Clipboard access disabled');
             };
           }
 
-          onCopyPaste = (e) => { e.preventDefault(); if (!isTestActive) return; showViolationWarning('copy', 'Copy, Cut, or Paste is not allowed during this test.'); };
-          onContextMenu = (e) => { e.preventDefault(); if (!isTestActive) return; showViolationWarning('copy', 'Right-click is disabled during this test.'); };
+          onCopyPaste = (e) => { e.preventDefault(); };
+          onContextMenu = (e) => { e.preventDefault(); };
           onSelectStart = (e) => { e.preventDefault(); };
-          onDragStart = (e) => { e.preventDefault(); if (!isTestActive) return; showViolationWarning('copy', 'Dragging content is not allowed during this test.'); };
+          onDragStart = (e) => { e.preventDefault(); };
           onKeyDown = (e) => {
             if (!isTestActive) return;
-            // Copy shortcuts → copy counter
+            // Block copy/paste/select-all shortcuts silently
             if ((e.ctrlKey || e.metaKey) && ['c', 'x', 'v', 'a', 'u', 's', 'p'].includes(e.key.toLowerCase())) {
               e.preventDefault();
-              showViolationWarning('copy', `Keyboard shortcut (Ctrl+${e.key.toUpperCase()}) is blocked during this test.`);
             }
-            // DevTools shortcuts → devtools counter
+            // Block DevTools shortcuts silently
             if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['i', 'j', 'c'].includes(e.key.toLowerCase()))) {
               e.preventDefault();
-              showViolationWarning('devtools', 'Developer tools are not allowed during this test.');
             }
             if (e.key === 'PrintScreen') {
               e.preventDefault();
-              showViolationWarning('copy', 'Screenshots are not allowed during this test.');
             }
             // Block Ctrl+R, Ctrl+W, F5 (refresh/close)
             if ((e.ctrlKey && ['r', 'w'].includes(e.key.toLowerCase())) || e.key === 'F5') {
@@ -1070,7 +1066,7 @@
                 }
               }
               if (tampering) {
-                showViolationWarning('devtools', 'DOM manipulation detected! Tampering with the exam is prohibited.');
+                logExamActivity('dom_tamper', 'DOM manipulation detected (silent log)');
               }
             }, 1000);
           });
@@ -1091,7 +1087,7 @@
         onFullscreenChange = () => {
           if (!isTestActive) return;
           if (!document.fullscreenElement) {
-            showViolationWarning('fullscreen', 'Exiting fullscreen is not allowed during this test.');
+            logExamActivity('fullscreen_exit', 'Exited fullscreen mode (silent log)');
           }
         };
         document.addEventListener('fullscreenchange', onFullscreenChange);
