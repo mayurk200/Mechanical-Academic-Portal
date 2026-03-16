@@ -716,7 +716,7 @@
       let submissionInProgress = false;
 
       // Separate violation counters
-      const LIMITS = { copy: 3, tab: 2, fullscreen: 2, devtools: 2 };
+      const LIMITS = { copy: 99, tab: 5, fullscreen: 5, devtools: 99 };
       let violations = { copy: 0, tab: 0, fullscreen: 0, devtools: 0 };
 
       // Event handler references for cleanup
@@ -1087,7 +1087,7 @@
         onFullscreenChange = () => {
           if (!isTestActive) return;
           if (!document.fullscreenElement) {
-            logExamActivity('fullscreen_exit', 'Exited fullscreen mode (silent log)');
+            showViolationWarning('fullscreen', 'Exiting fullscreen is not allowed during this test.');
           }
         };
         document.addEventListener('fullscreenchange', onFullscreenChange);
