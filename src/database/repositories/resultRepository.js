@@ -5,7 +5,8 @@
 
 import {
   db, collection, addDoc, getDocs,
-  query, where, serverTimestamp, limit
+  query, where, serverTimestamp, limit,
+  doc, getDoc, setDoc
 } from '../firestore.js';
 import { COLLECTIONS } from '../../config/constants.js';
 
@@ -13,7 +14,18 @@ const COL = COLLECTIONS.TEST_RESULTS;
 
 export const ResultRepository = {
   async submit(data) {
-    return await addDoc(collection(db, COL), {
+    // Generate deterministic Document ID: {studentId}_{testId}
+    const docId = `${data.studentId}_${data.testId}`;
+    const resultRef = doc(db, COL, docId);
+
+    // Prevent Multiple Submissions
+    const existingSnap = await getDoc(resultRef);
+    if (existingSnap.exists()) {
+      throw new Error('You have already submitted this test.');
+    }
+
+    // Set the document (1 write per student submission)
+    await setDoc(resultRef, {
       testId: data.testId,
       courseId: data.courseId || '',
       studentId: data.studentId,
@@ -33,6 +45,8 @@ export const ResultRepository = {
       submissionType: data.submissionType || 'manual',  // 'manual' | 'auto_copy' | 'auto_tab' | 'auto_fullscreen' | 'auto_devtools' | 'auto_timeout'
       submittedAt: serverTimestamp()
     });
+
+    return docId;
   },
 
   async getByTest(testId) {

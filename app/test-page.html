@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Tests — Mechanical Academic Portal</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
@@ -47,6 +47,7 @@
             <div class="mb-3"><label class="form-label">Description</label><textarea id="test-desc" class="form-control"
                 rows="2"></textarea></div>
 
+
             <!-- Questions Builder -->
             <h6>Questions</h6>
             <div id="questions-container"></div>
@@ -85,12 +86,13 @@
                     </div>
                   </div>
                   <div class="col-md-6 ps-md-3 border-start">
-                    <div class="form-check form-switch border-bottom pb-1 mb-1">
+                    <!-- Security toggles hidden: always active -->
+                    <div class="form-check form-switch border-bottom pb-1 mb-1 d-none">
                       <input type="checkbox" class="form-check-input" id="test-disable-copy" checked>
                       <label class="form-check-label small text-danger fw-bold" for="test-disable-copy">Disable
                         Copy/Paste & Selection</label>
                     </div>
-                    <div class="form-check form-switch border-bottom pb-1 mb-1">
+                    <div class="form-check form-switch border-bottom pb-1 mb-1 d-none">
                       <input type="checkbox" class="form-check-input" id="test-detect-tab" checked>
                       <label class="form-check-label small text-danger fw-bold" for="test-detect-tab"
                         title="Auto-submit on 3rd tab switch">Tab Change Detection (3 strikes)</label>
@@ -126,12 +128,13 @@
                 <th>Duration</th>
                 <th>Questions</th>
                 <th>Status</th>
+                <th>Active</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody id="tests-table">
               <tr>
-                <td colspan="6" class="text-center text-muted py-4"><span
+                <td colspan="7" class="text-center text-muted py-4"><span
                     class="spinner-border spinner-border-sm"></span></td>
               </tr>
             </tbody>
@@ -543,6 +546,7 @@
           if (new Date(endVal) <= new Date(startVal)) { showToast('End time must be after start time', 'error'); return; }
 
           const totalMarks = questions.reduce((s, q) => s + q.marks, 0);
+
           try {
             await TestService.create({
               title: document.getElementById('test-title').value.trim(),
@@ -557,9 +561,10 @@
               shuffleQuestions: document.getElementById('test-shuffle-questions').checked,
               randomizeOptions: document.getElementById('test-randomize-options').checked,
               questionsToAttempt: parseInt(document.getElementById('test-max-attempt').value) || null,
-              disableCopy: document.getElementById('test-disable-copy').checked,
-              detectTabSwitch: document.getElementById('test-detect-tab').checked,
+              disableCopy: true,
+              detectTabSwitch: true,
               autoSubmitTimeout: document.getElementById('test-auto-submit-timeout').checked,
+              isActive: true,
               createdBy: userData.uid
             });
             showToast('Test published!', 'success');
@@ -596,9 +601,14 @@
         }
         tbody.innerHTML = tests.map(t => {
           const { state, label } = getTestState(t);
+          const isActive = t.isActive !== false;
           let actionBtn = '';
+          let activeCol = '';
           if (userData.role === 'student') {
-            if (state === 'active') {
+            activeCol = '';
+            if (!isActive) {
+              actionBtn = `<span class="badge bg-secondary">Inactive</span>`;
+            } else if (state === 'active') {
               actionBtn = `<button class="btn btn-success btn-sm start-test-btn" data-id="${t.id}"><i class="bi bi-play me-1"></i>Start</button>`;
             } else if (state === 'upcoming') {
               actionBtn = `<span class="text-muted small">Not yet available</span>`;
@@ -606,6 +616,12 @@
               actionBtn = `<span class="text-muted small">Closed</span>`;
             }
           } else {
+            activeCol = `<td>
+              <div class="form-check form-switch">
+                <input class="form-check-input toggle-active" type="checkbox" data-id="${t.id}" ${isActive ? 'checked' : ''}>
+                <label class="form-check-label small">${isActive ? '<span class="text-success">Active</span>' : '<span class="text-danger">Inactive</span>'}</label>
+              </div>
+            </td>`;
             actionBtn = `<button class="btn btn-outline-danger btn-sm del-test-btn" data-id="${t.id}"><i class="bi bi-trash"></i></button>`;
           }
           return `<tr>
@@ -614,14 +630,28 @@
             <td>${t.duration} min</td>
             <td>${t.questions?.length || 0}</td>
             <td>${label}</td>
+            ${userData.role !== 'student' ? activeCol : ''}
             <td>${actionBtn}</td>
           </tr>`;
         }).join('');
+
+        // Toggle active/inactive for teachers
+        tbody.querySelectorAll('.toggle-active').forEach(toggle => {
+          toggle.addEventListener('change', async () => {
+            try {
+              const newState = await TestService.toggleActive(toggle.dataset.id);
+              const label = toggle.nextElementSibling;
+              label.innerHTML = newState ? '<span class="text-success">Active</span>' : '<span class="text-danger">Inactive</span>';
+              showToast(`Test ${newState ? 'activated' : 'deactivated'}`, 'success');
+            } catch (err) { showToast(err.message, 'error'); }
+          });
+        });
 
         // Start test (students only, active tests only)
         tbody.querySelectorAll('.start-test-btn').forEach(btn => {
           btn.addEventListener('click', async () => {
             const test = tests.find(t => t.id === btn.dataset.id);
+            if (test.isActive === false) { showToast('This test is currently inactive', 'warning'); return; }
             const testState = getTestState(test);
             if (testState.state !== 'active') { showToast('This test is not currently active', 'warning'); return; }
             const attempts = await ResultService.hasAttempted(test.id, userData.uid);
@@ -752,28 +782,12 @@
         };
       }
 
-      // ── Collect Current Answers ──
-      function collectCurrentAnswers(questions) {
-        return questions.map((q, i) => {
-          let ans;
-          if (q.type === 'short') {
-            ans = document.querySelector(`input[name="q${i}"]`)?.value?.trim() || '';
-          } else {
-            ans = document.querySelector(`input[name="q${i}"]:checked`)?.value || '';
-          }
-          return ans;
-        });
-      }
-
       // ── Auto-Save Answers ──
       async function autoSaveAnswers(test) {
         if (!isTestActive) return;
-        const questions = test._activeQuestions || [];
-        const answers = collectCurrentAnswers(questions);
         try {
-          // Using a simple key to avoid Firestore doc ID issues
           const key = `exam_draft_${test.id}_${userData.uid}`;
-          sessionStorage.setItem(key, JSON.stringify({ answers, savedAt: Date.now() }));
+          sessionStorage.setItem(key, JSON.stringify({ answers: test._savedAnswers || {}, savedAt: Date.now() }));
         } catch (e) { /* silent */ }
       }
 
@@ -861,40 +875,120 @@
         if (test.shuffleQuestions) {
           questions = questions.sort(() => Math.random() - 0.5);
         }
-
         // 2. Max Questions to Attempt
         if (test.questionsToAttempt && test.questionsToAttempt > 0 && test.questionsToAttempt < questions.length) {
           questions = questions.slice(0, test.questionsToAttempt);
         }
 
-        let timeLeft = (test.duration || 30) * 60;
-
-        // Obfuscate questions — render via JS, not plain HTML
-        const encodedQuestions = questions.map(q => ({
-          ...q,
-          _q: btoa(unescape(encodeURIComponent(q.question))),
-          _opts: (q.options || []).map(o => btoa(unescape(encodeURIComponent(o))))
-        }));
-
-        document.getElementById('test-body').innerHTML = encodedQuestions.map((q, i) => {
-          const decoded = decodeURIComponent(escape(atob(q._q)));
-          const opts = q._opts.map(o => decodeURIComponent(escape(atob(o))));
-          let correct = q.correctAnswer;
-
-          // 3. Randomize Options
-          if (test.randomizeOptions && q.type === 'mcq' && opts.length > 0) {
-            const optObjs = opts.map((optTxt, idx) => ({ text: optTxt, isCorrect: String(idx) === String(correct) }));
+        // 3. Randomize Options
+        questions.forEach((q, i) => {
+          if (test.randomizeOptions && q.type === 'mcq' && q.options && q.options.length > 0) {
+            const optObjs = q.options.map((optTxt, idx) => ({ text: optTxt, isCorrect: String(idx) === String(q.correctAnswer) }));
             optObjs.sort(() => Math.random() - 0.5);
-            const shuffledOpts = optObjs.map(o => o.text);
-            correct = optObjs.findIndex(o => o.isCorrect).toString();
-            questions[i].options = shuffledOpts;
-            questions[i].correctAnswer = correct;
-            return renderQuestionHTML(i, decoded, q.type, shuffledOpts, q.marks);
+            questions[i].options = optObjs.map(o => o.text);
+            questions[i].correctAnswer = optObjs.findIndex(o => o.isCorrect).toString();
           }
-          return renderQuestionHTML(i, decoded, q.type, opts, q.marks);
-        }).join('');
+        });
 
         test._activeQuestions = questions;
+        let timeLeft = (test.duration || 30) * 60;
+        let currentQ = 0;
+
+        // ── One-Question-At-A-Time Rendering ──
+        function renderCurrentQuestion() {
+          const q = questions[currentQ];
+          const totalQ = questions.length;
+          const testBody = document.getElementById('test-body');
+          testBody.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <span class="badge bg-primary fs-6">Question ${currentQ + 1} of ${totalQ}</span>
+              <span class="badge bg-secondary">${q.marks} mark${q.marks > 1 ? 's' : ''}</span>
+            </div>
+            <div class="card mb-3">
+              <div class="card-body">
+                <h6 class="mb-3">Q${currentQ + 1}. ${escapeHtml(q.question)}</h6>
+                ${q.type === 'mcq' ? q.options.map((o, j) => `
+                  <div class="form-check mb-2">
+                    <input class="form-check-input q-ans-input" type="radio" name="q${currentQ}" value="${j}" id="q${currentQ}_opt${j}">
+                    <label class="form-check-label" for="q${currentQ}_opt${j}">${escapeHtml(o)}</label>
+                  </div>
+                `).join('') : q.type === 'trueFalse' ? `
+                  <div class="form-check mb-2">
+                    <input class="form-check-input q-ans-input" type="radio" name="q${currentQ}" value="true" id="q${currentQ}_true">
+                    <label class="form-check-label" for="q${currentQ}_true">True</label>
+                  </div>
+                  <div class="form-check mb-2">
+                    <input class="form-check-input q-ans-input" type="radio" name="q${currentQ}" value="false" id="q${currentQ}_false">
+                    <label class="form-check-label" for="q${currentQ}_false">False</label>
+                  </div>
+                ` : `<input type="text" class="form-control q-ans-input" name="q${currentQ}" placeholder="Your answer...">`}
+              </div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+              <button class="btn btn-outline-secondary" id="prev-q-btn" ${currentQ === 0 ? 'disabled' : ''}><i class="bi bi-chevron-left me-1"></i>Previous</button>
+              <div class="question-nav d-flex flex-wrap gap-1 justify-content-center" id="question-nav-dots"></div>
+              <button class="btn btn-outline-primary" id="next-q-btn" ${currentQ === totalQ - 1 ? 'disabled' : ''}>Next<i class="bi bi-chevron-right ms-1"></i></button>
+            </div>
+          `;
+
+          // Restore saved answer
+          const savedAns = test._savedAnswers?.[currentQ];
+          if (savedAns !== undefined && savedAns !== '') {
+            if (q.type === 'short') {
+              const inp = testBody.querySelector(`input[name="q${currentQ}"]`);
+              if (inp) inp.value = savedAns;
+            } else {
+              const radio = testBody.querySelector(`input[name="q${currentQ}"][value="${savedAns}"]`);
+              if (radio) radio.checked = true;
+            }
+          }
+
+          // Render question nav dots
+          const navDots = document.getElementById('question-nav-dots');
+          navDots.innerHTML = questions.map((_, idx) => {
+            const answered = test._savedAnswers?.[idx] !== undefined && test._savedAnswers?.[idx] !== '';
+            const isCurrent = idx === currentQ;
+            let cls = 'btn btn-sm ';
+            if (isCurrent) cls += 'btn-primary';
+            else if (answered) cls += 'btn-success';
+            else cls += 'btn-outline-secondary';
+            return `<button class="${cls} q-nav-dot" data-idx="${idx}" style="min-width:32px;padding:2px 6px;font-size:0.75rem;">${idx + 1}</button>`;
+          }).join('');
+
+          // Save answer on change
+          testBody.querySelectorAll('.q-ans-input').forEach(inp => {
+            inp.addEventListener('change', () => {
+              if (!test._savedAnswers) test._savedAnswers = {};
+              if (q.type === 'short') {
+                test._savedAnswers[currentQ] = inp.value;
+              } else {
+                test._savedAnswers[currentQ] = inp.value;
+              }
+            });
+            if (q.type === 'short') {
+              inp.addEventListener('input', () => {
+                if (!test._savedAnswers) test._savedAnswers = {};
+                test._savedAnswers[currentQ] = inp.value;
+              });
+            }
+          });
+
+          // Nav buttons
+          document.getElementById('prev-q-btn').addEventListener('click', () => {
+            if (currentQ > 0) { currentQ--; renderCurrentQuestion(); }
+          });
+          document.getElementById('next-q-btn').addEventListener('click', () => {
+            if (currentQ < totalQ - 1) { currentQ++; renderCurrentQuestion(); }
+          });
+          navDots.querySelectorAll('.q-nav-dot').forEach(dot => {
+            dot.addEventListener('click', () => {
+              currentQ = parseInt(dot.dataset.idx);
+              renderCurrentQuestion();
+            });
+          });
+        }
+
+        renderCurrentQuestion();
 
         // ── SECURITY SETUP ──
 
@@ -1097,48 +1191,75 @@
         // Grade answers
         const questions = test._activeQuestions || test.questions || [];
         let score = 0, correct = 0, wrong = 0;
+        const savedAnswers = test._savedAnswers || {};
 
         const answers = questions.map((q, i) => {
-          let ans;
-          if (q.type === 'short') {
-            ans = document.querySelector(`input[name="q${i}"]`)?.value?.trim() || '';
-          } else {
-            ans = document.querySelector(`input[name="q${i}"]:checked`)?.value || '';
-          }
-          const isCorrect = String(ans).toLowerCase() === String(q.correctAnswer).toLowerCase();
+          const ans = savedAnswers[i] !== undefined ? String(savedAnswers[i]) : '';
+          const isCorrect = ans !== '' && String(ans).toLowerCase() === String(q.correctAnswer).toLowerCase();
           if (isCorrect) { score += q.marks; correct++; } else if (ans) { wrong++; }
           return { question: q.question, answer: ans, correct: isCorrect };
         });
 
-        const newTotalMarks = questions.reduce((acc, q) => acc + q.marks, 0) || 1;
-        const percentage = Math.round((score / newTotalMarks) * 100);
+        const totalMarks = questions.reduce((s, q) => s + q.marks, 0);
+        const percentage = totalMarks > 0 ? Math.round((score / totalMarks) * 100) : 0;
 
-        // Submit with full violation data
-        await ResultService.submit({
-          testId: test.id, courseId: test.courseId,
-          studentId: userData.uid, studentName: userData.name,
-          answers, score, totalMarks: newTotalMarks, percentage,
-          correctCount: correct, wrongCount: wrong,
-          copyAttempts: violations.copy,
-          tabSwitches: violations.tab,
-          fullscreenExits: violations.fullscreen,
-          devtoolsAttempts: violations.devtools,
-          autoSubmitted: submissionType !== 'manual',
-          submissionType
-        });
+        // Random delay to prevent submission burst (0 to 2000ms)
+        const delayMs = Math.floor(Math.random() * 2000);
 
-        // Log submission
-        logExamActivity('test_submit', `Submitted (${submissionType}) — Score: ${score}/${newTotalMarks} (${percentage}%)`);
+        // Show submitting state
+        showToast('Submitting your answers... please wait.', 'info');
 
-        // Clean up draft
-        try { sessionStorage.removeItem(`exam_draft_${test.id}_${userData.uid}`); } catch (e) { }
+        setTimeout(async () => {
+          try {
+            await ResultService.submit({
+              testId: test.id, courseId: test.courseId,
+              studentId: userData.uid, studentName: userData.name,
+              answers, score, totalMarks, percentage,
+              correctCount: correct, wrongCount: wrong,
+              copyAttempts: violations.copy,
+              tabSwitches: violations.tab,
+              fullscreenExits: violations.fullscreen,
+              devtoolsAttempts: violations.devtools,
+              autoSubmitted: submissionType !== 'manual',
+              submissionType
+            });
 
-        bootstrap.Modal.getInstance(document.getElementById('testModal'))?.hide();
-        _activeTest = null;
+            // Log submission
+            logExamActivity('test_submit', `Submitted (${submissionType}) — Score: ${score}/${totalMarks} (${percentage}%)`);
 
-        // NEVER show score to student — result controlled by admin
-        showToast('Test submitted successfully!', 'success');
-        loadTests();
+            // Clean up draft
+            try { sessionStorage.removeItem(`exam_draft_${test.id}_${userData.uid}`); } catch (e) { }
+
+            bootstrap.Modal.getInstance(document.getElementById('testModal'))?.hide();
+            _activeTest = null;
+
+            // NEVER show score to student — result controlled by admin
+            showToast('Test submitted successfully!', 'success');
+            loadTests();
+          } catch (err) {
+            submissionInProgress = false; // Allow retry if it wasn't a duplicate
+            if (err.message.includes('already submitted')) {
+              showToast('You have already submitted this test.', 'warning');
+              bootstrap.Modal.getInstance(document.getElementById('testModal'))?.hide();
+              _activeTest = null;
+              loadTests();
+            } else {
+              showToast('Error submitting test: ' + err.message, 'error');
+            }
+          }
+        }, delayMs);
+      }
+
+      // Helper to get simple browser name
+      function getBrowserName(userAgent) {
+        if (userAgent.includes('Firefox')) return 'Firefox';
+        if (userAgent.includes('SamsungBrowser')) return 'Samsung Internet';
+        if (userAgent.includes('Opera') || userAgent.includes('OPR')) return 'Opera';
+        if (userAgent.includes('Trident')) return 'Internet Explorer';
+        if (userAgent.includes('Edge')) return 'Edge';
+        if (userAgent.includes('Chrome')) return 'Chrome';
+        if (userAgent.includes('Safari')) return 'Safari';
+        return 'Unknown';
       }
 
       loadTests();
@@ -1213,7 +1334,7 @@
                  <small class="text-muted float-end char-count">${(data.question || '').length}/500</small>
               </div>
               <div class="col-md-3">
-                 <label class="form-label small fw-bold text-muted">Question Type</label>
+                 <label class="form-label small fw-bold text-muted">Type</label>
                  <select class="form-select q-type">
                     <option value="mcq" ${typeVal === 'mcq' ? 'selected' : ''}>Multiple Choice</option>
                     <option value="trueFalse" ${typeVal === 'trueFalse' ? 'selected' : ''}>True / False</option>
@@ -1424,14 +1545,12 @@
                 if (mapKey in mapDict) {
                   finalCorrect = mapDict[mapKey].toString();
                 } else if (!isNaN(parseInt(correct)) && parseInt(correct) >= 0 && parseInt(correct) <= 3) {
-                  // already index
                   finalCorrect = correct;
                 } else {
                   errors.push('MCQ correct answer should be A, B, C, or D');
                 }
                 options = [optA, optB, optC, optD].filter(o => o);
               } else {
-                // If no options, it's a short answer or True/False
                 if (correct.toLowerCase() === 'true' || correct.toLowerCase() === 'false') {
                   type = 'trueFalse';
                 } else {
@@ -1506,52 +1625,6 @@
 
     } catch (e) { console.error(e); }
   </script>
-</body>
-
-</html>
-document.getElementById('bq-errors').textContent = errorCount;
-tbody.innerHTML = html;
-
-bqPreview.classList.remove('d-none');
-
-if (validCount > 0) {
-bqValidateBtn.classList.add('d-none');
-bqImportBtn.classList.remove('d-none');
-} else {
-showToast('No valid questions found. Fix errors and try again.', 'error');
-}
-} catch (err) {
-showToast(err.message || 'Error processing file', 'error');
-}
-
-bqValidateBtn.disabled = false;
-bqValidateBtn.innerHTML = 'Validate File';
-});
-
-// Import valid questions into the form
-bqImportBtn.addEventListener('click', () => {
-const validQs = parsedQuestions.filter(q => q._valid);
-if (validQs.length === 0) return;
-
-validQs.forEach(q => {
-addQuestion(q);
-});
-
-closeModal('bulkQuestionModal');
-showToast(`${validQs.length} question(s) imported successfully!`, 'success');
-
-// Reset modal state
-bqFile.value = '';
-bqPreview.classList.add('d-none');
-bqImportBtn.classList.add('d-none');
-bqValidateBtn.classList.remove('d-none');
-bqValidateBtn.disabled = true;
-parsedQuestions = [];
-});
-}
-
-} catch (e) { console.error(e); }
-</script>
 </body>
 
 </html>

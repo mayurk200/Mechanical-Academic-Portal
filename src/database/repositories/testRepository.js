@@ -27,11 +27,15 @@ export const TestRepository = {
       negativeMarkValue: data.negativeMarkValue || 0,
       randomOrder: data.randomOrder || false,
       shuffleOptions: data.shuffleOptions || false,
-      disableCopy: data.disableCopy || false,
+      disableCopy: data.disableCopy !== false,
+      detectTabSwitch: data.detectTabSwitch !== false,
       tabSwitchLimit: data.tabSwitchLimit || 3,
       totalMarks: data.totalMarks || 0,
       questions: data.questions || [],
       showResultToStudents: data.showResultToStudents || false,
+      questionsToAttempt: data.questionsToAttempt || null,
+      unitConfig: data.unitConfig || null,
+      isActive: data.isActive !== false,
       createdBy: data.createdBy,
       createdAt: serverTimestamp()
     });
@@ -75,6 +79,14 @@ export const TestRepository = {
   async count() {
     const snap = await getDocs(collection(db, COL));
     return snap.size;
+  },
+
+  async toggleActive(id) {
+    const test = await this.get(id);
+    if (!test) return;
+    const newState = test.isActive === false ? true : false;
+    await this.update(id, { isActive: newState });
+    return newState;
   }
 };
 
@@ -89,7 +101,6 @@ export const QuestionBankRepository = {
       correctAnswer: data.correctAnswer,
       explanation: data.explanation || '',
       marks: data.marks || 1,
-      difficulty: data.difficulty || 'medium',
       tags: data.tags || [],
       createdBy: data.createdBy,
       createdAt: serverTimestamp()

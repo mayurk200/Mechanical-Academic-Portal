@@ -202,8 +202,6 @@ function setupCreateTest() {
     const courseId = document.getElementById('test-course').value;
     const duration = parseInt(document.getElementById('test-duration').value) || 30;
     const attemptLimit = parseInt(document.getElementById('test-attempts').value) || 1;
-    const negativeMarking = document.getElementById('test-negative').checked;
-    const randomOrder = document.getElementById('test-random').checked;
 
     if (!title) { showToast('Test title required', 'error'); return; }
     if (!courseId) { showToast('Select a course', 'error'); return; }
@@ -214,7 +212,7 @@ function setupCreateTest() {
     try {
       await TestService.create({
         title, courseId, duration, attemptLimit,
-        negativeMarking, randomOrder, totalMarks,
+        totalMarks,
         questions, createdBy: currentUser.uid
       });
       showToast('Test created successfully!', 'success');
@@ -261,9 +259,9 @@ async function loadStudentView() {
             </div>
           </div>
           ${canAttempt
-            ? `<button class="btn btn-primary btn-sm start-test" data-id="${t.id}">▶ Start Test</button>`
-            : `<span class="badge badge-warning">Max attempts reached</span>`
-          }
+        ? `<button class="btn btn-primary btn-sm start-test" data-id="${t.id}">▶ Start Test</button>`
+        : `<span class="badge badge-warning">Max attempts reached</span>`
+      }
         </div>
       </div>
     `;
@@ -435,43 +433,66 @@ async function submitTest(test, questions, answers) {
   score = Math.max(0, score);
   const percentage = Math.round((score / test.totalMarks) * 100);
 
-  try {
-    await ResultService.submit({
-      testId: test.id, studentId: currentUser.uid,
-      studentName: currentUser.name, answers,
-      score, totalMarks: test.totalMarks,
-      percentage, correctCount, wrongCount
-    });
+  const delayMs = Math.floor(Math.random() * 2000);
 
-    showToast('Test submitted successfully!', 'success');
+  showToast('Submitting your answers... please wait.', 'info');
 
-    // Show result
-    const panel = document.getElementById('student-panel');
-    const color = percentage >= 70 ? 'var(--success)' : percentage >= 40 ? 'var(--warning)' : 'var(--danger)';
+  setTimeout(async () => {
+    try {
+      await ResultService.submit({
+        testId: test.id, studentId: currentUser.uid,
+        studentName: currentUser.name, answers,
+        score, totalMarks: test.totalMarks,
+        percentage, correctCount, wrongCount
+      });
 
-    panel.innerHTML = `
-      <div class="card" style="text-align:center;max-width:500px;margin:40px auto;">
-        <h2 style="margin-bottom:24px;">🎉 Test Submitted!</h2>
-        <div class="result-score-circle" style="--score:${percentage}">
-          <div class="inner">
-            <div class="score-value" style="color:${color};">${percentage}%</div>
-            <div class="score-label">Score</div>
+      showToast('Test submitted successfully!', 'success');
+
+      // Show result
+      const panel = document.getElementById('student-panel');
+      const color = percentage >= 70 ? 'var(--success)' : percentage >= 40 ? 'var(--warning)' : 'var(--danger)';
+
+      panel.innerHTML = `
+        <div class="card" style="text-align:center;max-width:500px;margin:40px auto;">
+          <h2 style="margin-bottom:24px;">🎉 Test Submitted!</h2>
+          <div class="result-score-circle" style="--score:${percentage}">
+            <div class="inner">
+              <div class="score-value" style="color:${color};">${percentage}%</div>
+              <div class="score-label">Score</div>
+            </div>
           </div>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:24px 0;">
-          <div><div style="font-size:1.3rem;font-weight:700;color:var(--success);">${correctCount}</div><div style="font-size:0.78rem;color:var(--text-muted);">Correct</div></div>
-          <div><div style="font-size:1.3rem;font-weight:700;color:var(--danger);">${wrongCount}</div><div style="font-size:0.78rem;color:var(--text-muted);">Wrong</div></div>
-          <div><div style="font-size:1.3rem;font-weight:700;color:var(--text-primary);">${score}/${test.totalMarks}</div><div style="font-size:0.78rem;color:var(--text-muted);">Score</div></div>
-        </div>
-        <div style="display:flex;gap:12px;justify-content:center;">
-          <a href="result-page.html?testId=${test.id}" class="btn btn-primary">📊 View Detailed Results</a>
-          <a href="test-page.html" class="btn btn-outline">← Back to Tests</a>
-        </div>
-      </div>`;
-  } catch (err) {
-    LMSLogger.database('Test submission failed', err);
-    showToast('Failed to submit test. Please try again.', 'error');
-  }
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:24px 0;">
+            <div><div style="font-size:1.3rem;font-weight:700;color:var(--success);">${correctCount}</div><div style="font-size:0.78rem;color:var(--text-muted);">Correct</div></div>
+            <div><div style="font-size:1.3rem;font-weight:700;color:var(--danger);">${wrongCount}</div><div style="font-size:0.78rem;color:var(--text-muted);">Wrong</div></div>
+            <div><div style="font-size:1.3rem;font-weight:700;color:var(--text-primary);">${score}/${test.totalMarks}</div><div style="font-size:0.78rem;color:var(--text-muted);">Score</div></div>
+          </div>
+          <div style="display:flex;gap:12px;justify-content:center;">
+            <a href="result-page.html?testId=${test.id}" class="btn btn-primary">📊 View Detailed Results</a>
+            <a href="test-page.html" class="btn btn-outline">← Back to Tests</a>
+          </div>
+        </div>`;
+    } catch (err) {
+      if (err.message.includes('already submitted')) {
+        showToast('You have already submitted this test.', 'warning');
+        loadStudentView(); // Return to test list instead of erroring out
+      } else {
+        LMSLogger.database('Test submission failed', err);
+        showToast('Failed to submit test. Please try again.', 'error');
+      }
+    }
+  }, delayMs);
+}
+
+// Helper to get simple browser name
+function getBrowserName(userAgent) {
+  if (userAgent.includes('Firefox')) return 'Firefox';
+  if (userAgent.includes('SamsungBrowser')) return 'Samsung Internet';
+  if (userAgent.includes('Opera') || userAgent.includes('OPR')) return 'Opera';
+  if (userAgent.includes('Trident')) return 'Internet Explorer';
+  if (userAgent.includes('Edge')) return 'Edge';
+  if (userAgent.includes('Chrome')) return 'Chrome';
+  if (userAgent.includes('Safari')) return 'Safari';
+  return 'Unknown';
 }
 
 function shuffleArray(arr) {
