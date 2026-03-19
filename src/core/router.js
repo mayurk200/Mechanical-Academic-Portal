@@ -17,6 +17,7 @@ const menuConfig = {
     { icon: 'bi-calendar-check', label: 'Attendance', href: 'attendance.html' },
     { icon: 'bi-pencil-square', label: 'Tests', href: 'test-page.html' },
     { icon: 'bi-graph-up', label: 'Results', href: 'result-page.html' },
+    { icon: 'bi-bar-chart-line', label: 'Analytics', href: 'analytics.html' },
     { icon: 'bi-sliders', label: 'System Settings', href: 'admin-settings.html' },
     { icon: 'bi-person-circle', label: 'Profile', href: 'profile.html' },
   ],

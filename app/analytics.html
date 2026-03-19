@@ -7,10 +7,184 @@
   <title>Analytics — Mechanical Academic Portal</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="../assets/css/base.css">
-  <link rel="stylesheet" href="../assets/css/components.css">
-  <link rel="stylesheet" href="../assets/css/modules.css">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    /* ── Analytics Page Styles (light theme) ─── */
+    .analytics-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 992px) { .analytics-stats { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 576px) { .analytics-stats { grid-template-columns: 1fr; } }
+
+    .a-stat-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .a-stat-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+    .a-stat-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 3px;
+    }
+    .a-stat-card.blue::after { background: linear-gradient(90deg, #0d6efd, #6ea8fe); }
+    .a-stat-card.purple::after { background: linear-gradient(90deg, #6f42c1, #a98eda); }
+    .a-stat-card.green::after { background: linear-gradient(90deg, #198754, #4dd19a); }
+    .a-stat-card.orange::after { background: linear-gradient(90deg, #fd7e14, #ffb264); }
+
+    .a-stat-card .a-icon {
+      width: 48px; height: 48px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+      margin-bottom: 14px;
+    }
+    .a-icon.blue { background: #e7f1ff; color: #0d6efd; }
+    .a-icon.purple { background: #f3f0ff; color: #6f42c1; }
+    .a-icon.green { background: #d1fae5; color: #198754; }
+    .a-icon.orange { background: #fff3e0; color: #fd7e14; }
+
+    .a-stat-card .a-value {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #1e293b;
+      line-height: 1;
+    }
+    .a-stat-card .a-label {
+      font-size: 0.85rem;
+      color: #6c757d;
+      margin-top: 4px;
+    }
+
+    /* Chart Cards */
+    .chart-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      overflow: hidden;
+      transition: box-shadow 0.2s;
+    }
+    .chart-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+    .chart-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid #e9ecef;
+    }
+    .chart-card-header h6 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .chart-card-body { padding: 20px; }
+    .chart-card canvas { max-height: 300px; }
+
+    /* Performance Summary Boxes */
+    .perf-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .perf-box {
+      text-align: center;
+      padding: 14px;
+      background: #f8f9fa;
+      border-radius: 10px;
+      border: 1px solid #e9ecef;
+    }
+    .perf-box .pv {
+      font-size: 1.5rem;
+      font-weight: 800;
+    }
+    .perf-box .pl {
+      font-size: 0.75rem;
+      color: #6c757d;
+      margin-top: 2px;
+    }
+
+    /* Top Students Table */
+    .top-table { width: 100%; border-collapse: collapse; }
+    .top-table th {
+      background: #f8f9fa;
+      font-weight: 600;
+      color: #495057;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 10px 14px;
+      border-bottom: 2px solid #dee2e6;
+    }
+    .top-table td {
+      padding: 12px 14px;
+      font-size: 0.875rem;
+      color: #212529;
+      border-bottom: 1px solid #e9ecef;
+    }
+    .top-table tr:last-child td { border-bottom: none; }
+    .top-table tr:hover td { background: #f8f9fa; }
+
+    .rank-badge {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 700;
+    }
+    .rank-badge.gold { background: #fff3cd; color: #856404; }
+    .rank-badge.silver { background: #e2e3e5; color: #495057; }
+    .rank-badge.bronze { background: #fde2c8; color: #984c0c; }
+    .rank-badge.def { background: #f8f9fa; color: #6c757d; }
+
+    /* Activity Timeline */
+    .act-list { list-style: none; padding: 0; margin: 0; }
+    .act-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 4px;
+      border-bottom: 1px solid #e9ecef;
+      transition: background 0.15s;
+    }
+    .act-list li:last-child { border-bottom: none; }
+    .act-list li:hover { background: #f8f9fa; }
+    .act-ico {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem; flex-shrink: 0;
+    }
+    .act-ico.create { background: #d1fae5; color: #198754; }
+    .act-ico.delete { background: #fee2e2; color: #dc3545; }
+    .act-ico.submit { background: #e7f1ff; color: #0d6efd; }
+    .act-ico.export { background: #fff3cd; color: #fd7e14; }
+    .act-ico.other  { background: #f3f0ff; color: #6f42c1; }
+    .act-content { flex: 1; }
+    .act-action { font-size: 0.85rem; font-weight: 500; color: #212529; }
+    .act-time { font-size: 0.72rem; color: #6c757d; }
+
+    /* Counter animation */
+    @keyframes countUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .a-value { animation: countUp 0.5s ease-out forwards; }
+  </style>
 </head>
 
 <body>
@@ -18,90 +192,148 @@
   <div class="main-content">
     <div class="top-bar">
       <button class="btn btn-light btn-sm menu-toggle" id="menu-toggle"><i class="bi bi-list"></i></button>
-      <h4><i class="bi bi-bar-chart me-2"></i>Analytics</h4>
+      <h4><i class="bi bi-bar-chart-line me-2"></i>Analytics</h4>
       <button class="btn btn-outline-primary btn-sm" id="btn-download-report">
         <i class="bi bi-download me-1"></i> Download Report
       </button>
     </div>
     <div class="page-body">
-      <!-- Stats -->
-      <div class="row g-3 mb-4">
-        <div class="col-md-3 col-6">
-          <div class="card stat-card shadow-sm">
-            <div class="card-body">
-              <div class="stat-icon blue"><i class="bi bi-people"></i></div>
-              <div class="stat-value" id="a-users">—</div>
-              <div class="stat-label">Total Users</div>
+
+      <!-- ═══ Stat Cards ═══ -->
+      <div class="analytics-stats">
+        <div class="a-stat-card blue">
+          <div class="a-icon blue"><i class="bi bi-people-fill"></i></div>
+          <div class="a-value" id="a-users">—</div>
+          <div class="a-label">Total Users</div>
+        </div>
+        <div class="a-stat-card purple">
+          <div class="a-icon purple"><i class="bi bi-journal-bookmark-fill"></i></div>
+          <div class="a-value" id="a-courses">—</div>
+          <div class="a-label">Courses</div>
+        </div>
+        <div class="a-stat-card green">
+          <div class="a-icon green"><i class="bi bi-pencil-square"></i></div>
+          <div class="a-value" id="a-tests">—</div>
+          <div class="a-label">Tests Created</div>
+        </div>
+        <div class="a-stat-card orange">
+          <div class="a-icon orange"><i class="bi bi-check2-circle"></i></div>
+          <div class="a-value" id="a-results">—</div>
+          <div class="a-label">Total Submissions</div>
+        </div>
+      </div>
+
+      <!-- ═══ Charts Row 1 ═══ -->
+      <div class="row g-4 mb-4">
+        <!-- Score Distribution -->
+        <div class="col-lg-6">
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <h6><i class="bi bi-bar-chart-fill text-primary"></i> Score Distribution</h6>
+            </div>
+            <div class="chart-card-body">
+              <div class="perf-row">
+                <div class="perf-box">
+                  <div class="pv text-primary" id="perf-avg">—</div>
+                  <div class="pl">Avg Score</div>
+                </div>
+                <div class="perf-box">
+                  <div class="pv text-success" id="perf-pass">—</div>
+                  <div class="pl">Pass Rate</div>
+                </div>
+                <div class="perf-box">
+                  <div class="pv text-info" id="perf-top">—</div>
+                  <div class="pl">Highest Score</div>
+                </div>
+              </div>
+              <canvas id="chart-score-dist"></canvas>
             </div>
           </div>
         </div>
-        <div class="col-md-3 col-6">
-          <div class="card stat-card shadow-sm">
-            <div class="card-body">
-              <div class="stat-icon purple"><i class="bi bi-book"></i></div>
-              <div class="stat-value" id="a-courses">—</div>
-              <div class="stat-label">Courses</div>
+
+        <!-- Course Popularity -->
+        <div class="col-lg-6">
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <h6><i class="bi bi-trophy-fill text-warning"></i> Course Popularity</h6>
             </div>
-          </div>
-        </div>
-        <div class="col-md-3 col-6">
-          <div class="card stat-card shadow-sm">
-            <div class="card-body">
-              <div class="stat-icon green"><i class="bi bi-pencil-square"></i></div>
-              <div class="stat-value" id="a-tests">—</div>
-              <div class="stat-label">Tests</div>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3 col-6">
-          <div class="card stat-card shadow-sm">
-            <div class="card-body">
-              <div class="stat-icon orange"><i class="bi bi-check-circle"></i></div>
-              <div class="stat-value" id="a-results">—</div>
-              <div class="stat-label">Test Submissions</div>
+            <div class="chart-card-body">
+              <canvas id="chart-course-pop"></canvas>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="row g-4">
-        <!-- Course Popularity -->
-        <div class="col-lg-6">
-          <div class="card shadow-sm">
-            <div class="card-header bg-white">
-              <h6 class="mb-0"><i class="bi bi-book me-2"></i>Course Popularity</h6>
+      <!-- ═══ Charts Row 2 ═══ -->
+      <div class="row g-4 mb-4">
+        <!-- User Distribution -->
+        <div class="col-lg-5">
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <h6><i class="bi bi-pie-chart-fill text-info"></i> User Distribution</h6>
             </div>
-            <div class="card-body" id="course-popularity"></div>
+            <div class="chart-card-body d-flex align-items-center justify-content-center">
+              <canvas id="chart-role-dist" style="max-height:260px;"></canvas>
+            </div>
           </div>
         </div>
-        <!-- Test Performance -->
-        <div class="col-lg-6">
-          <div class="card shadow-sm">
-            <div class="card-header bg-white">
-              <h6 class="mb-0"><i class="bi bi-graph-up me-2"></i>Test Performance</h6>
+
+        <!-- Submissions Timeline -->
+        <div class="col-lg-7">
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <h6><i class="bi bi-graph-up-arrow text-success"></i> Submissions Over Time</h6>
             </div>
-            <div class="card-body" id="test-performance"></div>
-          </div>
-        </div>
-        <!-- Role Distribution -->
-        <div class="col-lg-6">
-          <div class="card shadow-sm">
-            <div class="card-header bg-white">
-              <h6 class="mb-0"><i class="bi bi-people me-2"></i>User Distribution</h6>
+            <div class="chart-card-body">
+              <canvas id="chart-timeline"></canvas>
             </div>
-            <div class="card-body" id="role-distribution"></div>
-          </div>
-        </div>
-        <!-- Recent Activity -->
-        <div class="col-lg-6">
-          <div class="card shadow-sm">
-            <div class="card-header bg-white">
-              <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Recent Activity</h6>
-            </div>
-            <div class="card-body" id="recent-activity"></div>
           </div>
         </div>
       </div>
+
+      <!-- ═══ Bottom Row ═══ -->
+      <div class="row g-4">
+        <!-- Top Students -->
+        <div class="col-lg-6">
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <h6><i class="bi bi-award-fill text-warning"></i> Top Performing Students</h6>
+            </div>
+            <div class="chart-card-body p-0">
+              <div style="max-height:360px;overflow-y:auto;">
+                <table class="top-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Student</th>
+                      <th>Tests</th>
+                      <th>Avg Score</th>
+                    </tr>
+                  </thead>
+                  <tbody id="top-students-body">
+                    <tr><td colspan="4" class="text-center text-muted py-4">Loading...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="col-lg-6">
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <h6><i class="bi bi-clock-history text-secondary"></i> Recent Activity</h6>
+            </div>
+            <div class="chart-card-body" style="max-height:360px;overflow-y:auto;">
+              <ul class="act-list" id="activity-timeline">
+                <li class="text-center text-muted py-4">Loading...</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -113,9 +345,26 @@
     import { EnrollmentService, ActivityLogService } from '../services/database.js';
     import { timeAgo, escapeHtml, LMSLogger, showToast, friendlyError } from '../assets/js/core/utils.js';
 
+    // ── Chart.js light-theme defaults ──
+    Chart.defaults.color = '#6c757d';
+    Chart.defaults.borderColor = '#e9ecef';
+    Chart.defaults.plugins.legend.labels.usePointStyle = true;
+    Chart.defaults.plugins.legend.labels.pointStyle = 'circle';
+    Chart.defaults.plugins.legend.labels.padding = 16;
+    Chart.defaults.plugins.tooltip.backgroundColor = '#1e293b';
+    Chart.defaults.plugins.tooltip.titleColor = '#fff';
+    Chart.defaults.plugins.tooltip.bodyColor = '#e2e8f0';
+    Chart.defaults.plugins.tooltip.borderColor = 'rgba(13,110,253,0.3)';
+    Chart.defaults.plugins.tooltip.borderWidth = 1;
+    Chart.defaults.plugins.tooltip.cornerRadius = 8;
+    Chart.defaults.plugins.tooltip.padding = 12;
+    Chart.defaults.animation.duration = 1000;
+    Chart.defaults.animation.easing = 'easeOutQuart';
+
     try {
       await initApp(['admin']);
 
+      // ── Fetch all data ──
       const [users, courses, tests, results] = await Promise.all([
         getDocs(collection(db, 'users')),
         getDocs(collection(db, 'courses')),
@@ -123,107 +372,290 @@
         getDocs(collection(db, 'test_results'))
       ]);
 
-      document.getElementById('a-users').textContent = users.size;
-      document.getElementById('a-courses').textContent = courses.size;
-      document.getElementById('a-tests').textContent = tests.size;
-      document.getElementById('a-results').textContent = results.size;
-
-      // Course Popularity
-      const coursesList = courses.docs.map(d => ({ id: d.id, ...d.data() }));
-      const popContainer = document.getElementById('course-popularity');
-      if (coursesList.length === 0) {
-        popContainer.innerHTML = '<p class="text-muted">No courses yet</p>';
-      } else {
-        const popularity = await Promise.all(coursesList.map(async c => {
-          const count = await EnrollmentService.countByCourse(c.id);
-          return { title: c.title, count };
-        }));
-        popularity.sort((a, b) => b.count - a.count);
-        const max = Math.max(...popularity.map(c => c.count), 1);
-        popContainer.innerHTML = popularity.slice(0, 8).map(c => `
-          <div class="mb-3">
-            <div class="d-flex justify-content-between mb-1">
-              <span class="small fw-semibold text-truncate" style="max-width: 250px;">${escapeHtml(c.title)}</span>
-              <span class="small text-muted">${c.count} students</span>
-            </div>
-            <div class="progress" style="height:8px;">
-              <div class="progress-bar" style="width:${(c.count / max * 100)}%"></div>
-            </div>
-          </div>`).join('');
+      // ── Animate counters ──
+      function animateCounter(el, target) {
+        let current = 0;
+        const step = Math.max(1, Math.ceil(target / 40));
+        const interval = setInterval(() => {
+          current += step;
+          if (current >= target) { current = target; clearInterval(interval); }
+          el.textContent = current.toLocaleString();
+        }, 25);
       }
+      animateCounter(document.getElementById('a-users'), users.size);
+      animateCounter(document.getElementById('a-courses'), courses.size);
+      animateCounter(document.getElementById('a-tests'), tests.size);
+      animateCounter(document.getElementById('a-results'), results.size);
 
-      // Test Performance
       const resultsList = results.docs.map(d => d.data());
-      const perfContainer = document.getElementById('test-performance');
-      if (resultsList.length === 0) {
-        perfContainer.innerHTML = '<p class="text-muted">No results yet</p>';
-      } else {
-        const avg = Math.round(resultsList.reduce((s, r) => s + (r.percentage || 0), 0) / resultsList.length);
-        const passed = resultsList.filter(r => r.percentage >= 40).length;
-        const passRate = Math.round((passed / resultsList.length) * 100);
-        perfContainer.innerHTML = `
-          <div class="row g-3 mb-3">
-            <div class="col-6 text-center"><div class="border rounded p-3"><div class="fs-4 fw-bold text-primary">${avg}%</div><div class="small text-muted">Average Score</div></div></div>
-            <div class="col-6 text-center"><div class="border rounded p-3"><div class="fs-4 fw-bold text-success">${passRate}%</div><div class="small text-muted">Pass Rate</div></div></div>
-          </div>
-          <div class="small text-muted">
-            <div class="d-flex justify-content-between mb-1"><span>Total Submissions</span><span class="fw-semibold text-dark">${resultsList.length}</span></div>
-            <div class="d-flex justify-content-between mb-1"><span>Passed (≥40%)</span><span class="text-success fw-semibold">${passed}</span></div>
-            <div class="d-flex justify-content-between"><span>Failed</span><span class="text-danger fw-semibold">${resultsList.length - passed}</span></div>
-          </div>`;
-      }
+      const usersData = users.docs.map(d => ({ id: d.id, ...d.data() }));
+      const coursesList = courses.docs.map(d => ({ id: d.id, ...d.data() }));
 
-      // Role Distribution
-      const usersData = users.docs.map(d => d.data());
+      // ══════ SCORE DISTRIBUTION ══════
+      const scoreBuckets = [0, 0, 0, 0, 0];
+      let totalPct = 0, highest = 0;
+      resultsList.forEach(r => {
+        const pct = r.percentage || 0;
+        totalPct += pct;
+        if (pct > highest) highest = pct;
+        if (pct <= 20) scoreBuckets[0]++;
+        else if (pct <= 40) scoreBuckets[1]++;
+        else if (pct <= 60) scoreBuckets[2]++;
+        else if (pct <= 80) scoreBuckets[3]++;
+        else scoreBuckets[4]++;
+      });
+
+      const avg = resultsList.length ? Math.round(totalPct / resultsList.length) : 0;
+      const passed = resultsList.filter(r => (r.percentage || 0) >= 40).length;
+      const passRate = resultsList.length ? Math.round((passed / resultsList.length) * 100) : 0;
+
+      document.getElementById('perf-avg').textContent = avg + '%';
+      document.getElementById('perf-pass').textContent = passRate + '%';
+      document.getElementById('perf-top').textContent = Math.round(highest) + '%';
+
+      new Chart(document.getElementById('chart-score-dist'), {
+        type: 'bar',
+        data: {
+          labels: ['0–20%', '21–40%', '41–60%', '61–80%', '81–100%'],
+          datasets: [{
+            label: 'Students',
+            data: scoreBuckets,
+            backgroundColor: ['#f87171', '#fbbf24', '#60a5fa', '#818cf8', '#34d399'],
+            borderColor: ['#ef4444', '#f59e0b', '#3b82f6', '#6366f1', '#10b981'],
+            borderWidth: 2,
+            borderRadius: 8,
+            borderSkipped: false
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 }, grid: { color: '#f1f5f9' } },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+
+      // ══════ COURSE POPULARITY ══════
+      const popularity = await Promise.all(coursesList.map(async c => {
+        const count = await EnrollmentService.countByCourse(c.id);
+        return { title: c.title, count };
+      }));
+      popularity.sort((a, b) => b.count - a.count);
+      const topCourses = popularity.slice(0, 8);
+
+      new Chart(document.getElementById('chart-course-pop'), {
+        type: 'bar',
+        data: {
+          labels: topCourses.map(c => c.title.length > 22 ? c.title.substring(0, 22) + '…' : c.title),
+          datasets: [{
+            label: 'Enrolled Students',
+            data: topCourses.map(c => c.count),
+            backgroundColor: 'rgba(13,110,253,0.6)',
+            borderColor: '#0d6efd',
+            borderWidth: 2,
+            borderRadius: 8,
+            borderSkipped: false
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 }, grid: { color: '#f1f5f9' } },
+            y: { grid: { display: false } }
+          }
+        }
+      });
+
+      // ══════ USER ROLE DOUGHNUT ══════
       const roles = { admin: 0, teacher: 0, student: 0 };
       usersData.forEach(u => { if (roles[u.role] !== undefined) roles[u.role]++; });
-      const total = usersData.length || 1;
-      const roleColors = { admin: 'bg-danger', teacher: 'bg-primary', student: 'bg-success' };
-      document.getElementById('role-distribution').innerHTML = Object.entries(roles).map(([role, count]) => `
-        <div class="mb-3">
-          <div class="d-flex justify-content-between mb-1">
-            <span class="small text-capitalize fw-semibold">${role}s</span>
-            <span class="small text-muted">${count} (${Math.round(count/total*100)}%)</span>
-          </div>
-          <div class="progress" style="height:8px;">
-            <div class="progress-bar ${roleColors[role]}" style="width:${(count / total * 100)}%"></div>
-          </div>
-        </div>`).join('');
 
-      // Recent Activity
-      const logs = await ActivityLogService.getRecent(10);
-      const actContainer = document.getElementById('recent-activity');
-      if (logs.length === 0) {
-        actContainer.innerHTML = '<p class="text-muted">No recent activity</p>';
+      new Chart(document.getElementById('chart-role-dist'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Admins', 'Teachers', 'Students'],
+          datasets: [{
+            data: [roles.admin, roles.teacher, roles.student],
+            backgroundColor: ['#ef4444', '#3b82f6', '#10b981'],
+            borderColor: '#fff',
+            borderWidth: 3,
+            hoverOffset: 12
+          }]
+        },
+        options: {
+          responsive: true,
+          cutout: '62%',
+          plugins: {
+            legend: { position: 'bottom' },
+            tooltip: {
+              callbacks: {
+                label: ctx => {
+                  const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                  const pct = total ? Math.round(ctx.raw / total * 100) : 0;
+                  return ` ${ctx.label}: ${ctx.raw} (${pct}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+
+      // ══════ SUBMISSIONS TIMELINE ══════
+      const monthMap = {};
+      resultsList.forEach(r => {
+        let date = r.submittedAt || r.createdAt;
+        if (date && date.toDate) date = date.toDate();
+        else if (date) date = new Date(date);
+        else return;
+        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        monthMap[key] = (monthMap[key] || 0) + 1;
+      });
+      const sortedMonths = Object.keys(monthMap).sort();
+      const monthLabels = sortedMonths.map(k => {
+        const [y, m] = k.split('-');
+        return new Date(y, m - 1).toLocaleDateString('en', { month: 'short', year: '2-digit' });
+      });
+
+      new Chart(document.getElementById('chart-timeline'), {
+        type: 'line',
+        data: {
+          labels: monthLabels.length ? monthLabels : ['No Data'],
+          datasets: [{
+            label: 'Submissions',
+            data: monthLabels.length ? sortedMonths.map(k => monthMap[k]) : [0],
+            borderColor: '#0d6efd',
+            backgroundColor: 'rgba(13,110,253,0.08)',
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#0d6efd',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointRadius: 5,
+            pointHoverRadius: 7
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 }, grid: { color: '#f1f5f9' } },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+
+      // ══════ TOP STUDENTS ══════
+      const studentScores = {};
+      resultsList.forEach(r => {
+        const uid = r.userId || r.studentId;
+        if (!uid) return;
+        if (!studentScores[uid]) studentScores[uid] = { total: 0, count: 0 };
+        studentScores[uid].total += (r.percentage || 0);
+        studentScores[uid].count++;
+      });
+
+      const topStudents = Object.entries(studentScores)
+        .map(([uid, s]) => ({ uid, avg: s.total / s.count, count: s.count }))
+        .sort((a, b) => b.avg - a.avg)
+        .slice(0, 10);
+
+      const userMap = {};
+      usersData.forEach(u => { userMap[u.id] = u; });
+
+      const tbody = document.getElementById('top-students-body');
+      if (topStudents.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">No test data yet</td></tr>';
       } else {
-        actContainer.innerHTML = logs.map(l => `
-          <div class="d-flex justify-content-between border-bottom py-2 small">
-            <span>${l.action}</span>
-            <span class="text-muted">${timeAgo(l.timestamp)}</span>
-          </div>`).join('');
+        tbody.innerHTML = topStudents.map((s, i) => {
+          const user = userMap[s.uid];
+          const name = user ? escapeHtml(user.name || user.email || 'Unknown') : s.uid.substring(0, 8) + '…';
+          const rc = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : 'def';
+          const bc = s.avg >= 60 ? 'bg-success' : s.avg >= 40 ? 'bg-warning text-dark' : 'bg-danger';
+          return `<tr>
+            <td><span class="rank-badge ${rc}">${i + 1}</span></td>
+            <td>${name}</td>
+            <td>${s.count}</td>
+            <td><span class="badge ${bc}">${Math.round(s.avg)}%</span></td>
+          </tr>`;
+        }).join('');
       }
 
-      // Download Report logic
+      // ══════ ACTIVITY TIMELINE ══════
+      const logs = await ActivityLogService.getRecent(15);
+      const actContainer = document.getElementById('activity-timeline');
+      if (logs.length === 0) {
+        actContainer.innerHTML = '<li class="text-center text-muted py-4">No recent activity</li>';
+      } else {
+        actContainer.innerHTML = logs.map(l => {
+          const action = (l.action || '').toUpperCase();
+          let ic = 'other', icon = 'bi-activity';
+          if (action.includes('CREATE') || action.includes('ADD')) { ic = 'create'; icon = 'bi-plus-circle-fill'; }
+          else if (action.includes('DELETE') || action.includes('REMOVE') || action.includes('WIPE')) { ic = 'delete'; icon = 'bi-trash-fill'; }
+          else if (action.includes('SUBMIT')) { ic = 'submit'; icon = 'bi-send-fill'; }
+          else if (action.includes('EXPORT') || action.includes('DOWNLOAD')) { ic = 'export'; icon = 'bi-cloud-download-fill'; }
+          return `<li>
+            <div class="act-ico ${ic}"><i class="bi ${icon}"></i></div>
+            <div class="act-content">
+              <div class="act-action">${escapeHtml(l.action || 'Unknown')}</div>
+              <div class="act-time">${l.timestamp ? timeAgo(l.timestamp) : '—'}</div>
+            </div>
+          </li>`;
+        }).join('');
+      }
+
+      // ══════ DOWNLOAD REPORT ══════
       const btnDownload = document.getElementById('btn-download-report');
       if (btnDownload) {
         btnDownload.addEventListener('click', () => {
           try {
             const wb = XLSX.utils.book_new();
 
-            // Export Stats as a simple sheet
-            const stats = [
+            // Sheet 1: System Stats
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([
               { Metric: 'Total Users', Value: users.size },
               { Metric: 'Total Courses', Value: courses.size },
               { Metric: 'Total Tests', Value: tests.size },
-              { Metric: 'Total Submissions', Value: results.size }
-            ];
-            const statsSheet = XLSX.utils.json_to_sheet(stats);
-            XLSX.utils.book_append_sheet(wb, statsSheet, "System Stats");
+              { Metric: 'Total Submissions', Value: results.size },
+              { Metric: 'Average Score', Value: avg + '%' },
+              { Metric: 'Pass Rate (≥40%)', Value: passRate + '%' },
+              { Metric: 'Highest Score', Value: Math.round(highest) + '%' }
+            ]), "System Stats");
 
-            // Export User Distribution
-            const roleData = Object.entries(roles).map(([r, c]) => ({ Role: r, Count: c }));
-            const roleSheet = XLSX.utils.json_to_sheet(roleData);
-            XLSX.utils.book_append_sheet(wb, roleSheet, "User Distribution");
+            // Sheet 2: Score Distribution
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(
+              ['0–20%', '21–40%', '41–60%', '61–80%', '81–100%'].map((r, i) => ({ Range: r, Count: scoreBuckets[i] }))
+            ), "Score Distribution");
+
+            // Sheet 3: Course Popularity
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(
+              popularity.map(c => ({ Course: c.title, Enrollments: c.count }))
+            ), "Course Popularity");
+
+            // Sheet 4: User Distribution
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(
+              Object.entries(roles).map(([r, c]) => ({ Role: r, Count: c }))
+            ), "User Distribution");
+
+            // Sheet 5: Monthly Submissions
+            if (sortedMonths.length) {
+              XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(
+                sortedMonths.map(k => ({ Month: k, Submissions: monthMap[k] }))
+              ), "Monthly Submissions");
+            }
+
+            // Sheet 6: Top Students
+            if (topStudents.length) {
+              XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(
+                topStudents.map((s, i) => {
+                  const user = userMap[s.uid];
+                  return { Rank: i + 1, Name: user?.name || user?.email || s.uid, Tests: s.count, AvgScore: Math.round(s.avg) + '%' };
+                })
+              ), "Top Students");
+            }
 
             XLSX.writeFile(wb, `Analytics_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
             showToast('Analytics report downloaded!', 'success');
@@ -233,6 +665,7 @@
           }
         });
       }
+
     } catch (e) {
       LMSLogger.database('Analytics failed to load', e);
       showToast(friendlyError(e), 'error');

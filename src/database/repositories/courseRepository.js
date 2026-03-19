@@ -60,6 +60,28 @@ export const CourseRepository = {
     _cache.delete(id);
   },
 
+  async cascadeDelete(id) {
+    // Delete all enrollments for this course
+    const enrollSnap = await getDocs(query(collection(db, COLLECTIONS.ENROLLMENTS), where('courseId', '==', id)));
+    for (const d of enrollSnap.docs) await deleteDoc(doc(db, COLLECTIONS.ENROLLMENTS, d.id));
+
+    // Delete all sections for this course
+    const secSnap = await getDocs(query(collection(db, SEC_COL), where('courseId', '==', id)));
+    for (const d of secSnap.docs) await deleteDoc(doc(db, SEC_COL, d.id));
+
+    // Delete all tests for this course and their results
+    const testSnap = await getDocs(query(collection(db, COLLECTIONS.TESTS), where('courseId', '==', id)));
+    for (const t of testSnap.docs) {
+      const resSnap = await getDocs(query(collection(db, COLLECTIONS.TEST_RESULTS), where('testId', '==', t.id)));
+      for (const r of resSnap.docs) await deleteDoc(doc(db, COLLECTIONS.TEST_RESULTS, r.id));
+      await deleteDoc(doc(db, COLLECTIONS.TESTS, t.id));
+    }
+
+    // Delete the course itself
+    await deleteDoc(doc(db, COL, id));
+    _cache.delete(id);
+  },
+
   async count() {
     const snap = await getDocs(collection(db, COL));
     return snap.size;
