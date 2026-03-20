@@ -294,25 +294,60 @@ function setupEventListeners() {
     });
   }
 
-  // Export All Data (all 9 collections)
-  const btnExport = document.getElementById('btn-export-data');
-  if (btnExport) {
-    btnExport.addEventListener('click', async () => {
-      await withLoadingButton(btnExport, async () => {
-        try {
-          const [users, courses, attendanceSnap, enrollmentsSnap, testsSnap, resultsSnap, assignmentsSnap, submissionsSnap, activityLogs] = await Promise.all([
-            UserService.getAll(),
-            CourseService.getAll(),
-            getDocs(collection(db, 'attendance')),
-            getDocs(collection(db, 'enrollments')),
-            getDocs(collection(db, 'tests')),
-            getDocs(collection(db, 'test_results')),
-            getDocs(collection(db, 'assignments')),
-            getDocs(collection(db, 'submissions')),
-            ActivityLogService.getAll()
-          ]);
+  async function fetchAllExportData() {
+    return Promise.all([
+      UserService.getAll(),
+      CourseService.getAll(),
+      getDocs(collection(db, 'attendance')),
+      getDocs(collection(db, 'enrollments')),
+      getDocs(collection(db, 'tests')),
+      getDocs(collection(db, 'test_results')),
+      getDocs(collection(db, 'assignments')),
+      getDocs(collection(db, 'submissions')),
+      ActivityLogService.getAll()
+    ]);
+  }
 
-          const toDateStr = (ts) => ts?.toDate ? ts.toDate().toLocaleString() : '';
+  const toDateStr = (ts) => ts?.toDate ? ts.toDate().toLocaleString() : '';
+  const toISODateStr = (ts) => ts?.toDate ? ts.toDate().toISOString() : '';
+
+  // Export Data Logic shared wrapper
+  async function handleExport(buttonId, isJsExport = false) {
+    const btnRef = document.getElementById('btn-export-dropdown'); // Use the parent button for loading state
+    await withLoadingButton(btnRef, async () => {
+      try {
+        const [users, courses, attendanceSnap, enrollmentsSnap, testsSnap, resultsSnap, assignmentsSnap, submissionsSnap, activityLogs] = await fetchAllExportData();
+
+        if (isJsExport) {
+          // Export as JS File
+          const exportObj = {
+            users: users.map(u => ({ ...u, createdAt: toISODateStr(u.createdAt) })),
+            courses: courses.map(c => ({ ...c, createdAt: toISODateStr(c.createdAt) })),
+            enrollments: enrollmentsSnap.docs.map(d => ({ id: d.id, ...d.data(), assignedDate: toISODateStr(d.data().assignedDate) })),
+            attendance: attendanceSnap.docs.map(d => ({ id: d.id, ...d.data() })),
+            tests: testsSnap.docs.map(d => ({ id: d.id, ...d.data(), createdAt: toISODateStr(d.data().createdAt) })),
+            testResults: resultsSnap.docs.map(d => ({ id: d.id, ...d.data(), submittedAt: toISODateStr(d.data().submittedAt) })),
+            assignments: assignmentsSnap.docs.map(d => ({ id: d.id, ...d.data(), createdAt: toISODateStr(d.data().createdAt) })),
+            submissions: submissionsSnap.docs.map(d => ({ id: d.id, ...d.data(), submittedAt: toISODateStr(d.data().submittedAt) })),
+            activityLogs: activityLogs.map(l => ({ ...l, timestamp: toISODateStr(l.timestamp) }))
+          };
+
+          const jsContent = `/** LMS Full Backup - ${new Date().toISOString()} **/\n\nexport const LMSDataBackup = ${JSON.stringify(exportObj, null, 2)};\n\nexport default LMSDataBackup;\n`;
+
+          const blob = new Blob([jsContent], { type: 'text/javascript' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `LMS_Full_Backup_${new Date().toISOString().split('T')[0]}.js`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+
+          showToast('Data exported successfully as JavaScript file!', 'success');
+          await ActivityLogService.log(currentUserUid, 'EXPORT_ALL_DATA_JS', 'Exported full JS backup file.');
+        } else {
+          // Export as Excel
           const wb = XLSX.utils.book_new();
 
           // 1. Users
@@ -381,11 +416,29 @@ function setupEventListeners() {
           XLSX.writeFile(wb, `LMS_Full_Backup_${new Date().toISOString().split('T')[0]}.xlsx`);
           showToast('All data exported successfully! (9 sheets)', 'success');
           await ActivityLogService.log(currentUserUid, 'EXPORT_ALL_DATA', 'Exported full Excel backup with 9 sheets.');
-        } catch (err) {
-          LMSLogger.database('Export failed', err);
-          showToast('Failed to export data.', 'error');
         }
-      }, 'Exporting...');
+      } catch (err) {
+        LMSLogger.database('Export failed', err);
+        showToast('Failed to export data.', 'error');
+      }
+    }, 'Exporting...');
+  }
+
+  // Bind Export Listeners
+  const btnExportExcel = document.getElementById('btn-export-excel');
+  const btnExportJs = document.getElementById('btn-export-js');
+
+  if (btnExportExcel) {
+    btnExportExcel.addEventListener('click', (e) => {
+      e.preventDefault();
+      handleExport('btn-export-excel', false);
+    });
+  }
+
+  if (btnExportJs) {
+    btnExportJs.addEventListener('click', (e) => {
+      e.preventDefault();
+      handleExport('btn-export-js', true);
     });
   }
 }

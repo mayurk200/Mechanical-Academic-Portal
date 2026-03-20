@@ -29,9 +29,15 @@
           <h5 class="mb-0">Data Control Center</h5>
           <p class="text-muted small mb-0">Manage global limits, backup operations, and access the Danger Zone.</p>
         </div>
-        <button class="btn btn-outline-primary btn-sm" id="btn-export-data">
-          <i class="bi bi-file-earmark-excel me-1"></i> Export All Data
-        </button>
+        <div class="dropdown">
+          <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" id="btn-export-dropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-download me-1"></i> Export All Data
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="btn-export-dropdown">
+            <li><a class="dropdown-item" href="#" id="btn-export-excel"><i class="bi bi-file-earmark-excel me-2 text-success"></i>Export as Excel (.xlsx)</a></li>
+            <li><a class="dropdown-item" href="#" id="btn-export-js"><i class="bi bi-filetype-js me-2 text-warning"></i>Export as JavaScript (.js)</a></li>
+          </ul>
+        </div>
       </div>
 
       <!-- General Settings (Placeholders for future use) -->
